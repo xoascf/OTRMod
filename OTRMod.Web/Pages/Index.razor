@@ -1,86 +1,105 @@
 ﻿@page "/"
-
 @using BlazorDownloadFile
 @using OTRMod.ROM
 @using OTRMod.OTR
 @using OTRMod.Util
 @using System.Text
-
 <PageTitle>OTRMod Web - Get OTR</PageTitle>
-
 <h1>Get OTR mod from ROM image</h1>
 <br />
 <p>
-	<label>
-		Select the Script:
-		<InputFile OnChange="@ProcessScript" single />
-	</label>
+	<label>Select a script: <InputFile OnChange="@ProcessScript" single /></label>
 </p>
 <p>
-	<label>
-		Select the ROM:
-		<InputFile OnChange="@ProcessROM" single />
-	</label>
+	<label>Select a ROM: <InputFile OnChange="@ProcessROM" single/></label>
 </p>
-<br />
-<button @onclick=@GenerateOTR>Generate OTR</button>
-
+<div class="alert alert-secondary mt-4">
+	@switch (_genStatus)
+	{
+		case GenerationStatus.NoSelected:
+			<span class="text-nowrap">Select a script and ROM to generate the OTR.</span>
+			break;
+		case GenerationStatus.Generating:
+			<span class="text-nowrap">Please wait while your OTR is being generated...</span>
+			break;
+		case GenerationStatus.Finished:
+			<span class="text-nowrap">OTR generated successfully!</span>
+			break;
+		case GenerationStatus.Error:
+			<span class="text-wrap">Error: @_lastError</span>
+			break;
+		case GenerationStatus.Selected:
+		default:
+			<span class="text-nowrap">Click the "Generate OTR" button when you're ready.</span>
+			break;
+	}
+</div>
+<button disabled="@(_genStatus == GenerationStatus.NoSelected)" @onclick="@GenerateOTR">
+	Generate OTR
+</button>
 @code {
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
-	private readonly string[] _separators = new string[] { "\n", "\r\n", "\r" };
+	private readonly string[] _separators = { "\n", "\r\n", "\r" };
 	private string[]? _script;
-	private readonly MemoryStream _scriptMs = new MemoryStream();
-	private readonly MemoryStream _romMs = new MemoryStream();
-	private MemoryStream _otrMs = new MemoryStream();
+	private readonly MemoryStream _scriptMs = new();
+	private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
 	private const int MaxSizeROM = 64 * 1024 * 1024; // 64 MB ROM.
+	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
+	private string? _lastError;
 
 	private async void ProcessScript(InputFileChangeEventArgs e)
 	{
-		_scriptMs.SetLength(0);
-		IBrowserFile scriptFile = e.File;
+		_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
 		if (_script != null)
 			Array.Clear(_script, 0, _script.Length);
-
 		await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
+		_genStatus = GenerationStatus.Selected;
 	}
 
 	private async void ProcessROM(InputFileChangeEventArgs e)
 	{
-		_romMs.SetLength(0);
-		IBrowserFile romFile = e.File;
-
+		_romMs.SetLength(0); IBrowserFile romFile = e.File;
 		await romFile.OpenReadStream(MaxSizeROM).CopyToAsync(_romMs);
+		_genStatus = GenerationStatus.Selected;
 	}
 
 	private async void GenerateOTR()
 	{
-		if (_scriptMs.Length == 0 || _romMs.Length == 0)
+		_genStatus = GenerationStatus.Generating;
+		if (_genStatus == GenerationStatus.NoSelected)
 			return;
+		try
+		{
+			_genStatus = GenerationStatus.Finished;
+			_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).
+				Split(_separators, StringSplitOptions.None);
 
-		_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).
-			Split(_separators, StringSplitOptions.None);
-
-		byte[] decompressed = Decompress.DecompressedBytes(ReadFully(_romMs));
-		ScriptParser sParser = new ScriptParser
+			byte[] decompressed = Decompress.DecompressedBytes
+				(ROM.Convert.ToBigEndian(ReadFully(_romMs)));
+			ScriptParser sParser = new ScriptParser
 			{
 				ScriptStrings = _script,
 				ImageData = decompressed,
 			};
-		sParser.ParseScript();
-		_otrMs.SetLength(0);
-		Generate.FromImage(ref _otrMs);
-
-		await DlFileService.DownloadFile
-			(sParser.OTRFileName,
-				_otrMs,
-				"application/octet-stream");
+			sParser.ParseScript();
+			_otrMs.SetLength(0);
+			Generate.FromImage(ref _otrMs);
+			await DlFileService.DownloadFile
+				(sParser.OTRFileName,
+					_otrMs,
+					"application/octet-stream");
+		}
+		catch (Exception ex)
+		{
+			_genStatus = GenerationStatus.Error;
+			_lastError = ex.ToString();
+		}
 	}
 
 	private static byte[] ReadFully(Stream stream)
 	{
 		if (stream is MemoryStream stream1)
 			return stream1.ToArray();
-
 		using var memoryStream = new MemoryStream();
 		stream.CopyTo(memoryStream);
 		return memoryStream.ToArray();
