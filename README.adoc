@@ -1,0 +1,4 @@
+
+:proj-name: OTRMod
+
+= {proj-name}
