@@ -8,10 +8,10 @@
 <h1>Get OTR mod from ROM image</h1>
 <br />
 <p>
-	<label>Select a script: <InputFile OnChange="@ProcessScript" single /></label>
+	<label>Select a script: <InputFile OnChange="@ProcessScript" accept=".txt" single /></label>
 </p>
 <p>
-	<label>Select a ROM: <InputFile OnChange="@ProcessROM" single/></label>
+	<label>Select a ROM: <InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.rom" single /></label>
 </p>
 <div class="alert alert-secondary mt-4">
 	@switch (_genStatus)
