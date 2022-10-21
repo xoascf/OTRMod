@@ -1,0 +1,22 @@
+name: 'Deploy OTRMod to gh-pages'
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '**/README.adoc'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v2
+        - name: Setup .NET
+          uses: actions/setup-dotnet@v3
+          with:
+            dotnet-version: 6.0.x
+        - name: Restore dependencies
+          run: dotnet restore
+        - uses: proulxsamuel/deploy-blazor-to-gh-pages@master
+          with:
+            project_path: 'OTRMod.Web'   
