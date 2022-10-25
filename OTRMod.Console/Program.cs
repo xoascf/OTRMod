@@ -2,18 +2,24 @@
 using OTRMod.Util;
 
 var otrMs = new MemoryStream();
+bool romMode;
 
-void Run(string pathROM, string pathScript)
+void Run(string pathImgData, string pathScript)
 {
 	try
 	{
-		byte[] romBytes = OTRMod.ROM.Convert.ToBigEndian
-			(File.ReadAllBytes(pathROM));
+		byte[] imgBytes;
+		if (romMode)
+			imgBytes = OTRMod.ROM.Decompress.DecompressedBytes
+			(OTRMod.ROM.Convert.ToBigEndian
+				(File.ReadAllBytes(pathImgData)));
+		else
+			imgBytes = File.ReadAllBytes(pathImgData);
 
 		ScriptParser sParser = new ScriptParser
 		{
 			ScriptStrings = File.ReadAllLines(pathScript),
-			ImageData = OTRMod.ROM.Decompress.DecompressedBytes(romBytes),
+			ImageData = imgBytes,
 		};
 		sParser.ParseScript();
 		otrMs.SetLength(0);
@@ -27,9 +33,13 @@ void Run(string pathROM, string pathScript)
 
 }
 
-Console.Write("ROM: ");
-string rom = Console.ReadLine() ?? string.Empty;
-if (rom == string.Empty)
+//Console.Write("Is it a ROM?: ");
+//romMode = Convert.ToBoolean(Console.ReadLine());
+romMode = true;
+
+Console.Write("Image: ");
+string img = Console.ReadLine() ?? string.Empty;
+if (img == string.Empty)
 	return;
 
 Console.Write("Script: ");
@@ -37,7 +47,7 @@ string script = Console.ReadLine() ?? string.Empty;
 if (script == string.Empty)
 	return;
 
-Run(rom, script);
+Run(img, script);
 
 Console.Write("Output: ");
 string output = Console.ReadLine() ?? string.Empty;

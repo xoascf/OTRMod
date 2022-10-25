@@ -1,46 +1,33 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
-namespace OTRMod.ROM;
+namespace OTRMod.Util;
 
-internal class ByteOrder
+public static class ByteOrder
 {
 	public enum Format
 	{
-		BigEndian, // .z64
+		BigEndian,    // .z64
 		LittleEndian, // .n64
-		ByteSwapped, // .v64
-		WordSwapped, // .u64
+		ByteSwapped,  // .v64
+		WordSwapped,  // .u64
 		Unknown
 	}
 
-	public static Format IdentifyFormat(byte[] b64)
+	public static Format IdentifyFormat(byte[] input, ReadOnlySpan<byte> magic)
 	{
 		Format format = Format.Unknown;
 
-		if (b64.Length < 4)
-
+		if (magic.Length != input.Length)
 			return format;
 
-		if (b64[0] == 0x80 &&
-		    b64[1] == 0x37 &&
-		    b64[2] == 0x12 &&
-		    b64[3] == 0x40)
+		if (magic.Matches(input))
 			format = Format.BigEndian;
-		else if (b64[0] == 0x40 &&
-		         b64[1] == 0x12 &&
-		         b64[2] == 0x37 &&
-		         b64[3] == 0x80)
+		else if (magic.Matches(input.CopyAs(Format.LittleEndian)))
 			format = Format.LittleEndian;
-		else if (b64[0] == 0x37 &&
-		         b64[1] == 0x80 &&
-		         b64[2] == 0x40 &&
-		         b64[3] == 0x12)
+		else if (magic.Matches(input.CopyAs(Format.ByteSwapped)))
 			format = Format.ByteSwapped;
-		else if (b64[0] == 0x12 &&
-		         b64[1] == 0x40 &&
-		         b64[2] == 0x80 &&
-		         b64[3] == 0x37)
+		else if (magic.Matches(input.CopyAs(Format.WordSwapped)))
 			format = Format.WordSwapped;
 
 		return format;
@@ -84,5 +71,19 @@ internal class ByteOrder
 		}
 
 		return data;
+	}
+
+	public static void To(this byte[] data, Format f, int s = 0, int l = 4)
+	{ data.Set(s, ToBigEndian(GetFrom(data, s, l), f)); }
+
+	public static byte[] DataTo(this byte[] data, Format f, int s = 0, int l = 4)
+	{ data.To(f, s, l); return data; }
+
+	public static byte[] CopyAs(this byte[] a, Format f, int s = 0, int l = 4)
+	{
+		byte[] b = new byte[l];
+		Buffer.BlockCopy(a, 0, b, 0, l);
+
+		return b.DataTo(f, s, l);
 	}
 }

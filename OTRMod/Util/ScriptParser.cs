@@ -94,7 +94,7 @@ public class ScriptParser
 		(ImageData, int.Parse(str[2], NumberStyles.HexNumber),
 			Texture.GetLengthFrom(codec, w * h));
 		if (addHeader)
-			toExport = Texture.AddHeader(codec, w, h, toExport);
+			toExport = Texture.Export(codec, w, h, toExport);
 		string savePath = Concatenate(SubDir, str[3]);
 
 		Save(toExport, savePath, ref Generate.SavedFiles);
@@ -109,14 +109,14 @@ public class ScriptParser
 			if (varWords.Length == 2)
 			{
 				ParseTex(varWords[0], out Texture.Codec codec, out int w, out int h);
-				dataBytes = Texture.AddHeader(codec, w, h, dataBytes);
+				dataBytes = Texture.Export(codec, w, h, dataBytes);
 			}
 			else if (varWords.Length == 3)
 			{
 				switch (varWords[0])
 				{
 					case "Seq":
-						dataBytes = Format.Sequence.AddHeader
+						dataBytes = Format.Sequence.Export
 							(int.Parse(varWords[1]),
 								int.Parse(varWords[2]), dataBytes);
 						break;

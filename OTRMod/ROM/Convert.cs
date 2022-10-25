@@ -1,14 +1,20 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
+using OTRMod.Util;
+
 namespace OTRMod.ROM;
 
-public class Convert
+public static class Convert
 {
+	private static readonly byte[] N64Header = ByteArray.FromString("80371240");
+
 	public static byte[] ToBigEndian(byte[] bytes)
 	{
+		byte[] fileHeader = GetFrom(bytes, 0, 4);
+
 		ByteOrder.Format format = ByteOrder.IdentifyFormat
-			(GetFrom(bytes, 0, 0x40));
+			(fileHeader, N64Header);
 
 		if (format == ByteOrder.Format.Unknown)
 			throw new Exception("ROM format is not valid!");

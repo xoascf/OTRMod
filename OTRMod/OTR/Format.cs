@@ -2,30 +2,29 @@
 
 using System.Buffers.Binary;
 using System.Text;
+using OTRMod.Util;
 
 namespace OTRMod.OTR;
 
 internal static class Format
 {
-	private static readonly byte[] /* Little Endian: DE AD BE EF */
-		EndiannessBytes = { 0xEF, 0xBE, 0xAD, 0xDE, 0xEF, 0xBE, 0xAD, 0xDE };
+	private const int HeaderSize = 0x40;
+	private const ByteOrder.Format Endianness = ByteOrder.Format.LittleEndian;
+	private const string EndianMagic = "DEADBEEF";
+	private static readonly byte[] // Twice??
+		EndiannessData = ByteArray.FromString(EndianMagic + EndianMagic).
+			DataTo(Endianness, 0, 8);
+	private const Version MajorVersion = Version.Deckard;
 
 	internal static class Texture
 	{
-		private const int HeaderSize = 0x50;
-
 		public enum Codec
 		{
 			Unknown,
-			RGBA32,
-			RGBA16,
-			CI4,
-			CI8,
-			I4,
-			I8,
-			IA4,
-			IA8,
-			IA16,
+			RGBA32, RGBA16,
+			CI4, CI8,
+			I4, I8,
+			IA4, IA8, IA16,
 		}
 
 		public static int GetLengthFrom(Codec codec, int wxh)
@@ -47,28 +46,23 @@ internal static class Format
 			return length;
 		}
 
-		public static byte[] AddHeader
-			(Codec codec, int width, int height, byte[] data)
+		public static byte[] Export(Codec codec, int width, int height, byte[] input)
 		{
-			int texSize = data.Length;
+			int texSize = input.Length;
 
-			byte[] withHeaderData = new byte[HeaderSize + texSize];
-			byte[] headerData = new byte[HeaderSize];
-			byte[] texBytes = { 0x58, 0x45, 0x54, 0x4F };
+			byte[] data = new byte[HeaderSize + 16 + texSize];
 			byte[] typeBytes = { (byte)(int)codec };
 			byte[] widthBytes = { (byte)width };
 			byte[] heightBytes = { (byte)height };
 
-			headerData.Set(0x04, texBytes);
-			headerData.Set(0x0C, EndiannessBytes);
-			headerData.Set(0x40, typeBytes);
-			headerData.Set(0x44, widthBytes);
-			headerData.Set(0x48, heightBytes);
-			headerData.Set(0x4C, BitConverter.GetBytes(texSize));
-			withHeaderData.Set(0x00, headerData);
-			withHeaderData.Set(HeaderSize, data);
+			data.Set(0, GetHeader(ResourceType.Texture));
+			data.Set(HeaderSize, typeBytes); // 4
+			data.Set(HeaderSize + 4, widthBytes); // 4
+			data.Set(HeaderSize + 8, heightBytes); // 4
+			data.Set(HeaderSize + 12, BitConverter.GetBytes(texSize)); // 4
+			data.Set(HeaderSize + 16, input);
 
-			return withHeaderData;
+			return data;
 		}
 	}
 
@@ -81,31 +75,27 @@ internal static class Format
 			public byte BoxPos;
 			public int Offset;
 			public List<byte>? Message;
-		};
+		}
 
-		private const int HeaderSize = 0x44;
-
-		public static byte[] AddHeader(byte[] data, byte[] sizeBytes)
+		public static byte[] Export(byte[] input, byte[] sizeBytes)
 		{
-			byte[] withHeaderData = new byte[HeaderSize + data.Length];
-			byte[] headerData = new byte[HeaderSize];
-			byte[] txtBytes = { 0x54, 0x58, 0x54, 0x4F };
+			byte[] data = new byte[HeaderSize + 4 + input.Length];
 
-			headerData.Set(0x04, txtBytes);
-			headerData.Set(0x0C, EndiannessBytes);
-			headerData.Set(0x40, sizeBytes);
-			withHeaderData.Set(0x00, headerData);
-			withHeaderData.Set(HeaderSize, data);
+			data.Set(0, GetHeader(ResourceType.Text));
+			data.Set(HeaderSize, sizeBytes); // 4
+			data.Set(HeaderSize + 4, input);
 
-			return withHeaderData;
+			return data;
 		}
 
 		public static byte[] Merge(byte[] messageData, byte[] tableData, bool addChars)
 		{
 			List<byte> newData = new List<byte>();
 			int index = 0;
-
 			MessageEntry msgEntry = new MessageEntry();
+			const string toAdd = "0123456789" +
+			                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+			                     "abcdefghijklmnopqrstuvwxyz -.";
 			while (index < tableData.Length)
 			{
 				msgEntry.MessageID = BinaryPrimitives.ReverseEndianness
@@ -146,17 +136,14 @@ internal static class Format
 					c = messageData[msg];
 				}
 
-				if (msgEntry.MessageID == 0xFFFD && addChars)
-				{
-					msgEntry.MessageID = 0xFFFC;
-					msgEntry.Message.Clear();
-					const string toAdd = "0123456789" +
-					                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-					                     "abcdefghijklmnopqrstuvwxyz -.";
-					msgEntry.Message.AddRange(Encoding.ASCII.GetBytes(toAdd));
-				}
-				else if (msgEntry.MessageID == 0xFFFD && addChars == false)
-					break;
+				if (msgEntry.MessageID is 0xFFFD)
+					if (addChars)
+					{
+						msgEntry.MessageID = 0xFFFC; msgEntry.Message.Clear();
+						msgEntry.Message.AddRange(Encoding.ASCII.GetBytes(toAdd));
+					}
+					else
+						break;
 
 				if (msgEntry.MessageID is 0xFFFF)
 					break;
@@ -170,36 +157,42 @@ internal static class Format
 				index += 8;
 			}
 
-			return AddHeader(newData.ToArray(), BitConverter.GetBytes(index / 8));
+			return Export(newData.ToArray(), BitConverter.GetBytes(index / 8));
 		}
 	}
 
 	internal static class Sequence
 	{
-		private const int HeaderSize = 0x40;
 		private const int FooterSize = 0x0C;
 
-		public static byte[] AddHeader(int index, int font, byte[] data)
+		public static byte[] Export(int index, int font, byte[] input)
 		{
-			int seqSize = data.Length;
+			int seqSize = input.Length;
 
-			byte[] withHeaderData = new byte[HeaderSize + seqSize + FooterSize];
-			byte[] headerData = new byte[HeaderSize];
-			byte[] seqBytes = { 0x51, 0x45, 0x53, 0x4F, 0x02 };
+			byte[] data = new byte[HeaderSize + seqSize + FooterSize];
 			byte[] unkBytes = { 0x02, 0x02, 0x01 };
 			byte[] indexBytes = { (byte)index };
 			byte[] fontBytes = { (byte)font };
 
-			headerData.Set(0x04, seqBytes);
-			headerData.Set(0x0C, EndiannessBytes);
-			withHeaderData.Set(0x00, headerData);
-			withHeaderData.Set(HeaderSize, data);
-			withHeaderData.Set(0x40, BitConverter.GetBytes(seqSize));
-			withHeaderData.Set(HeaderSize + seqSize + 4, indexBytes);
-			withHeaderData.Set(HeaderSize + seqSize + 5, unkBytes);
-			withHeaderData.Set(HeaderSize + seqSize + 11, fontBytes);
+			data.Set(0, GetHeader(ResourceType.AudioSequence, Version.Rachael));
+			data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
+			data.Set(HeaderSize + 4, input);
+			data.Set(HeaderSize + seqSize + 4, indexBytes);
+			data.Set(HeaderSize + seqSize + 5, unkBytes);
+			data.Set(HeaderSize + seqSize + 11, fontBytes);
 
-			return withHeaderData;
+			return data;
 		}
+	}
+
+	internal static byte[] GetHeader(ResourceType type, Version version = MajorVersion)
+	{
+		byte[] header = new byte[HeaderSize];
+		// Twice?? (prev: BitConverter.GetBytes((int)resourceType))
+		header.Set(0x04, ByteArray.FromInt((int)type).CopyAs(Endianness));
+		header.Set(0x08, BitConverter.GetBytes((int)version));
+		header.Set(0x0C, EndiannessData);
+
+		return header;
 	}
 }
