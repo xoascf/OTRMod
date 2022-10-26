@@ -13,7 +13,7 @@ internal static class IO
 		using (MemoryStream s = new MemoryStream(input))
 		{
 			s.Seek(start, SeekOrigin.Begin);
-			s.Read(bytes, 0, length);
+			_ = s.Read(bytes, 0, length);
 		}
 
 		return bytes;
@@ -39,9 +39,18 @@ internal static class IO
 		}
 	}
 
+	public static Span<T> Slice<T>(this T[] input, int start)
+	{
+		return input.AsSpan().Slice(start);
+	}
+
+	public static Span<T> Slice<T>(this T[] input, int start, int length)
+	{
+		return input.AsSpan().Slice(start, length);
+	}
+
 	public static string Concatenate(params string[] paths)
 	{
-		if (paths == null) return null;
 		string newPath = paths[0];
 		for (int i = 1; i < paths.Length; i++)
 			newPath = Path.Combine(newPath, paths[i]);

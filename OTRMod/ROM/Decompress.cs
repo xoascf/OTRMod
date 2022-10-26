@@ -35,12 +35,11 @@ public static class Decompress
 		{
 			tbl = TableEntry.GetTableEntry(inTable, i);
 			if (tbl.PEnd == 0)
-				outRom.Set(tbl.VStart,
-					GetFrom(inRom, tbl.PStart, tbl.Size));
+				inRom.Slice(tbl.PStart, tbl.Size)
+					.CopyTo(outRom.Slice(tbl.VStart));
 			else
-				outRom.Set(tbl.VStart,
-					Decode(GetFrom(inRom, tbl.PStart, tbl.PEnd),
-						GetFrom(outRom, tbl.VStart, tbl.Size), tbl.Size));
+				Decode(inRom.Slice(tbl.PStart),
+					outRom.Slice(tbl.VStart), tbl.Size);
 
 			tbl.PStart = tbl.VStart;
 			tbl.PEnd = 0;
@@ -53,7 +52,7 @@ public static class Decompress
 		return outRom;
 	}
 
-	private static byte[] Decode(byte[] src, byte[] dst, int size)
+	private static Span<byte> Decode(Span<byte> src, Span<byte> dst, int size)
 	{ /* Yaz0: http://www.amnoid.de/gc/yaz0.txt */
 		int srcPlace = 16;
 		int dstPlace = 0;
@@ -70,7 +69,7 @@ public static class Decompress
 				dst[dstPlace++] = src[srcPlace++];
 			else
 			{
-				byte[] bytes = GetFrom(src, srcPlace, 2);
+				Span<byte> bytes = src.Slice(srcPlace, 2);
 				srcPlace += 2;
 				int distance = ((bytes[0] & 0xF) << 8) | bytes[1];
 				int copyPlace = dstPlace - (distance + 1);
