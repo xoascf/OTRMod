@@ -7,17 +7,31 @@ namespace OTRMod.Util;
 
 public static class ByteArray
 {
+	private static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
+
 	public static byte[] FromInt(int value)
-	{ return BitConverter.GetBytes(value).CopyAs(ByteOrder.Format.LittleEndian); }
+	{
+		byte[] b = BitConverter.GetBytes(value);
+
+		return IsLittleEndian ?
+			b.CopyAs(ByteOrder.Format.LittleEndian) : b;
+	}
 
 	public static byte[] FromUInt(uint value)
-	{ return BitConverter.GetBytes(value).CopyAs(ByteOrder.Format.LittleEndian); }
+	{
+		byte[] b = BitConverter.GetBytes(value);
+
+		return IsLittleEndian ?
+			b.CopyAs(ByteOrder.Format.LittleEndian) : b;
+	}
 
 	// https://stackoverflow.com/a/11013375
 	public static byte[] FromString(string input)
 	{
 		byte[] b = BigInteger.Parse(input, NumberStyles.HexNumber).ToByteArray();
-		return b.DataTo(ByteOrder.Format.LittleEndian, 0, b.Length);
+
+		return IsLittleEndian ?
+			b.DataTo(ByteOrder.Format.LittleEndian, 0, b.Length) : b;
 	}
 
 	// https://stackoverflow.com/a/26880541
@@ -44,8 +58,16 @@ public static class ByteArray
 	}
 
 	public static int ToInt(this byte[] bytes)
-	{ return BitConverter.ToInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)); }
+	{
+		return IsLittleEndian ?
+			BitConverter.ToInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)) :
+			BitConverter.ToInt32(bytes);
+	}
 
 	public static uint ToUInt(byte[] bytes)
-	{ return BitConverter.ToUInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)); }
+	{
+		return IsLittleEndian ?
+			BitConverter.ToUInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)) :
+			BitConverter.ToUInt32(bytes);
+	}
 }
