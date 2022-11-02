@@ -1,7 +1,7 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
-using OTRMod.Util;
+using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 
@@ -13,8 +13,7 @@ public static class Convert
 	{
 		byte[] fileHeader = GetFrom(bytes, 0, 4);
 
-		ByteOrder.Format format = ByteOrder.IdentifyFormat
-			(fileHeader, N64Header);
+		ByteOrder.Format format = ByteOrder.Identify(fileHeader, N64Header);
 
 		if (format == ByteOrder.Format.Unknown)
 			throw new Exception("ROM format is not valid!");

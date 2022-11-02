@@ -3,13 +3,14 @@
 
 using War3Net.IO.Mpq;
 
-namespace OTRMod;
+namespace OTRMod.Utility;
 
 internal static class IO
 {
 	public static byte[] GetFrom(byte[] input, int start, int length)
 	{
 		byte[] bytes = new byte[length];
+
 		using (MemoryStream s = new MemoryStream(input))
 		{
 			s.Seek(start, SeekOrigin.Begin);
@@ -27,14 +28,22 @@ internal static class IO
 	}
 
 	// Substitutes (overwrites) anything after offset with new data.
-	public static void Set(this byte[] array, int offset, byte[] newData)
+	public static void Set(this byte[] array, int offset, object newData)
 	{
 		using (MemoryStream s = new MemoryStream(array))
 		{
 			s.Seek(offset, SeekOrigin.Begin);
-			for (int i = 0; i < newData.Length; i++)
+
+			switch (newData)
 			{
-				s.WriteByte(newData[i]);
+				case byte[] bytes:
+					for (int i = 0; i < bytes.Length; i++)
+						s.WriteByte(bytes[i]);
+					break;
+
+				case byte data:
+					s.WriteByte(data);
+					break;
 			}
 		}
 	}
@@ -52,6 +61,7 @@ internal static class IO
 	public static string Concatenate(params string[] paths)
 	{
 		string newPath = paths[0];
+
 		for (int i = 1; i < paths.Length; i++)
 			newPath = Path.Combine(newPath, paths[i]);
 
@@ -59,12 +69,15 @@ internal static class IO
 	}
 
 	public static void Save
-		(byte[] bytes, string output, ref Dictionary<string, byte[]> fileList)
-	{ fileList.Add(output, bytes); }
-
-	public static void Add(this MpqArchiveBuilder ab, Stream s, string destiny)
+		(byte[] data, string path, ref Dictionary<string, byte[]> list)
 	{
-		MpqFile file = MpqFile.New(s, destiny);
+		list.Add(path, data);
+	}
+
+	public static void Add(this MpqArchiveBuilder ab, Stream stream, string fileName)
+	{
+		MpqFile file = MpqFile.New(stream, fileName);
+
 		ab.AddFile(file);
 	}
 }

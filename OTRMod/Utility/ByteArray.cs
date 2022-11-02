@@ -3,7 +3,7 @@
 
 using System.Numerics;
 
-namespace OTRMod.Util;
+namespace OTRMod.Utility;
 
 public static class ByteArray
 {

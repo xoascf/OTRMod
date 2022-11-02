@@ -1,7 +1,7 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
-namespace OTRMod.Util;
+namespace OTRMod.Utility;
 
 public static class ByteOrder
 {
@@ -14,7 +14,7 @@ public static class ByteOrder
 		Unknown
 	}
 
-	public static Format IdentifyFormat(byte[] input, ReadOnlySpan<byte> magic)
+	public static Format Identify(byte[] input, ReadOnlySpan<byte> magic)
 	{
 		Format format = Format.Unknown;
 
@@ -83,7 +83,6 @@ public static class ByteOrder
 	{
 		byte[] b = new byte[l];
 		Buffer.BlockCopy(a, 0, b, 0, l);
-
 		return b.DataTo(f, s, l);
 	}
 }

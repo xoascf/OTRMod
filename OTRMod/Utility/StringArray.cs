@@ -1,7 +1,7 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 // Thanks Internet.
 
-namespace OTRMod.Util;
+namespace OTRMod.Utility;
 
 internal static class StringArray
 {

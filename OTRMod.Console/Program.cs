@@ -1,5 +1,5 @@
 ﻿using OTRMod.OTR;
-using OTRMod.Util;
+using OTRMod.Utility;
 
 var otrMs = new MemoryStream();
 bool romMode;
@@ -10,7 +10,7 @@ void Run(string pathImgData, string pathScript)
 	{
 		byte[] imgBytes;
 		if (romMode)
-			imgBytes = OTRMod.ROM.Decompress.DecompressedBytes
+			imgBytes = OTRMod.ROM.Decompress.DecompressedData
 			(OTRMod.ROM.Convert.ToBigEndian
 				(File.ReadAllBytes(pathImgData)));
 		else
@@ -33,9 +33,8 @@ void Run(string pathImgData, string pathScript)
 
 }
 
-//Console.Write("Is it a ROM?: ");
-//romMode = Convert.ToBoolean(Console.ReadLine());
-romMode = true;
+Console.Write("Is it a ROM?: ");
+romMode = Convert.ToBoolean(Console.ReadLine());
 
 Console.Write("Image: ");
 string img = Console.ReadLine() ?? string.Empty;

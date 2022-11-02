@@ -2,7 +2,7 @@
 @using BlazorDownloadFile
 @using OTRMod.ROM
 @using OTRMod.OTR
-@using OTRMod.Util
+@using OTRMod.Utility
 @using System.Text
 <PageTitle>OTRMod Web - Get OTR</PageTitle>
 <h1>Get OTR mod from ROM image</h1>
@@ -43,7 +43,6 @@
 	private string[]? _script;
 	private readonly MemoryStream _scriptMs = new();
 	private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
-	private const int MaxSizeROM = 64 * 1024 * 1024; // 64 MB ROM.
 	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
 	private string? _lastError;
 
@@ -59,7 +58,7 @@
 	private async void ProcessROM(InputFileChangeEventArgs e)
 	{
 		_romMs.SetLength(0); IBrowserFile romFile = e.File;
-		await romFile.OpenReadStream(MaxSizeROM).CopyToAsync(_romMs);
+		await romFile.OpenReadStream(Decompress.ADecompressedSize).CopyToAsync(_romMs);
 		_genStatus = GenerationStatus.Selected;
 	}
 
@@ -74,7 +73,7 @@
 			_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).
 				Split(_separators, StringSplitOptions.None);
 
-			byte[] decompressed = Decompress.DecompressedBytes
+			byte[] decompressed = Decompress.DecompressedData
 				(ROM.Convert.ToBigEndian(ReadFully(_romMs)));
 			ScriptParser sParser = new ScriptParser
 			{

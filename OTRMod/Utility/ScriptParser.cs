@@ -2,7 +2,7 @@
 
 using OTRMod.OTR;
 
-namespace OTRMod.Util;
+namespace OTRMod.Utility;
 
 public class ScriptParser
 {
@@ -29,7 +29,7 @@ public class ScriptParser
 	private void WorkDo(ActionKeywords k, string[] val)
 	{
 		bool addHeader = false;
-		if (_def.ContainsKey("AddH"))
+		if (_def.ContainsKey("AddH")) // FIXME: Make obsolete.
 			addHeader = bool.Parse(_def["AddH"]);
 
 		switch (k)
@@ -102,23 +102,22 @@ public class ScriptParser
 
 	private void SaveAddingHeader(string varKey, string output, bool addHeader)
 	{
-		byte[] dataBytes = _var[varKey];
+		byte[] data = _var[varKey];
 		if (addHeader && varKey.Contains("_"))
 		{
 			string[] varWords = varKey.Split('_');
 			if (varWords.Length == 2)
 			{
 				ParseTex(varWords[0], out Texture.Codec codec, out int w, out int h);
-				dataBytes = Texture.Export(codec, w, h, dataBytes);
+				data = Texture.Export(codec, w, h, data);
 			}
 			else if (varWords.Length == 3)
 			{
 				switch (varWords[0])
 				{
 					case "Seq":
-						dataBytes = Format.Sequence.Export
-							(int.Parse(varWords[1]),
-								int.Parse(varWords[2]), dataBytes);
+						data = Audio.ExportSeq(int.Parse(varWords[1]),
+								int.Parse(varWords[2]), data);
 						break;
 					/*case "Fnt": // TODO!
 						break; */
@@ -129,7 +128,7 @@ public class ScriptParser
 
 		string savePath = Concatenate(SubDir, output);
 
-		Save(dataBytes, savePath, ref Generate.SavedFiles);
+		Save(data, savePath, ref Generate.SavedFiles);
 	}
 
 	public const string OTRDefaultFileName = "Mod.otr";
@@ -147,7 +146,7 @@ public class ScriptParser
 			if (!Enum.TryParse(words[0], out ActionKeywords action))
 			{
 				int n = i + 1;
-				throw new Exception("Invalid action in line " + n + ": " + line);
+				throw new Exception($"Invalid action in line {n}: {line}");
 			}
 
 			WorkDo(action, words);

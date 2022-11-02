@@ -1,7 +1,7 @@
 /* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
-using OTRMod.Util;
+using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 

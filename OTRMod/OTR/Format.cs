@@ -2,7 +2,7 @@
 
 using System.Buffers.Binary;
 using System.Text;
-using OTRMod.Util;
+using OTRMod.Utility;
 
 namespace OTRMod.OTR;
 
@@ -51,14 +51,11 @@ internal static class Format
 			int texSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + 16 + texSize];
-			byte[] typeBytes = { (byte)(int)codec };
-			byte[] widthBytes = { (byte)width };
-			byte[] heightBytes = { (byte)height };
 
 			data.Set(0, GetHeader(ResourceType.Texture));
-			data.Set(HeaderSize, typeBytes); // 4
-			data.Set(HeaderSize + 4, widthBytes); // 4
-			data.Set(HeaderSize + 8, heightBytes); // 4
+			data.Set(HeaderSize, (byte)(int)codec); // 4
+			data.Set(HeaderSize + 4, (byte)width); // 4
+			data.Set(HeaderSize + 8, (byte)height); // 4
 			data.Set(HeaderSize + 12, BitConverter.GetBytes(texSize)); // 4
 			data.Set(HeaderSize + 16, input);
 
@@ -161,25 +158,22 @@ internal static class Format
 		}
 	}
 
-	internal static class Sequence
+	internal static class Audio
 	{
-		private const int FooterSize = 0x0C;
-
-		public static byte[] Export(int index, int font, byte[] input)
+		public static byte[] ExportSeq(int index, int font, byte[] input)
 		{
+			const int footerSize = 0x0C;
 			int seqSize = input.Length;
 
-			byte[] data = new byte[HeaderSize + seqSize + FooterSize];
+			byte[] data = new byte[HeaderSize + seqSize + footerSize];
 			byte[] unkBytes = { 0x02, 0x02, 0x01 };
-			byte[] indexBytes = { (byte)index };
-			byte[] fontBytes = { (byte)font };
 
 			data.Set(0, GetHeader(ResourceType.AudioSequence, Version.Rachael));
 			data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
 			data.Set(HeaderSize + 4, input);
-			data.Set(HeaderSize + seqSize + 4, indexBytes);
+			data.Set(HeaderSize + seqSize + 4, (byte)index);
 			data.Set(HeaderSize + seqSize + 5, unkBytes);
-			data.Set(HeaderSize + seqSize + 11, fontBytes);
+			data.Set(HeaderSize + seqSize + 11, (byte)font);
 
 			return data;
 		}

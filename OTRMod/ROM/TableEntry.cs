@@ -1,7 +1,7 @@
 /* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
-using OTRMod.Util;
+using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 
@@ -31,7 +31,7 @@ public struct TableEntry
 		throw new Exception("Could not find file table!");
 	}
 
-	public static TableEntry GetTableEntry(byte[] data, int i)
+	public static TableEntry Get(byte[] data, int i)
 	{
 		i *= 16;
 		TableEntry e = new TableEntry();
@@ -42,7 +42,7 @@ public struct TableEntry
 		return e;
 	}
 
-	public byte[] GetNewTableEntry()
+	public byte[] GetNew()
 	{
 		byte[] intData = new byte[16];
 		intData.Set(0, ByteArray.FromInt(VStart));
