@@ -12,7 +12,7 @@ internal static class Format
 	private const ByteOrder.Format Endianness = ByteOrder.Format.LittleEndian;
 	private const string EndianMagic = "DEADBEEF";
 	private static readonly byte[] // Twice??
-		EndiannessData = ByteArray.FromString(EndianMagic + EndianMagic).
+		EndiannessData = ByteArray.ReadHEX(EndianMagic + EndianMagic).
 			DataTo(Endianness, 0, 8);
 	private const Version MajorVersion = Version.Deckard;
 
@@ -63,6 +63,7 @@ internal static class Format
 		}
 	}
 
+	// ZText.cpp
 	internal static class Text
 	{
 		private class MessageEntry
@@ -160,6 +161,20 @@ internal static class Format
 
 	internal static class Audio
 	{
+		public static byte[] ExportSft(int index, byte[] input)
+		{
+			int fntSize = input.Length;
+
+			byte[] data = new byte[HeaderSize + fntSize];
+
+			data.Set(0, GetHeader(ResourceType.AudioSoundFont, Version.Rachael));
+			data.Set(HeaderSize, (byte)index);
+			data.Set(HeaderSize + 3, BitConverter.GetBytes(fntSize));
+			data.Set(HeaderSize + 4, input);
+
+			return data;
+		}
+
 		public static byte[] ExportSeq(int index, int font, byte[] input)
 		{
 			const int footerSize = 0x0C;
@@ -174,6 +189,46 @@ internal static class Format
 			data.Set(HeaderSize + seqSize + 4, (byte)index);
 			data.Set(HeaderSize + seqSize + 5, unkBytes);
 			data.Set(HeaderSize + seqSize + 11, (byte)font);
+
+			return data;
+		}
+	}
+
+	enum AnimationType
+	{
+		Normal = 0,
+		Link = 1,
+		Curve = 2,
+		Legacy = 3,
+	}
+
+	internal static class Animation
+	{
+		public static byte[] Export(byte[] input)
+		{
+			int aniSize = input.Length;
+
+			byte[] data = new byte[HeaderSize + 4 + aniSize];
+
+			data.Set(0, GetHeader(ResourceType.Animation));
+			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
+			data.Set(HeaderSize + 10, ByteOrder.MoveBytes(input, new[] { 1, 0, 3, 2 }));
+
+			return data;
+		}
+	}
+
+	internal static class PlayerAnimation
+	{
+		public static byte[] Export(byte[] input)
+		{
+			int aniSize = input.Length;
+
+			byte[] data = new byte[HeaderSize + 4 + aniSize];
+
+			data.Set(0, GetHeader(ResourceType.PlayerAnimation));
+			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
+			data.Set(HeaderSize + 4, ByteOrder.MoveBytes(input, new[] { 1, 0, 3, 2 }));
 
 			return data;
 		}

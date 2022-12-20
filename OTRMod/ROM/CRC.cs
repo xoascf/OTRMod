@@ -51,7 +51,7 @@ public class CRC
 
 	public void FixCRC()
 	{
-		newCRCbytes = GetFrom(Bytes, 0, 1052672);
+		newCRCbytes = Bytes.Get(0, 1052672);
 		uint[] array = CalculateCRC(newCRCbytes);
 		newCRCbytes.Set(16, ByteArray.FromUInt(array[0]));
 		newCRCbytes.Set(20, ByteArray.FromUInt(array[1]));
@@ -75,7 +75,7 @@ public class CRC
 
 	private static int GetCIC(byte[] bytes)
 	{
-		switch (CRC32(GetFrom(bytes, 64, 4032)))
+		switch (CRC32(bytes.Get(64, 4032)))
 		{
 			case 0x6170A4A1: return 6101;
 			case 0x90BB6CB5: return 6102;
@@ -117,7 +117,7 @@ public class CRC
 		t1 = t2 = t3 = t4 = t5 = t6 = seed;
 		for (int i = 4096; i < 1052672; i += 4)
 		{
-			uint d = ByteArray.ToUInt(GetFrom(bytes, i, 4));
+			uint d = ByteArray.ToUInt(bytes.Get(i, 4));
 			if ((t6 + d) < t6)
 				t4++;
 
@@ -128,7 +128,7 @@ public class CRC
 			t2 = (t2 <= d) ? (t2 ^ (t6 ^ d)) : (t2 ^ r);
 			t1 = (cic != 6105) ? (t1 + (t5 ^ d)) :
 				(t1 + (ByteArray.ToUInt
-					(GetFrom(bytes, 1872 + (i & 0xFF), 4)) ^ d));
+					(bytes.Get(1872 + (i & 0xFF), 4)) ^ d));
 		}
 		switch (cic)
 		{

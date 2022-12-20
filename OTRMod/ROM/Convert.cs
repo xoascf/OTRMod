@@ -7,11 +7,11 @@ namespace OTRMod.ROM;
 
 public static class Convert
 {
-	private static readonly byte[] N64Header = ByteArray.FromString("80371240");
+	private static readonly byte[] N64Header = ByteArray.ReadHEX("80371240");
 
 	public static byte[] ToBigEndian(byte[] bytes)
 	{
-		byte[] fileHeader = GetFrom(bytes, 0, 4);
+		byte[] fileHeader = bytes.Get(0, 4);
 
 		ByteOrder.Format format = ByteOrder.Identify(fileHeader, N64Header);
 

@@ -6,11 +6,8 @@ namespace OTRMod.OTR;
 
 public class Generate
 {
-	private static readonly MpqArchiveBuilder
-		Builder = new MpqArchiveBuilder();
-
-	public static Dictionary<string, byte[]>
-		SavedFiles = new Dictionary<string, byte[]>();
+	private static readonly MpqArchiveBuilder Builder = new();
+	public static Dictionary<string, byte[]> SavedFiles = new();
 
 	public static void FromImage(ref MemoryStream otrStream)
 	{

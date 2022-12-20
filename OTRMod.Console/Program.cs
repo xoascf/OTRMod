@@ -1,5 +1,5 @@
-﻿using OTRMod.OTR;
-using OTRMod.Utility;
+﻿using OTRMod;
+using OTRMod.OTR;
 
 var otrMs = new MemoryStream();
 bool romMode;
