@@ -212,7 +212,7 @@ internal static class Format
 
 			data.Set(0, GetHeader(ResourceType.Animation));
 			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 10, ByteOrder.MoveBytes(input, new[] { 1, 0, 3, 2 }));
+			data.Set(HeaderSize + 10, input.DataTo(ByteOrder.Format.ByteSwapped));
 
 			return data;
 		}
@@ -228,7 +228,7 @@ internal static class Format
 
 			data.Set(0, GetHeader(ResourceType.PlayerAnimation));
 			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 4, ByteOrder.MoveBytes(input, new[] { 1, 0, 3, 2 }));
+			data.Set(HeaderSize + 4, input.DataTo(ByteOrder.Format.ByteSwapped));
 
 			return data;
 		}

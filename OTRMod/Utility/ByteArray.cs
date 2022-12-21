@@ -10,24 +10,27 @@ public static class ByteArray {
 
 	public static byte[] FromInt(int value) {
 		byte[] b = BitConverter.GetBytes(value);
+		if (IsLittleEndian)
+			Array.Reverse(b);
 
-		return IsLittleEndian ?
-			b.CopyAs(ByteOrder.Format.LittleEndian) : b;
+		return b;
 	}
 
 	public static byte[] FromUInt(uint value) {
 		byte[] b = BitConverter.GetBytes(value);
+		if (IsLittleEndian)
+			Array.Reverse(b);
 
-		return IsLittleEndian ?
-			b.CopyAs(ByteOrder.Format.LittleEndian) : b;
+		return b;
 	}
 
 	// https://stackoverflow.com/a/11013375
 	public static byte[] ReadHEX(this string input) {
 		byte[] b = BigInteger.Parse(input, NumberStyles.HexNumber).ToByteArray();
+		if (IsLittleEndian)
+			Array.Reverse(b);
 
-		return IsLittleEndian ?
-			b.DataTo(ByteOrder.Format.LittleEndian, 0, b.Length) : b;
+		return b;
 	}
 
 	// https://stackoverflow.com/a/26880541
@@ -51,14 +54,16 @@ public static class ByteArray {
 	}
 
 	public static int ToInt(this byte[] bytes) {
-		return IsLittleEndian ?
-			BitConverter.ToInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)) :
-			BitConverter.ToInt32(bytes);
+		if (IsLittleEndian)
+			Array.Reverse(bytes);
+
+		return BitConverter.ToInt32(bytes);
 	}
 
 	public static uint ToUInt(byte[] bytes) {
-		return IsLittleEndian ?
-			BitConverter.ToUInt32(bytes.CopyAs(ByteOrder.Format.LittleEndian)) :
-			BitConverter.ToUInt32(bytes);
+		if (IsLittleEndian)
+			Array.Reverse(bytes);
+
+		return BitConverter.ToUInt32(bytes);
 	}
 }

@@ -1,4 +1,4 @@
-﻿/* Licensed under the Open Software License version 3.0 */
+/* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
 namespace OTRMod.Utility;
@@ -13,24 +13,22 @@ public static class ByteOrder {
 	}
 
 	public static Format Identify(byte[] input, ReadOnlySpan<byte> magic) {
-		Format format = Format.Unknown;
-
 		if (magic.Length != input.Length)
-			return format;
+			return Format.Unknown;
 
 		if (magic.Matches(input))
-			format = Format.BigEndian;
+			return Format.BigEndian;
 
-		else if (magic.Matches(input.CopyAs(Format.LittleEndian)))
-			format = Format.LittleEndian;
+		foreach (Format f in Enum.GetValues(typeof(Format))) {
+			if (f is Format.BigEndian
+				  or Format.Unknown)
+				continue;
 
-		else if (magic.Matches(input.CopyAs(Format.ByteSwapped)))
-			format = Format.ByteSwapped;
+			if (magic.Matches(input.CopyAs(f)))
+				return f;
+		}
 
-		else if (magic.Matches(input.CopyAs(Format.WordSwapped)))
-			format = Format.WordSwapped;
-
-		return format;
+		return Format.Unknown;
 	}
 
 	public static byte[] MoveBytes(byte[] data, int[] order) {
@@ -54,7 +52,7 @@ public static class ByteOrder {
 	public static byte[] ToBigEndian(byte[] data, Format format) {
 		switch (format) {
 			case Format.LittleEndian:
-				Array.Reverse(data);
+				MoveBytes(data, new[] { 3, 2, 1, 0 });
 				break;
 
 			case Format.ByteSwapped:
@@ -69,7 +67,8 @@ public static class ByteOrder {
 		return data;
 	}
 
-	public static void To(this byte[] data, Format f, int s = 0, int l = 4) {
+	public static void To(this byte[] data, Format f, int s = 0, int l = 4)
+	{
 		data.Set(s, ToBigEndian(data.Get(s, l), f));
 	}
 
@@ -81,6 +80,7 @@ public static class ByteOrder {
 
 	public static byte[] CopyAs(this byte[] a, Format f, int s = 0, int l = 4) {
 		byte[] b = new byte[l];
+
 		Buffer.BlockCopy(a, 0, b, 0, l);
 
 		return b.DataTo(f, s, l);
