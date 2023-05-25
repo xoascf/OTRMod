@@ -1,38 +1,32 @@
 /* Licensed under the Open Software License version 3.0 */
-// From OpenOcarinaBuilder.
+
+using EF = OTRMod.ID.Endianness;
 
 namespace OTRMod.Utility;
 
 public static class ByteOrder {
-	public enum Format {
-		BigEndian,    // .z64
-		LittleEndian, // .n64
-		ByteSwapped,  // .v64
-		WordSwapped,  // .u64
-		Unknown
-	}
-
-	public static Format Identify(byte[] input, ReadOnlySpan<byte> magic) {
+	public static EF Identify(byte[] input, byte[] magic) {
 		if (magic.Length != input.Length)
-			return Format.Unknown;
+			return EF.Unknown;
 
 		if (magic.Matches(input))
-			return Format.BigEndian;
+			return EF.BigEndian;
 
-		foreach (Format f in Enum.GetValues(typeof(Format))) {
-			if (f is Format.BigEndian
-				  or Format.Unknown)
+		foreach (EF f in Enum.GetValues(typeof(EF))) {
+			if (f is EF.BigEndian or EF.Unknown)
 				continue;
 
 			if (magic.Matches(input.CopyAs(f)))
 				return f;
 		}
 
-		return Format.Unknown;
+		return EF.Unknown;
 	}
 
 	public static byte[] MoveBytes(byte[] data, int[] order) {
 		byte[] array = new byte[4];
+
+		/* FIXME: Add exception if data is not divisible by 4!! */
 
 		for (int i = 0; i < data.Length / 4; i++) {
 			array[0] = data[i * 4 + order[0]];
@@ -49,17 +43,17 @@ public static class ByteOrder {
 		return data;
 	}
 
-	public static byte[] ToBigEndian(byte[] data, Format format) {
+	public static byte[] ToBigEndian(byte[] data, EF format) {
 		switch (format) {
-			case Format.LittleEndian:
+			case EF.LittleEndian:
 				MoveBytes(data, new[] { 3, 2, 1, 0 });
 				break;
 
-			case Format.ByteSwapped:
+			case EF.ByteSwapped:
 				MoveBytes(data, new[] { 1, 0, 3, 2 });
 				break;
 
-			case Format.WordSwapped:
+			case EF.WordSwapped:
 				MoveBytes(data, new[] { 2, 3, 0, 1 });
 				break;
 		}
@@ -67,20 +61,14 @@ public static class ByteOrder {
 		return data;
 	}
 
-	public static void To(this byte[] data, Format f, int s = 0, int l = 4)
-	{
-		data.Set(s, ToBigEndian(data.Get(s, l), f));
+	public static byte[] DataTo(this byte[] b, EF f, int s = 0, int l = 4) {
+		b.Set(s, ToBigEndian(b.Get(s, l), f));
+
+		return b;
 	}
 
-	public static byte[] DataTo(this byte[] data, Format f, int s = 0, int l = 4) {
-		data.To(f, s, l);
-
-		return data;
-	}
-
-	public static byte[] CopyAs(this byte[] a, Format f, int s = 0, int l = 4) {
+	public static byte[] CopyAs(this byte[] a, EF f, int s = 0, int l = 4) {
 		byte[] b = new byte[l];
-
 		Buffer.BlockCopy(a, 0, b, 0, l);
 
 		return b.DataTo(f, s, l);

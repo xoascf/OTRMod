@@ -1,53 +1,19 @@
 ﻿/* Licensed under the Open Software License version 3.0 */
 
-using System.Buffers.Binary;
-using System.Text;
+using OTRMod.ID;
 using OTRMod.Utility;
 
 namespace OTRMod.OTR;
 
-internal static class Format
-{
+internal static class Format {
 	private const int HeaderSize = 0x40;
-	private const ByteOrder.Format Endianness = ByteOrder.Format.LittleEndian;
-	private const string EndianMagic = "DEADBEEF";
-	private static readonly byte[] // Twice??
-		EndiannessData = ByteArray.ReadHEX(EndianMagic + EndianMagic).
-			DataTo(Endianness, 0, 8);
-	private const Version MajorVersion = Version.Deckard;
+	private const Endianness Endian = Endianness.LittleEndian;
+	private const string DBMagic = "DEADBEEFDEADBEEF";
+	private static readonly byte[] EndianData = DBMagic.ReadHex().DataTo(Endian, 0, 8);
+	private const ShipVersion MajorVersion = ShipVersion.Deckard;
 
-	internal static class Texture
-	{
-		public enum Codec
-		{
-			Unknown,
-			RGBA32, RGBA16,
-			CI4, CI8,
-			I4, I8,
-			IA4, IA8, IA16,
-		}
-
-		public static int GetLengthFrom(Codec codec, int wxh)
-		{
-			int length = 0;
-
-			switch (codec)
-			{
-				case Codec.RGBA32: length = wxh * 4;
-					break;
-				case Codec.RGBA16: case Codec.IA16: length = wxh * 2;
-					break;
-				case Codec.CI4: case Codec.I4: case Codec.IA4: length = wxh / 2;
-					break;
-				case Codec.CI8: case Codec.I8: case Codec.IA8: length = wxh;
-					break;
-			}
-
-			return length;
-		}
-
-		public static byte[] Export(Codec codec, int width, int height, byte[] input)
-		{
+	internal static class Tex {
+		public static byte[] Export(Texture.Codec codec, int width, int height, byte[] input) {
 			int texSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + 16 + texSize];
@@ -64,15 +30,15 @@ internal static class Format
 	}
 
 	// ZText.cpp
-	internal static class Text
+	internal static class Txt
 	{
 		private class MessageEntry
 		{
-			public ushort MessageID;
+			public ushort ID;
 			public byte BoxType;
 			public byte BoxPos;
 			public int Offset;
-			public List<byte>? Message;
+			public List<byte>? Content;
 		}
 
 		public static byte[] Export(byte[] input, byte[] sizeBytes)
@@ -88,69 +54,68 @@ internal static class Format
 
 		public static byte[] Merge(byte[] messageData, byte[] tableData, bool addChars)
 		{
-			List<byte> newData = new List<byte>();
+			List<byte> newData = new();
+			MessageEntry entry = new();
 			int index = 0;
-			MessageEntry msgEntry = new MessageEntry();
 			const string toAdd = "0123456789" +
-			                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-			                     "abcdefghijklmnopqrstuvwxyz -.";
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+				"abcdefghijklmnopqrstuvwxyz -.";
+
 			while (index < tableData.Length)
 			{
-				msgEntry.MessageID = BinaryPrimitives.ReverseEndianness
+				entry.ID = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness
 					(BitConverter.ToUInt16(tableData, index));
-				msgEntry.BoxType = (byte)((tableData[index + 2] & 0xF0) >> 4);
-				msgEntry.BoxPos = (byte)(tableData[index + 2] & 0x0F);
-				msgEntry.Offset = (tableData[index + 5 + 2] << 0) |
-								  (tableData[index + 5 + 1] << 8) |
-								  (tableData[index + 5 + 0] << 16) & 0x00FFFFFF;
-				msgEntry.Message = new List<byte>();
+				entry.BoxType = (byte)((tableData[index + 2] & 0xF0) >> 4);
+				entry.BoxPos = (byte)(tableData[index + 2] & 0x0F);
+				entry.Offset =
+					(tableData[index + 5 + 2] << 0) |
+					(tableData[index + 5 + 1] << 8) |
+					(tableData[index + 5 + 0] << 16) & 0x00FFFFFF;
+				entry.Content = new List<byte>();
 
-				int msg = msgEntry.Offset;
+				int msg = entry.Offset;
 				byte c = messageData[msg];
 				int extra = 0;
 				bool stop = false;
 
-				while ((c != '\0' && !stop) || extra > 0)
-				{
-					msgEntry.Message.Add(c);
+				while ((c != '\0' && !stop) || extra > 0) {
+					entry.Content.Add(c);
 					msg++;
 
 					if (extra == 0)
-						switch (c)
-						{
-							case 0x05: case 0x06: case 0x13: case 0x0E:
-							case 0x0C: case 0x1E: case 0x14: extra = 1;
-								break;
-							case 0x07: extra = 2; stop = true;
-								break;
-							case 0x11: case 0x12: extra = 2;
-								break;
-							case 0x15: extra = 3;
-								break;
+						switch (c) {
+							case 0x02:
+								stop = true; break;
+							case 0x05: case 0x06: case 0x0C: case 0x0E:
+							case 0x13: case 0x14: case 0x1E:
+								extra = 1; break;
+							case 0x07:
+								extra = 2; stop = true; break;
+							case 0x11: case 0x12:
+								extra = 2; break;
+							case 0x15:
+								extra = 3; break;
 						}
-					else
-						extra--;
+					else extra--;
 
 					c = messageData[msg];
 				}
 
-				if (msgEntry.MessageID is 0xFFFD)
-					if (addChars)
-					{
-						msgEntry.MessageID = 0xFFFC; msgEntry.Message.Clear();
-						msgEntry.Message.AddRange(Encoding.ASCII.GetBytes(toAdd));
+				if (entry.ID is 0xFFFD)
+					if (addChars) {
+						entry.ID = 0xFFFC;
+						entry.Content.Clear();
+						entry.Content.AddRange(System.Text.Encoding.ASCII.GetBytes(toAdd));
 					}
-					else
-						break;
+					else break;
 
-				if (msgEntry.MessageID is 0xFFFF)
-					break;
+				if (entry.ID is 0xFFFF) break;
 
-				newData.AddRange(BitConverter.GetBytes(msgEntry.MessageID));
-				newData.Add(msgEntry.BoxType);
-				newData.Add(msgEntry.BoxPos);
-				newData.AddRange(BitConverter.GetBytes(msgEntry.Message.Count));
-				newData.AddRange(msgEntry.Message.ToArray());
+				newData.AddRange(BitConverter.GetBytes(entry.ID));
+				newData.Add(entry.BoxType);
+				newData.Add(entry.BoxPos);
+				newData.AddRange(BitConverter.GetBytes(entry.Content.Count));
+				newData.AddRange(entry.Content.ToArray());
 
 				index += 8;
 			}
@@ -167,7 +132,7 @@ internal static class Format
 
 			byte[] data = new byte[HeaderSize + fntSize];
 
-			data.Set(0, GetHeader(ResourceType.AudioSoundFont, Version.Rachael));
+			data.Set(0, GetHeader(ResourceType.AudioSoundFont, ShipVersion.Rachael));
 			data.Set(HeaderSize, (byte)index);
 			data.Set(HeaderSize + 3, BitConverter.GetBytes(fntSize));
 			data.Set(HeaderSize + 4, input);
@@ -183,18 +148,18 @@ internal static class Format
 			byte[] data = new byte[HeaderSize + seqSize + footerSize];
 			byte[] unkBytes = { 0x02, 0x02, 0x01 };
 
-			data.Set(0, GetHeader(ResourceType.AudioSequence, Version.Rachael));
+			data.Set(0, GetHeader(ResourceType.AudioSequence, ShipVersion.Rachael));
 			data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
 			data.Set(HeaderSize + 4, input);
 			data.Set(HeaderSize + seqSize + 4, (byte)index);
-			data.Set(HeaderSize + seqSize + 5, unkBytes);
+			data.Set(HeaderSize + seqSize + 5, unkBytes); // FIXME: This is cachePolicy
 			data.Set(HeaderSize + seqSize + 11, (byte)font);
 
 			return data;
 		}
 	}
 
-	enum AnimationType
+	public enum AnimationType
 	{
 		Normal = 0,
 		Link = 1,
@@ -204,15 +169,31 @@ internal static class Format
 
 	internal static class Animation
 	{
+		public static byte[] ParseAnimation(byte[] input, AnimationType type)
+		{
+			int aniSize = input.Length;
+
+			byte[] data = new byte[HeaderSize + 12 + aniSize];
+
+			data.Set(0, GetHeader(ResourceType.Animation));
+			data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
+			data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
+			data.Set(HeaderSize + 10, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
+
+			return data;
+		}
+
+
 		public static byte[] Export(byte[] input)
 		{
 			int aniSize = input.Length;
 
-			byte[] data = new byte[HeaderSize + 4 + aniSize];
+			byte[] data = new byte[HeaderSize + 12 + aniSize];
 
 			data.Set(0, GetHeader(ResourceType.Animation));
-			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 10, input.DataTo(ByteOrder.Format.ByteSwapped));
+			data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
+			data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
+			data.Set(HeaderSize + 10, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
 
 			return data;
 		}
@@ -228,19 +209,19 @@ internal static class Format
 
 			data.Set(0, GetHeader(ResourceType.PlayerAnimation));
 			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 4, input.DataTo(ByteOrder.Format.ByteSwapped));
+			data.Set(HeaderSize + 4, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
 
 			return data;
 		}
 	}
 
-	internal static byte[] GetHeader(ResourceType type, Version version = MajorVersion)
+	internal static byte[] GetHeader(ResourceType type, ShipVersion version = MajorVersion)
 	{
 		byte[] header = new byte[HeaderSize];
 		// Twice?? (prev: BitConverter.GetBytes((int)resourceType))
-		header.Set(0x04, ByteArray.FromInt((int)type).CopyAs(Endianness));
+		header.Set(0x04, ByteArray.FromInt((int)type).CopyAs(Endian));
 		header.Set(0x08, BitConverter.GetBytes((int)version));
-		header.Set(0x0C, EndiannessData);
+		header.Set(0x0C, EndianData);
 
 		return header;
 	}

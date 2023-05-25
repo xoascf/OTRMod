@@ -1,33 +1,34 @@
 /* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
+using OTRMod.ID;
 using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 
 public static class Convert
 {
-	private static readonly byte[] N64Header = ByteArray.ReadHEX("80371240");
+	private static readonly byte[] N64Header = "80371240".ReadHex();
 
 	public static byte[] ToBigEndian(byte[] bytes)
 	{
 		byte[] fileHeader = bytes.Get(0, 4);
 
-		ByteOrder.Format format = ByteOrder.Identify(fileHeader, N64Header);
+		Endianness format = ByteOrder.Identify(fileHeader, N64Header);
 
-		if (format == ByteOrder.Format.Unknown)
+		if (format == Endianness.Unknown)
 			throw new Exception("ROM format is not valid!");
 
 		switch (format)
 		{
-			case ByteOrder.Format.BigEndian:
+			case Endianness.BigEndian:
 				// We don't convert anything.
 				// But return the bytes anyway!
 				return bytes;
 
-			case ByteOrder.Format.LittleEndian:
-			case ByteOrder.Format.ByteSwapped:
-			case ByteOrder.Format.WordSwapped:
+			case Endianness.LittleEndian:
+			case Endianness.ByteSwapped:
+			case Endianness.WordSwapped:
 				return ByteOrder.ToBigEndian(bytes, format);
 		}
 

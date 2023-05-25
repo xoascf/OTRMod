@@ -1,6 +1,7 @@
 /* Licensed under the Open Software License version 3.0 */
 // From OpenOcarinaBuilder.
 
+using OTRMod.OTR;
 using War3Net.IO.Mpq;
 
 namespace OTRMod.Utility;
@@ -41,18 +42,15 @@ internal static class IO {
 		}
 	}
 
-	public static Span<T> Slice<T>(this T[] input, int start)
-	{
+	public static Span<T> Slice<T>(this T[] input, int start) {
 		return input.AsSpan().Slice(start);
 	}
 
-	public static Span<T> Slice<T>(this T[] input, int start, int length)
-	{
+	public static Span<T> Slice<T>(this T[] input, int start, int length) {
 		return input.AsSpan().Slice(start, length);
 	}
 
-	public static string Concatenate(params string[] paths)
-	{
+	public static string Concatenate(params string[] paths) {
 		string newPath = paths[0];
 
 		for (int i = 1; i < paths.Length; i++)
@@ -61,11 +59,7 @@ internal static class IO {
 		return newPath;
 	}
 
-	public static void Save
-		(byte[] data, string path, ref Dictionary<string, byte[]> list) 
-	{
-		list.Add(path, data);
-	}
+	public static void Save(byte[] data, string path) => Generate.AddFile(path, data);
 
 	public static void Add(this MpqArchiveBuilder ab, Stream stream, string fileName) {
 		MpqFile file = MpqFile.New(stream, fileName);

@@ -2,13 +2,20 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0</TargetFrameworks>
+    <LangVersion>10</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="War3Net.IO.Mpq" Version="5.5.0" />
+    <PackageReference Include="DotNetZip" Version="1.16.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="War3Net.IO.Mpq">
+      <HintPath>..\..\War3Net\src\War3Net.IO.Mpq\bin\Release\net6.0\War3Net.IO.Mpq.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

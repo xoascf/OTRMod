@@ -3,13 +3,17 @@
 
 namespace OTRMod.ROM;
 
-public static class Decompress {
-	public const int DefCompressedSize = 0x2000000; // 32MB ROM
-	public const int PDecompressedSize = 0x34D3040; // 52.8MB ROM (for PAL_1.0)
-	public const int EDecompressedSize = 0x3600000; // 54MB ROM (for EUR_MQD)
-	public const int ADecompressedSize = 0x4000000; // 64MB ROM
+public static class Decompressor {
+	public const int DComSize = 0x2000000; // Default Compressed: 32MB ROM
+	public const int PDecSize = 0x34D3040; // 52.8MB ROM (for PAL_1.0)
+	public const int EDecSize = 0x3600000; // 54MB ROM (for EUR_MQD)
+	public const int ADecSize = 0x4000000; // 64MB ROM
 
-	public static byte[] DecompressedData(byte[] inROM, int outSize = PDecompressedSize) {
+	public static byte[] Data(byte[] inROM, int outSize = PDecSize, bool calc = true) {
+		// FIXME: Assumed to be decompressed if the ROM size is larger than 32MB
+		if (inROM.Length > DComSize)
+			return inROM;
+
 		byte[] outROM = new byte[outSize];
 		inROM.CopyTo(outROM, 0);
 
@@ -28,12 +32,10 @@ public static class Decompress {
 			tbl = TableEntry.Get(inTable, i);
 
 			switch (tbl.PEnd) {
-				case -1:
-					/* MM ROM, that's for sure. */
+				case -1: /* MM ROM, that's for sure */
 					continue;
 
-				case 0:
-					/* Already decompressed. */
+				case 0: /* Already decompressed */
 					inROM.Slice(tbl.PStart, tbl.Size).CopyTo(outROM.Slice(tbl.VStart));
 					break;
 
@@ -48,13 +50,15 @@ public static class Decompress {
 		}
 
 		outROM.Set(tblStart, outTable);
-		outROM.Set(0, CRC.GetNewCRC(outROM));
+
+		if (calc) /* Recalculate CRC */
+			outROM.Set(0, CRC.GetNewCRC(outROM));
 
 		return outROM;
 	}
 
 	private static void Decode(Span<byte> src, Span<byte> dst, int size) {
-		/* Yaz0: http://www.amnoid.de/gc/yaz0.txt */
+		/* Yaz0: http://amnoid.de/gc/yaz0.txt */
 		int srcPlace = 16;
 		int dstPlace = 0;
 		int bitCount = 0;

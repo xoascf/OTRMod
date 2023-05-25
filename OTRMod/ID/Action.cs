@@ -1,9 +1,6 @@
-/* Licensed under the Open Software License version 3.0 */
+namespace OTRMod.ID;
 
-namespace OTRMod;
-
-public enum ActionKeywords
-{
+public enum Action {
 	/// <summary>
 	/// Get Raw Data from Image ("var" start(h) length(h)).
 	/// </summary>
@@ -20,7 +17,7 @@ public enum ActionKeywords
 	Set,
 
 	/// <summary>
-	/// Merge Message Data and Table ("msgVar1" "tblVar2" addChars3 "fileName4").
+	/// Merge Content Data and Table ("msgVar1" "tblVar2" addChars3 "fileName4").
 	/// </summary>
 	Mrg,
 

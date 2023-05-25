@@ -5,7 +5,7 @@ namespace OTRMod.Utility;
 public static class Misc
 {
 	private static InvalidCastException InvalidCast(string valueName)
-	{ throw new InvalidCastException($"Invalid cast for '{valueName}'!"); }
+	/* Invalid Cast (s) */=> throw new InvalidCastException($"Invalid cast for '{valueName}'!");
 
 	public static int AsInt(this object number)
 	{
@@ -22,9 +22,7 @@ public static class Misc
 	}
 
 	public static bool AsBool(this string boolean, bool fallback)
-	{
-		return bool.TryParse(boolean, out bool result) ? result : fallback;
-	}
+	/* As Bool (s, b) */=> bool.TryParse(boolean, out bool result) ? result : fallback;
 
 	public static void SetKey(this Dictionary<string, string> dict, string key,
 		string value)

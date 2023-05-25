@@ -45,8 +45,7 @@
 	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
 	private string? _lastError;
 
-	private async void ProcessScript(InputFileChangeEventArgs e)
-	{
+	private async void ProcessScript(InputFileChangeEventArgs e) {
 		_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
 		if (_script != null)
 			Array.Clear(_script, 0, _script.Length);
@@ -54,26 +53,23 @@
 		_genStatus = GenerationStatus.Selected;
 	}
 
-	private async void ProcessROM(InputFileChangeEventArgs e)
-	{
+	private async void ProcessROM(InputFileChangeEventArgs e) {
 		_romMs.SetLength(0); IBrowserFile romFile = e.File;
-		await romFile.OpenReadStream(Decompress.ADecompressedSize).CopyToAsync(_romMs);
+		await romFile.OpenReadStream(Decompressor.ADecSize).CopyToAsync(_romMs);
 		_genStatus = GenerationStatus.Selected;
 	}
 
-	private async void GenerateOTR()
-	{
+	private async void GenerateOTR() {
 		_genStatus = GenerationStatus.Generating;
 		if (_genStatus == GenerationStatus.NoSelected)
 			return;
-		try
-		{
+		try {
 			_genStatus = GenerationStatus.Finished;
 			_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).
 				Split(_separators, StringSplitOptions.None);
 
-			byte[] decompressed = Decompress.DecompressedData
-				(ROM.Convert.ToBigEndian(ReadFully(_romMs)));
+			byte[] decompressed = Decompressor.Data
+				(ROM.Convert.ToBigEndian(ReadFully(_romMs)), calc: false);
 			ScriptParser sParser = new ScriptParser
 			{
 				ScriptStrings = _script,
@@ -87,15 +83,13 @@
 					_otrMs,
 					"application/octet-stream");
 		}
-		catch (Exception ex)
-		{
+		catch (Exception ex) {
 			_genStatus = GenerationStatus.Error;
 			_lastError = ex.ToString();
 		}
 	}
 
-	private static byte[] ReadFully(Stream stream)
-	{
+	private static byte[] ReadFully(Stream stream) {
 		if (stream is MemoryStream stream1)
 			return stream1.ToArray();
 		using var memoryStream = new MemoryStream();
