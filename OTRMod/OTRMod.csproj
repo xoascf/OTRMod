@@ -10,12 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetZip" Version="1.16.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="War3Net.IO.Mpq">
-      <HintPath>..\..\War3Net\src\War3Net.IO.Mpq\bin\Release\net6.0\War3Net.IO.Mpq.dll</HintPath>
-    </Reference>
+    <PackageReference Include="War3Net.IO.Mpq" Version="5.6.1" />
   </ItemGroup>
 
 </Project>
