@@ -3,39 +3,38 @@
 @using OTRMod.ROM
 @using OTRMod.OTR
 @using System.Text
-<PageTitle>OTRMod Web - Get OTR</PageTitle>
-<h1>Get OTR mod from ROM image</h1>
+
+<PageTitle>@T["get_otr_title"]</PageTitle>
+<h1>@T["get_otr_h1"]</h1>
 <br />
 <p>
-	<label>Select a script: <InputFile OnChange="@ProcessScript" accept=".txt" single /></label>
+	<label>@T["sel_script"]<InputFile OnChange="@ProcessScript" accept=".txt" single /></label>
 </p>
 <p>
-	<label>Select a ROM: <InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.rom" single /></label>
+	<label>@T["sel_rom"]<InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.rom" single /></label>
 </p>
 <div class="alert alert-secondary mt-4">
 	@switch (_genStatus)
 	{
 		case GenerationStatus.NoSelected:
-			<span class="text-nowrap">Select a script and ROM to generate the OTR.</span>
+			<span class="text-nowrap">@T["info_not_sel"]</span>
 			break;
 		case GenerationStatus.Generating:
-			<span class="text-nowrap">Please wait while your OTR is being generated...</span>
+			<span class="text-nowrap">@T["info_wait"]</span>
 			break;
 		case GenerationStatus.Finished:
-			<span class="text-nowrap">OTR generated successfully!</span>
+			<span class="text-nowrap">@T["info_fin"]</span>
 			break;
 		case GenerationStatus.Error:
-			<span class="text-wrap">Error: @_lastError</span>
+			<span class="text-wrap">@T["error", _lastError]</span>
 			break;
 		case GenerationStatus.Selected:
 		default:
-			<span class="text-nowrap">Click the "Generate OTR" button when you're ready.</span>
+			<span class="text-nowrap">@T["info_sel"]</span>
 			break;
 	}
 </div>
-<button disabled="@(_genStatus == GenerationStatus.NoSelected)" @onclick="@GenerateOTR">
-	Generate OTR
-</button>
+<button disabled="@(_genStatus == GenerationStatus.NoSelected)" @onclick="@GenerateOTR">@T["btn_gen_otr"]</button>
 @code {
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
 	private readonly string[] _separators = { "\n", "\r\n", "\r" };
@@ -43,7 +42,7 @@
 	private readonly MemoryStream _scriptMs = new();
 	private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
 	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
-	private string? _lastError;
+	private string _lastError = "?";
 
 	private async void ProcessScript(InputFileChangeEventArgs e) {
 		_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;

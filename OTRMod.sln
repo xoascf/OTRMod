@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod", "OTRMod\OTRMod.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod.Web", "OTRMod.Web\OTRMod.Web.csproj", "{F5414982-AE44-400B-8C25-DB7CE43AAA0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTRMod.Console", "OTRMod.Console\OTRMod.Console.csproj", "{F88FE393-2974-4751-B0C6-D66D2205936E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod.Console", "OTRMod.Console\OTRMod.Console.csproj", "{F88FE393-2974-4751-B0C6-D66D2205936E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
