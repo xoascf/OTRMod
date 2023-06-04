@@ -101,7 +101,7 @@
       "url": "_framework\/icudt.dat"
     },
     {
-      "hash": "sha256-XiwHObkJsrtYY4DGAekqzH2s5hfYDzZueBNj53gS+fM=",
+      "hash": "sha256-YveONLTzQVD5xmvXlWoXTaZ\/RjULjWS8NfjcDbsfaL4=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -185,7 +185,7 @@
       "url": "_framework\/OTRMod.dll"
     },
     {
-      "hash": "sha256-NZ4LdmimKLnuPcOCEdqouJOlknLIzntHYG16Eu2Kgo4=",
+      "hash": "sha256-zbZmWDqt71Gb\/AdgflFwSnZ6y3DyEG0t4QmiFl270\/M=",
       "url": "_framework\/OTRMod.Web.dll"
     },
     {
@@ -389,7 +389,7 @@
       "url": "_framework\/War3Net.IO.Mpq.dll"
     },
     {
-      "hash": "sha256-k2\/yAap61Meb53Wl81\/cdXotesGMS0IkbUjhLefYiWk=",
+      "hash": "sha256-O8Hz1qRULuqNj9EaWB2Fv2\/rR8emgRRzPXWA12guSSo=",
       "url": "_framework\/es\/OTRMod.Web.resources.dll"
     },
     {
@@ -405,5 +405,5 @@
       "url": "_content\/Toolbelt.Blazor.PWA.Updater\/Toolbelt.Blazor.PWA.Updater.bundle.scp.css"
     }
   ],
-  "version": "HV3McdSK"
+  "version": "16rbmxkD"
 };

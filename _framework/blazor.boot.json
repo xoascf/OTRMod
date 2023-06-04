@@ -27,7 +27,7 @@
       "Microsoft.JSInterop.WebAssembly.dll": "sha256-Vgi6k6xNMGb6w3mT2aaCLZEqSMW1OmFh9XMLxV9P77Y=",
       "netstandard.dll": "sha256-ei7ZuUaWZ\/PqtbE5SMqxhtiEZcIcLb3CnrD0PFi18Uw=",
       "OTRMod.dll": "sha256-IoCQiPP3akuKGZJeYSDv1PSnpKAcBZOdNduagA\/pMtg=",
-      "OTRMod.Web.dll": "sha256-NZ4LdmimKLnuPcOCEdqouJOlknLIzntHYG16Eu2Kgo4=",
+      "OTRMod.Web.dll": "sha256-zbZmWDqt71Gb\/AdgflFwSnZ6y3DyEG0t4QmiFl270\/M=",
       "System.Collections.Concurrent.dll": "sha256-d4abBimbs\/Psqq2mZNTez0OOTPE7Q6+Xl8GMBfhhVLM=",
       "System.Collections.dll": "sha256-6MJWVdc2qBj56Dn\/82xP42wowPuQsTnfU74bh0nwksQ=",
       "System.Collections.NonGeneric.dll": "sha256-72XyUEeOl9fbbfMVwOwBOm5r+NiawQP5lo90j9aqaeE=",
@@ -100,7 +100,7 @@
     },
     "satelliteResources": {
       "es": {
-        "es\/OTRMod.Web.resources.dll": "sha256-k2\/yAap61Meb53Wl81\/cdXotesGMS0IkbUjhLefYiWk="
+        "es\/OTRMod.Web.resources.dll": "sha256-O8Hz1qRULuqNj9EaWB2Fv2\/rR8emgRRzPXWA12guSSo="
       }
     }
   }
