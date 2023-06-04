@@ -1,17 +1,29 @@
 /* Licensed under the Open Software License version 3.0 */
 
+using static System.BitConverter;
+
 namespace OTRMod.Utility;
 
 public static class ByteArray {
-	private static byte[] EndianConvert(byte[] b) {
-		if (BitConverter.IsLittleEndian) Array.Reverse(b);
-		
-		return b;
-	}
+	private static bool ShouldRev(bool big)
+		=> (IsLittleEndian && big) || (!IsLittleEndian && !big);
 
-	public static byte[] FromInt(int v) => EndianConvert(BitConverter.GetBytes(v));
+	public static byte[] Reverse(this byte[] data) { Array.Reverse(data); return data; }
 
-	public static byte[] FromUInt(uint v) => EndianConvert(BitConverter.GetBytes(v));
+	public static byte[] FromI32(int value, bool big = true) // 4 bytes
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
+	public static byte[] FromU32(uint value, bool big = true) // 4 bytes
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
+	public static byte[] FromU64(ulong value, bool big = true) // 8 bytes
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
+	public static int ToI32(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToInt32(Reverse(data), 0) : ToInt32(data, 0);
+
+	public static uint ToU32(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToUInt32(Reverse(data), 0) : ToUInt32(data, 0);
 
 	public static byte[] ReadHex(this string hex) {
 		if (hex.Length % 2 != 0) throw new ArgumentException("Invalid length", nameof(hex));
@@ -45,8 +57,4 @@ public static class ByteArray {
 
 		return true;
 	}
-
-	public static int ToInt(this byte[] b) => BitConverter.ToInt32(EndianConvert(b));
-
-	public static uint ToUInt(byte[] b) => BitConverter.ToUInt32(EndianConvert(b));
 }

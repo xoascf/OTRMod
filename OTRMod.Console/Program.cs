@@ -4,31 +4,27 @@ using OTRMod;
 using OTRMod.OTR;
 using OTRMod.ROM;
 using static OTRMod.Console.Helper;
-using Convert = OTRMod.ROM.Convert;
 using MS = System.IO.MemoryStream;
 
-static MS Run(string pathImgData, bool romMode, bool calc, out string otrName) {
-	otrName = "NoName.otr";
+static MS Run(string pathImgData, bool romMode, bool calc, out string outName) {
+	bool decompressOnly = romMode && calc;
+	outName = "Decompressed.z64";
 	try {
-		byte[] imgBytes;
+		byte[] iData = File.ReadAllBytes(pathImgData);
 		if (romMode)
-			imgBytes = Decompressor.Data(Convert.ToBigEndian
-				(File.ReadAllBytes(pathImgData)), calc: calc);
-		else
-			imgBytes = File.ReadAllBytes(pathImgData);
-
+			iData = Decompressor.Data(iData.ToBigEndian(), calc: calc);
 		MS ms;
-		if (romMode && calc) /*  Send only the decompressed ROM */
-			ms = new MS(imgBytes);
+		if (decompressOnly)
+			ms = new MS(iData);
 		else {
 			ms = new MS();
 			ms.SetLength(0);
 			ScriptParser sParser = new() {
 				ScriptStrings = File.ReadAllLines(ReadPath("Script")),
-				ImageData = imgBytes
+				ImageData = iData
 			};
 			sParser.ParseScript();
-			otrName = sParser.OTRFileName;
+			outName = sParser.OTRFileName;
 			Generate.FromImage(ref ms);
 		}
 
@@ -40,15 +36,19 @@ static MS Run(string pathImgData, bool romMode, bool calc, out string otrName) {
 	}
 }
 
-static void Save(MS ms, string output) {
-	using FileStream fs = new(output, FileMode.OpenOrCreate);
-	_ = ms.Seek(0, SeekOrigin.Begin); ms.CopyTo(fs); fs.Flush(); fs.Close();
+static void Save(MS ms, string path) {
+	using FileStream fs = new(path, FileMode.OpenOrCreate);
+	_ = ms.Seek(0, SeekOrigin.Begin);
+	ms.CopyTo(fs);
+	fs.Flush();
+	fs.Close();
 }
 
 static void TUIRun(bool romMode, bool calc) {
-	using MS genMS = Run(ReadPath("Image"), romMode, calc, out string otrName);
-	Save(genMS, ReadPath($"Output (default: {otrName})", otrName, false));
-	genMS.Flush(); genMS.Close();
+	using MS genMs = Run(ReadPath("Image"), romMode, calc, out string outName);
+	Save(genMs, ReadPath($"Output (default: {outName})", outName, false));
+	genMs.Flush();
+	genMs.Close();
 	CompactAndCollect();
 }
 
@@ -61,7 +61,6 @@ Dictionary<int, Action> options = new() {
 
 Console.WriteLine(Console.Title = "OTRMod - Console Mode");
 
-int choice;
 do {
 	Console.Write("\nSelect an option:\n" +
 		"1. Create OTR mod from ROM (with auto-decompress)\n" +
@@ -69,20 +68,21 @@ do {
 		"3. Don't create OTR mod, just auto-decompress ROM\n" +
 		"4. Exit\n");
 
-	if (!int.TryParse(Console.ReadLine(), out choice)) {
+	if (!int.TryParse(Console.ReadLine(), out int choice)) {
 		Console.WriteLine("Please enter a number.");
 		continue;
 	}
-	if (!options.TryGetValue(choice, out var action)) {
+	if (!options.TryGetValue(choice, out Action? action)) {
 		Console.WriteLine("Please select a valid option.");
 		continue;
 	}
 
-	Console.WriteLine(); action(); Console.WriteLine();
+	Console.WriteLine();
+	action();
+	Console.WriteLine();
 
 	if (AnsweredYesTo("Do you want to start again?"))
 		continue;
-	else
-		Exit(0);
+	Exit(0);
 
 } while (true);

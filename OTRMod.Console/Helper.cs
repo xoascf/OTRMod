@@ -1,13 +1,13 @@
 /* Licensed under the Open Software License version 3.0 */
 
 using System.Runtime;
-using Cnsl = System.Console;
+using Con = System.Console;
 
 namespace OTRMod.Console;
 
 internal class Helper {
 	internal static void Exit(int code) {
-		Cnsl.Write("Goodbye!"); Environment.Exit(code);
+		Con.Write("Goodbye!"); Environment.Exit(code);
 	}
 
 	internal static void CompactAndCollect() {
@@ -20,8 +20,8 @@ internal class Helper {
 		(string name, string fallback = "", bool checkIfExists = true) {
 		string? path;
 		do {
-			Cnsl.Write($"{name}: ");
-			path = Cnsl.ReadLine();
+			Con.Write($"{name}: ");
+			path = Con.ReadLine();
 			if (string.IsNullOrWhiteSpace(path)) path = fallback;
 		} while (string.IsNullOrWhiteSpace(path));
 
@@ -29,7 +29,7 @@ internal class Helper {
 			path = path[1..^1];
 
 		while (checkIfExists && !File.Exists(path)) {
-			Cnsl.WriteLine("File not found!");
+			Con.WriteLine("File not found!");
 			path = ReadPath(name);
 		}
 
@@ -37,8 +37,8 @@ internal class Helper {
 	}
 
 	internal static bool AnsweredYesTo(string question) {
-		Cnsl.Write($"{question} [Y/n] ");
-		string? res = Cnsl.ReadLine();
+		Con.Write($"{question} [Y/n] ");
+		string? res = Con.ReadLine();
 		return string.IsNullOrEmpty(res)
 			|| res.StartsWith("y", StringComparison.OrdinalIgnoreCase);
 	}

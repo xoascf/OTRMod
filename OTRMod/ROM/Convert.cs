@@ -10,8 +10,7 @@ public static class Convert
 {
 	private static readonly byte[] N64Header = "80371240".ReadHex();
 
-	public static byte[] ToBigEndian(byte[] bytes)
-	{
+	public static byte[] ToBigEndian(this byte[] bytes) {
 		byte[] fileHeader = bytes.Get(0, 4);
 
 		Endianness format = ByteOrder.Identify(fileHeader, N64Header);

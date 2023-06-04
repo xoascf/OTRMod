@@ -7,10 +7,8 @@ namespace OTRMod.OTR;
 
 internal static class Format {
 	private const int HeaderSize = 0x40;
-	private const Endianness Endian = Endianness.LittleEndian;
-	private const string DBMagic = "DEADBEEFDEADBEEF";
-	private static readonly byte[] EndianData = DBMagic.ReadHex().DataTo(Endian, 0, 8);
-	private const ShipVersion MajorVersion = ShipVersion.Deckard;
+	private const ulong MagicValue = 0xDEADBEEFDEADBEEF;
+	private static readonly byte[] BeefData = ByteArray.FromU64(MagicValue, big: false);
 
 	internal static class Tex {
 		public static byte[] Export(Texture.Codec codec, int width, int height, byte[] input) {
@@ -19,10 +17,10 @@ internal static class Format {
 			byte[] data = new byte[HeaderSize + 16 + texSize];
 
 			data.Set(0, GetHeader(ResourceType.Texture));
-			data.Set(HeaderSize, (byte)(int)codec); // 4
-			data.Set(HeaderSize + 4, (byte)width); // 4
-			data.Set(HeaderSize + 8, (byte)height); // 4
-			data.Set(HeaderSize + 12, BitConverter.GetBytes(texSize)); // 4
+			data.Set(HeaderSize, (byte)(int)codec);
+			data.Set(HeaderSize + 4, (byte)width);
+			data.Set(HeaderSize + 8, (byte)height);
+			data.Set(HeaderSize + 12, BitConverter.GetBytes(texSize));
 			data.Set(HeaderSize + 16, input);
 
 			return data;
@@ -132,7 +130,7 @@ internal static class Format {
 
 			byte[] data = new byte[HeaderSize + fntSize];
 
-			data.Set(0, GetHeader(ResourceType.AudioSoundFont, ShipVersion.Rachael));
+			data.Set(0, GetHeader(ResourceType.AudioSoundFont, 2));
 			data.Set(HeaderSize, (byte)index);
 			data.Set(HeaderSize + 3, BitConverter.GetBytes(fntSize));
 			data.Set(HeaderSize + 4, input);
@@ -148,7 +146,7 @@ internal static class Format {
 			byte[] data = new byte[HeaderSize + seqSize + footerSize];
 			byte[] unkBytes = { 0x02, 0x02, 0x01 };
 
-			data.Set(0, GetHeader(ResourceType.AudioSequence, ShipVersion.Rachael));
+			data.Set(0, GetHeader(ResourceType.AudioSequence, 2));
 			data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
 			data.Set(HeaderSize + 4, input);
 			data.Set(HeaderSize + seqSize + 4, (byte)index);
@@ -215,13 +213,11 @@ internal static class Format {
 		}
 	}
 
-	internal static byte[] GetHeader(ResourceType type, ShipVersion version = MajorVersion)
-	{
+	internal static byte[] GetHeader(ResourceType type, int version = 0) {
 		byte[] header = new byte[HeaderSize];
-		// Twice?? (prev: BitConverter.GetBytes((int)resourceType))
-		header.Set(0x04, ByteArray.FromInt((int)type).CopyAs(Endian));
-		header.Set(0x08, BitConverter.GetBytes((int)version));
-		header.Set(0x0C, EndianData);
+		header.Set(0x04, ByteArray.FromI32((int)type, big: false));
+		header.Set(0x08, ByteArray.FromI32(version, big: false));
+		header.Set(0x0C, BeefData);
 
 		return header;
 	}

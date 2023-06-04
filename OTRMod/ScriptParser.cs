@@ -3,19 +3,18 @@
 using OTRMod.ID;
 using OTRMod.Utility;
 using Action = OTRMod.ID.Action;
-using str = System.String;
 
 namespace OTRMod;
 
 public class ScriptParser {
-	public str[] ScriptStrings = null!;
+	public string[] ScriptStrings = null!;
 	public byte[] ImageData = null!;
-	public str SubDir = "";
+	public string SubDir = "";
 
-	private readonly Dictionary<str, byte[]> _var = new();
-	private readonly Dictionary<str, str> _def = new();
+	private readonly Dictionary<string, byte[]> _var = new();
+	private readonly StringsDict _def = new();
 
-	private void WorkDo(Action k, str[] val) { /* In line. */
+	private void WorkDo(Action k, string[] val) {
 		switch (k) {
 			case Action.Get:
 				_var.Add(val[1], GetData(val[2], val[3]));
@@ -26,7 +25,7 @@ public class ScriptParser {
 				break;
 
 			case Action.Set:
-				_def.SetKey(val[1], val[2]);
+				_def[val[1]] = val[2];
 				break;
 
 			case Action.Mrg:
@@ -43,13 +42,13 @@ public class ScriptParser {
 				break;
 
 			case Action.Exp:
-				_def.GetKeyStr("AddH", out str addH);
+				_def.GetKeyStr("AddH", out string addH);
 				Save(GetExportData(val, addH.AsBool(true)), GetOutPath(val));
 				break;
 		}
 	}
 
-	private byte[] GetExportData(str[] info, bool addHeader) {
+	private byte[] GetExportData(string[] info, bool addHeader) {
 		if (!Enum.TryParse(info[1], out Texture.Codec codec))
 			return info[1] switch {
 				"Pam" => PlayerAnimation.Export(GetData(info[2], info[3])),
@@ -59,32 +58,31 @@ public class ScriptParser {
 				_ => throw new Exception("Invalid format to export!")
 			};
 
-		str texS = _def.GetKeyStr("TexS", "texture size", null!, true);
-		str[] size = texS.Split('x');
-		int w = int.Parse(size[0]); int h = int.Parse(size[1]);
+		string texS = _def.GetKeyStr("TexS", "texture size", null!, true);
+		string[] size = texS.Split('x');
+		int w = int.Parse(size[0]);
+		int h = int.Parse(size[1]);
 		byte[] data = GetData(info[2], Texture.GetSize(codec, w * h));
 		return addHeader ? Tex.Export(codec, w, h, data) : data;
 	}
 
 	private byte[] GetData(object s, object l) => ImageData.Get(s.AsInt(), l.AsInt());
-	private str GetOutPath(str[] expInfo) => Concatenate(SubDir, expInfo[^1]);
-	private const str DEFAULT_FILE_NAME = "Mod.otr";
-	public str OTRFileName = DEFAULT_FILE_NAME;
+	private string GetOutPath(string[] expInfo) => Concatenate(SubDir, expInfo[^1]);
+	private const string DefaultFileName = "Mod.otr";
+	public string OTRFileName = DefaultFileName;
 
 	public void ParseScript() {
 		for (int i = 0; i < ScriptStrings.Length; i += 1) {
-			str line = ScriptStrings[i];
-			str[] words = line.Split(' ');
-
-			if (line.StartsWith("#") || str.IsNullOrWhiteSpace(line) || str.IsNullOrEmpty(line))
-				continue;
+			string line = ScriptStrings[i];
+			if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line)) continue;
+			string[] words = line.Split(' ');
 
 			if (!Enum.TryParse(words[0], out Action action))
-				throw new Exception($"Invalid action in line {i + 1}: {line}");
+				throw new Exception($"Invalid action on line {i + 1}: {words[0]}");
 
 			WorkDo(action, words);
 		}
 
-		OTRFileName = _def.GetKeyStr("OTRFileName", "", DEFAULT_FILE_NAME);
+		OTRFileName = _def.GetKeyStr("OTRFileName", "", DefaultFileName);
 	}
 }
