@@ -6,8 +6,7 @@ using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 
-public static class Convert
-{
+public static class Convert {
 	private static readonly byte[] N64Header = "80371240".ReadHex();
 
 	public static byte[] ToBigEndian(this byte[] bytes) {
@@ -18,8 +17,7 @@ public static class Convert
 		if (format == Endianness.Unknown)
 			throw new Exception("ROM format is not valid!");
 
-		switch (format)
-		{
+		switch (format) {
 			case Endianness.BigEndian:
 				// We don't convert anything.
 				// But return the bytes anyway!

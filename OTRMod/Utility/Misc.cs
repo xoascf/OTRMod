@@ -21,10 +21,8 @@ public static class Misc
 	public static bool AsBool(this string boolean, bool fallback)
 	/* As Bool (s, b) */=> bool.TryParse(boolean, out bool result) ? result : fallback;
 
-	public static bool GetKeyStr(this StringDict dict, string key, out string str)
-	{
-		if (dict.ContainsKey(key))
-		{
+	public static bool GetKeyStr(this StringsDict dict, string key, out string str) {
+		if (dict.ContainsKey(key)) {
 			str = dict[key];
 			return true;
 		}
@@ -33,8 +31,8 @@ public static class Misc
 		return false;
 	}
 
-	public static string GetKeyStr(this StringDict dict, string key, string desc, object fallback = null!, bool mayThrow = false)
-	{
+	public static string GetKeyStr(this StringsDict dict, string key,
+		string desc, object fallback = null!, bool mayThrow = false) {
 		if (GetKeyStr(dict, key, out string str)) return str;
 		if (mayThrow) throw new Exception($"'{key}' ({desc}) has not been set!");
 

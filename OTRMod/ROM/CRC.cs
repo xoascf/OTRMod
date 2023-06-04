@@ -13,40 +13,40 @@ public class CRC
 	private const uint CIC6105 = 0xDF26F436;
 	private const uint CIC6106 = 0x1FEA617A;
 
-	private readonly byte[] bytes;
-	private static uint[]? crcTable;
+	private readonly byte[] _bytes;
+	private static uint[]? _crcTable;
 
-	public CRC(byte[] bytes) => this.bytes = bytes;
+	public CRC(byte[] bytes) => _bytes = bytes;
 
 	public static byte[] GetNewCRC(byte[] bytes) {
 		new CRC(bytes).FixCRC();
-		return newCRCbytes!;
+		return _newCRCData!;
 	}
 
-	private static byte[]? newCRCbytes;
+	private static byte[]? _newCRCData;
 
 	private static uint[] CRCTable {
 		get {
-			if (crcTable == null) {
-				crcTable = new uint[256];
+			if (_crcTable == null) {
+				_crcTable = new uint[256];
 				for (int i = 0; i < 256; i++) {
 					uint crc = (uint)i;
 					for (int j = 8; j > 0; j--)
 						crc = ((crc & 1) == 0) ? (crc >> 1) : ((crc >> 1) ^ 0xEDB88320u);
-					crcTable[i] = crc;
+					_crcTable[i] = crc;
 				}
 			}
-			return crcTable;
+			return _crcTable;
 		}
 	}
 
 	private static uint ROL(uint i, int b) => (i << b) | (i >> 32 - b);
 
 	public void FixCRC() {
-		newCRCbytes = bytes.Get(0, 1052672);
-		uint[] array = CalculateCRC(newCRCbytes);
-		newCRCbytes.Set(16, ByteArray.FromU32(array[0]));
-		newCRCbytes.Set(20, ByteArray.FromU32(array[1]));
+		_newCRCData = _bytes.Get(0, 1052672);
+		uint[] array = CalculateCRC(_newCRCData);
+		_newCRCData.Set(16, ByteArray.FromU32(array[0]));
+		_newCRCData.Set(20, ByteArray.FromU32(array[1]));
 	}
 
 	private static uint CRC32(byte[] data) {
@@ -80,7 +80,7 @@ public class CRC
 		uint t1, t2, t3, t4, t5, t6;
 		t1 = t2 = t3 = t4 = t5 = t6 = seed;
 		for (int i = 4096; i < 1052672; i += 4) {
-			uint d = ByteArray.ToU32(bytes.Get(i, 4));
+			uint d = bytes.Get(i, 4).ToU32();
 			if ((t6 + d) < t6)
 				t4++;
 
@@ -90,7 +90,7 @@ public class CRC
 			t5 += r;
 			t2 = (t2 <= d) ? (t2 ^ (t6 ^ d)) : (t2 ^ r);
 			t1 = (cic != 6105) ? (t1 + (t5 ^ d)) :
-				(t1 + (ByteArray.ToU32(bytes.Get(1872 + (i & 0xFF), 4)) ^ d));
+				(t1 + (bytes.Get(1872 + (i & 0xFF), 4).ToU32() ^ d));
 		}
 		switch (cic) {
 			case 6103:
