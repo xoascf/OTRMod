@@ -150,4 +150,7 @@
   <data name="get_otr_tab" xml:space="preserve">
     <value>Get OTR</value>
   </data>
+  <data name="btn_wait" xml:space="preserve">
+    <value>Generating...</value>
+  </data>
 </root>

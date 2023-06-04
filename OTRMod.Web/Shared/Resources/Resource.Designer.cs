@@ -70,6 +70,15 @@ namespace OTRMod.Web.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generating....
+        /// </summary>
+        public static string btn_wait {
+            get {
+                return ResourceManager.GetString("btn_wait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error: {0}.
         /// </summary>
         public static string error {

@@ -11,7 +11,7 @@
 	<label>@T["sel_script"]<InputFile OnChange="@ProcessScript" accept=".txt" single /></label>
 </p>
 <p>
-	<label>@T["sel_rom"]<InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.rom" single /></label>
+	<label>@T["sel_rom"]<InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.u64,.rom" single /></label>
 </p>
 <div class="alert alert-secondary mt-4">
 	@switch (_genStatus)
@@ -34,7 +34,9 @@
 			break;
 	}
 </div>
-<button disabled="@(_genStatus == GenerationStatus.NoSelected)" @onclick="@GenerateOTR">@T["btn_gen_otr"]</button>
+<button class="btn btn-primary" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateOTR">
+	@(_genStatus == GenerationStatus.Generating ? T["btn_wait"] : T["btn_gen_otr"])
+</button>
 @code {
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
 	private readonly string[] _separators = { "\n", "\r\n", "\r" };
@@ -42,12 +44,11 @@
 	private readonly MemoryStream _scriptMs = new();
 	private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
 	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
-	private string _lastError = "?";
+	private string _lastError = string.Empty;
 
 	private async void ProcessScript(InputFileChangeEventArgs e) {
 		_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
-		if (_script != null)
-			Array.Clear(_script, 0, _script.Length);
+		if (_script != null) Array.Clear(_script, 0, _script.Length);
 		await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
 		_genStatus = GenerationStatus.Selected;
 	}
@@ -58,29 +59,13 @@
 		_genStatus = GenerationStatus.Selected;
 	}
 
-	private async void GenerateOTR() {
+	private async Task GenerateOTR() {
+		if (_genStatus == GenerationStatus.NoSelected) return;
 		_genStatus = GenerationStatus.Generating;
-		if (_genStatus == GenerationStatus.NoSelected)
-			return;
+		await Task.Delay(10);
 		try {
+			await RunProcess();
 			_genStatus = GenerationStatus.Finished;
-			_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).
-				Split(_separators, StringSplitOptions.None);
-
-			byte[] decompressed = Decompressor.Data
-				(ROM.Convert.ToBigEndian(ReadFully(_romMs)), calc: false);
-			ScriptParser sParser = new ScriptParser
-			{
-				ScriptStrings = _script,
-				ImageData = decompressed,
-			};
-			sParser.ParseScript();
-			_otrMs.SetLength(0);
-			Generate.FromImage(ref _otrMs);
-			await DlFileService.DownloadFile
-				(sParser.OTRFileName,
-					_otrMs,
-					"application/octet-stream");
 		}
 		catch (Exception ex) {
 			_genStatus = GenerationStatus.Error;
@@ -88,10 +73,22 @@
 		}
 	}
 
-	private static byte[] ReadFully(Stream stream) {
-		if (stream is MemoryStream stream1)
-			return stream1.ToArray();
-		using var memoryStream = new MemoryStream();
+	private async Task RunProcess() {
+		_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).Split(_separators, StringSplitOptions.None);
+		byte[] decompressed = Decompressor.Data(ReadFully(_romMs).ToBigEndian(), calc: false);
+		ScriptParser sParser = new() {
+			ScriptStrings = _script,
+			ImageData = decompressed,
+		};
+		sParser.ParseScript();
+		_otrMs.SetLength(0);
+		Generate.FromImage(ref _otrMs);
+		await DlFileService.DownloadFile(sParser.OTRFileName, _otrMs, "application/octet-stream");
+	}
+
+	private static byte[] ReadFully(Stream stream){
+		if (stream is MemoryStream ms) return ms.ToArray();
+		using MemoryStream memoryStream = new();
 		stream.CopyTo(memoryStream);
 		return memoryStream.ToArray();
 	}
