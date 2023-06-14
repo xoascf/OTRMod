@@ -19,8 +19,6 @@ jobs:
             dotnet-version: 6.0.x
         - name: Publish app
           run: dotnet publish OTRMod.Web/OTRMod.Web.csproj -c Release -o ${{env.OUT_DIR}}
-        - name: Use proper base href
-          run: sed -i 's/<base href="\/"[[:blank:]]\/>/<base href="\/${{github.event.repository.name}}\/" \/>/g' ${{env.OUT_DIR}}/wwwroot/index.html
         - name: Copy index.html to 404.html
           run: cp ${{env.OUT_DIR}}/wwwroot/index.html ${{env.OUT_DIR}}/wwwroot/404.html
         - name: Add .nojekyll file
