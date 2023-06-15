@@ -2,17 +2,17 @@
 
 <Toolbelt.Blazor.PWA.Updater.PWAUpdater />
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://github.com/xoascf/OTRMod" target="_blank">GitHub</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+	<div class="sidebar">
+		<NavMenu />
+	</div>
+	<main>
+		<div class="top-row px-4">
+			@T["dev_by"]
+			<a href="https://ko-fi.com/xoascf" target="_blank" title="@T["gimme_cafe"]"><i aria-hidden="true" class="fa-solid fa-mug-saucer"></i></a>
+			<a href="https://github.com/xoascf/OTRMod" target="_blank" title="@T["visit_on_gh"]"><i aria-hidden="true" class="fa-brands fa-github-alt"></i></a>
+		</div>
+		<article class="content px-4">
+			@Body
+		</article>
+	</main>
 </div>

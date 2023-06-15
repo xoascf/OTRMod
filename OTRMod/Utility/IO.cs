@@ -1,5 +1,4 @@
 /* Licensed under the Open Software License version 3.0 */
-// From OpenOcarinaBuilder.
 
 using OTRMod.OTR;
 using War3Net.IO.Mpq;
@@ -28,8 +27,7 @@ internal static class IO {
 		s.Seek(offset, SeekOrigin.Begin);
 
 		switch (newData) {
-			case byte[] bytes:
-				for (int i = 0; i < bytes.Length; i++) s.WriteByte(bytes[i]);
+			case byte[] bytes: foreach (byte t in bytes) s.WriteByte(t);
 				break;
 
 			case byte data: s.WriteByte(data);
@@ -37,10 +35,12 @@ internal static class IO {
 		}
 	}
 
-	public static Span<T> Slice<T>(this T[] input, int start) => input.AsSpan()[start..];
+	public static Span<T> Slice<T>(this T[] input, int start) {
+		return new(input, start, input.Length - start);
+	}
 
 	public static Span<T> Slice<T>(this T[] input, int start, int length) {
-		return input.AsSpan().Slice(start, length);
+		return new(input, start, length);
 	}
 
 	public static string Concatenate(params string[] paths) {

@@ -153,4 +153,28 @@
   <data name="btn_wait" xml:space="preserve">
     <value>Generating...</value>
   </data>
+  <data name="nav_menu" xml:space="preserve">
+    <value>Navigation menu</value>
+  </data>
+  <data name="error_404_h1" xml:space="preserve">
+    <value>404 - Page not found</value>
+  </data>
+  <data name="error_404_p" xml:space="preserve">
+    <value>Sorry, the page you are looking for does not exist.</value>
+  </data>
+  <data name="error_404_title" xml:space="preserve">
+    <value>Page not found</value>
+  </data>
+  <data name="lang_tag" xml:space="preserve">
+    <value>en</value>
+  </data>
+  <data name="visit_on_gh" xml:space="preserve">
+    <value>Visit OTRMod on GitHub</value>
+  </data>
+  <data name="gimme_cafe" xml:space="preserve">
+    <value>Keep me awake</value>
+  </data>
+  <data name="dev_by" xml:space="preserve">
+    <value>Developed by Amaro Martínez (xoascf)</value>
+  </data>
 </root>

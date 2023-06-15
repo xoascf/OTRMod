@@ -1,6 +1,5 @@
-﻿/* Licensed under the Open Software License version 3.0 */
+/* Licensed under the Open Software License version 3.0 */
 
-using OTRMod.ID;
 using OTRMod.Utility;
 
 namespace OTRMod.OTR;
@@ -28,10 +27,8 @@ internal static class Format {
 	}
 
 	// ZText.cpp
-	internal static class Txt
-	{
-		private class MessageEntry
-		{
+	internal static class Txt {
+		private class MessageEntry {
 			public ushort ID;
 			public byte BoxType;
 			public byte BoxPos;
@@ -39,8 +36,7 @@ internal static class Format {
 			public List<byte>? Content;
 		}
 
-		public static byte[] Export(byte[] input, byte[] sizeBytes)
-		{
+		public static byte[] Export(byte[] input, byte[] sizeBytes) {
 			byte[] data = new byte[HeaderSize + 4 + input.Length];
 
 			data.Set(0, GetHeader(ResourceType.Text));
@@ -50,8 +46,7 @@ internal static class Format {
 			return data;
 		}
 
-		public static byte[] Merge(byte[] messageData, byte[] tableData, bool addChars)
-		{
+		public static byte[] Merge(byte[] messageData, byte[] tableData, bool addChars) {
 			List<byte> newData = new();
 			MessageEntry entry = new();
 			int index = 0;
@@ -59,17 +54,12 @@ internal static class Format {
 				"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 				"abcdefghijklmnopqrstuvwxyz -.";
 
-			while (index < tableData.Length)
-			{
-				entry.ID = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness
-					(BitConverter.ToUInt16(tableData, index));
+			while (index < tableData.Length) {
+				entry.ID = BitConverter.ToUInt16(tableData, index).SwapEndian();
 				entry.BoxType = (byte)((tableData[index + 2] & 0xF0) >> 4);
 				entry.BoxPos = (byte)(tableData[index + 2] & 0x0F);
-				entry.Offset =
-					(tableData[index + 5 + 2] << 0) |
-					(tableData[index + 5 + 1] << 8) |
-					(tableData[index + 5 + 0] << 16) & 0x00FFFFFF;
-				entry.Content = new List<byte>();
+				entry.Offset = Misc.ToI32BigEndian(tableData, index + 4) & 0x00FFFFFF;
+				entry.Content = new();
 
 				int msg = entry.Offset;
 				byte c = messageData[msg];
@@ -93,8 +83,7 @@ internal static class Format {
 								extra = 2; break;
 							case 0x15:
 								extra = 3; break;
-						}
-					else extra--;
+						} else extra--;
 
 					c = messageData[msg];
 				}
@@ -104,8 +93,7 @@ internal static class Format {
 						entry.ID = 0xFFFC;
 						entry.Content.Clear();
 						entry.Content.AddRange(System.Text.Encoding.ASCII.GetBytes(toAdd));
-					}
-					else break;
+					} else break;
 
 				if (entry.ID is 0xFFFF) break;
 
@@ -122,10 +110,8 @@ internal static class Format {
 		}
 	}
 
-	internal static class Audio
-	{
-		public static byte[] ExportSft(int index, byte[] input)
-		{
+	internal static class Audio {
+		public static byte[] ExportSft(int index, byte[] input) {
 			int fntSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + fntSize];
@@ -138,8 +124,7 @@ internal static class Format {
 			return data;
 		}
 
-		public static byte[] ExportSeq(int index, int font, byte[] input)
-		{
+		public static byte[] ExportSeq(int index, int font, byte[] input) {
 			const int footerSize = 0x0C;
 			int seqSize = input.Length;
 
@@ -157,18 +142,15 @@ internal static class Format {
 		}
 	}
 
-	public enum AnimationType
-	{
+	public enum AnimationType {
 		Normal = 0,
 		Link = 1,
 		Curve = 2,
 		Legacy = 3,
 	}
 
-	internal static class Animation
-	{
-		public static byte[] ParseAnimation(byte[] input, AnimationType type)
-		{
+	internal static class Animation {
+		public static byte[] ParseAnimation(byte[] input, AnimationType type) {
 			int aniSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + 12 + aniSize];
@@ -176,14 +158,13 @@ internal static class Format {
 			data.Set(0, GetHeader(ResourceType.Animation));
 			data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
 			data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
-			data.Set(HeaderSize + 10, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
+			data.Set(HeaderSize + 10, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
 
 			return data;
 		}
 
 
-		public static byte[] Export(byte[] input)
-		{
+		public static byte[] Export(byte[] input) {
 			int aniSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + 12 + aniSize];
@@ -191,23 +172,21 @@ internal static class Format {
 			data.Set(0, GetHeader(ResourceType.Animation));
 			data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
 			data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
-			data.Set(HeaderSize + 10, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
+			data.Set(HeaderSize + 10, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
 
 			return data;
 		}
 	}
 
-	internal static class PlayerAnimation
-	{
-		public static byte[] Export(byte[] input)
-		{
+	internal static class PlayerAnimation {
+		public static byte[] Export(byte[] input) {
 			int aniSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + 4 + aniSize];
 
 			data.Set(0, GetHeader(ResourceType.PlayerAnimation));
 			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 4, input.CopyAs(Endianness.ByteSwapped, l: aniSize));
+			data.Set(HeaderSize + 4, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
 
 			return data;
 		}

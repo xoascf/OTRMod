@@ -1,6 +1,5 @@
 /* Licensed under the Open Software License version 3.0 */
 
-using OTRMod.ID;
 using OTRMod.Utility;
 using Action = OTRMod.ID.Action;
 
@@ -42,7 +41,7 @@ public class ScriptParser {
 				break;
 
 			case Action.Exp:
-				_def.GetKeyStr("AddH", out string addH);
+				_def.GetKey("AddH", out string addH);
 				Save(GetExportData(val, addH.AsBool(true)), GetOutPath(val));
 				break;
 		}
@@ -55,10 +54,10 @@ public class ScriptParser {
 				"Anm" => Animation.Export(GetData(info[2], info[3])),
 				"Seq" => Audio.ExportSeq(int.Parse(info[2]), int.Parse(info[3]),
 					GetData(info[4], info[5])),
-				_ => throw new Exception("Invalid format to export!")
+				_ => throw new Exception("Invalid format to export.")
 			};
 
-		string texS = _def.GetKeyStr("TexS", "texture size", null!, true);
+		string texS = _def.GetKey("TexS", "texture size", null!, true);
 		string[] size = texS.Split('x');
 		int w = int.Parse(size[0]);
 		int h = int.Parse(size[1]);
@@ -78,11 +77,11 @@ public class ScriptParser {
 			string[] words = line.Split(' ');
 
 			if (!Enum.TryParse(words[0], out Action action))
-				throw new Exception($"Invalid action on line {i + 1}: {words[0]}");
+				throw new Exception($"Invalid action on line {i + 1}: {words[0]}.");
 
 			WorkDo(action, words);
 		}
 
-		OTRFileName = _def.GetKeyStr("OTRFileName", "", DefaultFileName);
+		OTRFileName = _def.GetKey("OTRFileName", "", DefaultFileName);
 	}
 }

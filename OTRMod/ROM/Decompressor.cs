@@ -1,17 +1,11 @@
 /* Licensed under the Open Software License version 3.0 */
-// From OpenOcarinaBuilder.
 
 namespace OTRMod.ROM;
 
 public static class Decompressor {
-	public const int DComSize = 0x2000000; // Default Compressed: 32MB ROM
-	public const int PDecSize = 0x34D3040; // 52.8MB ROM (for PAL_1.0)
-	public const int EDecSize = 0x3600000; // 54MB ROM (for EUR_MQD)
-	public const int ADecSize = 0x4000000; // 64MB ROM
-
-	public static byte[] Data(byte[] inROM, int outSize = PDecSize, bool calc = true) {
-		// FIXME: Assumed to be decompressed if the ROM size is larger than 32MB
-		if (inROM.Length > DComSize)
+	public static byte[] Data(byte[] inROM, int outSize = Size.PDec, bool calc = true) {
+		/* Assumes that the ROM is decompressed if its size is larger than 32MB. */
+		if (inROM.Length > Size.DCom)
 			return inROM;
 
 		byte[] outROM = new byte[outSize];
@@ -21,9 +15,9 @@ public static class Decompressor {
 		TableEntry tbl = TableEntry.Get(GetAllFrom(inROM, tblStart), 2);
 
 		int tblCount = tbl.Size / 16;
-		Debug.WriteLine("Number of files: " + tblCount);
+		Debug.WriteLine($"Number of files: {tblCount}.");
 
-		byte[] inTable  = inROM.Get(tblStart, tbl.VEnd - tblStart);
+		byte[] inTable = inROM.Get(tblStart, tbl.VEnd - tblStart);
 		byte[] outTable = outROM.Get(tblStart, tbl.VEnd - tblStart);
 
 		Array.Clear(outROM, tbl.VEnd, outROM.Length - tbl.VEnd);
@@ -46,6 +40,7 @@ public static class Decompressor {
 
 			tbl.PStart = tbl.VStart;
 			tbl.PEnd = 0;
+
 			outTable.Set(i * 16, tbl.GetNew());
 		}
 
@@ -62,6 +57,7 @@ public static class Decompressor {
 		int srcPlace = 16;
 		int dstPlace = 0;
 		int bitCount = 0;
+
 		byte codeByte = 0;
 
 		while (dstPlace < size) {

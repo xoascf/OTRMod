@@ -1,4 +1,4 @@
-﻿/* Licensed under the Open Software License version 3.0 */
+/* Licensed under the Open Software License version 3.0 */
 
 using War3Net.IO.Mpq;
 using MS = System.IO.MemoryStream;

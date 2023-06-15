@@ -1,5 +1,4 @@
 /* Licensed under the Open Software License version 3.0 */
-// From OpenOcarinaBuilder.
 
 using OTRMod.Utility;
 
@@ -27,23 +26,24 @@ public class CRC
 
 	private static uint[] CRCTable {
 		get {
-			if (_crcTable == null) {
-				_crcTable = new uint[256];
-				for (int i = 0; i < 256; i++) {
-					uint crc = (uint)i;
-					for (int j = 8; j > 0; j--)
-						crc = ((crc & 1) == 0) ? (crc >> 1) : ((crc >> 1) ^ 0xEDB88320u);
-					_crcTable[i] = crc;
-				}
+			if (_crcTable != null)
+				return _crcTable;
+			_crcTable = new uint[256];
+			for (int i = 0; i < 256; i++) {
+				uint crc = (uint)i;
+				for (int j = 8; j > 0; j--)
+					crc = ((crc & 1) == 0) ? (crc >> 1) : ((crc >> 1) ^ 0xEDB88320u);
+				_crcTable[i] = crc;
 			}
 			return _crcTable;
 		}
 	}
 
-	private static uint ROL(uint i, int b) => (i << b) | (i >> 32 - b);
+	/* FIXME: Should we update to BitOperations.RotateLeft? */
+	private static uint RoL(uint i, int b) => (i << b) | (i >> 32 - b);
 
 	public void FixCRC() {
-		_newCRCData = _bytes.Get(0, 1052672);
+		_newCRCData = _bytes.Get(0, 0x101000);
 		uint[] array = CalculateCRC(_newCRCData);
 		_newCRCData.Set(16, ByteArray.FromU32(array[0]));
 		_newCRCData.Set(20, ByteArray.FromU32(array[1]));
@@ -57,13 +57,13 @@ public class CRC
 	}
 
 	private static int GetCIC(byte[] bytes) {
-		return CRC32(bytes.Get(64, 4032)) switch {
+		return CRC32(bytes.Get(0x40, 0xFC0)) switch {
 			0x6170A4A1 => 6101,
 			0x90BB6CB5 => 6102,
 			0x0B050EE0 => 6103,
 			0x98BC2C86 => 6105,
 			0xACC8580A => 6106,
-			_ => 0,
+			_ => 6105,
 		};
 	}
 
@@ -75,18 +75,18 @@ public class CRC
 			6103 => CIC6103,
 			6105 => CIC6105,
 			6106 => CIC6106,
-			_ => throw new Exception("CIC not valid!"),
+			_ => throw new Exception("Invalid CIC."),
 		};
 		uint t1, t2, t3, t4, t5, t6;
 		t1 = t2 = t3 = t4 = t5 = t6 = seed;
-		for (int i = 4096; i < 1052672; i += 4) {
+		for (int i = 0x1000; i < 0x101000; i += 4) {
 			uint d = bytes.Get(i, 4).ToU32();
 			if ((t6 + d) < t6)
 				t4++;
 
 			t6 += d;
 			t3 ^= d;
-			uint r = ROL(d, (int)(d & 0x1F));
+			uint r = RoL(d, (int)(d & 0x1F));
 			t5 += r;
 			t2 = (t2 <= d) ? (t2 ^ (t6 ^ d)) : (t2 ^ r);
 			t1 = (cic != 6105) ? (t1 + (t5 ^ d)) :

@@ -139,7 +139,7 @@
     <value>Espere mientras se genera su OTR...</value>
   </data>
   <data name="info_not_sel" xml:space="preserve">
-    <value>Seleccione un archivo de script y ROM para generar el OTR.</value>
+    <value>Seleccione un script y ROM para generar un OTR.</value>
   </data>
   <data name="sel_rom" xml:space="preserve">
     <value>Seleccione su ROM: </value>
@@ -152,5 +152,29 @@
   </data>
   <data name="btn_wait" xml:space="preserve">
     <value>Generando...</value>
+  </data>
+  <data name="nav_menu" xml:space="preserve">
+    <value>Menú de navegación</value>
+  </data>
+  <data name="error_404_h1" xml:space="preserve">
+    <value>404 - Página no encontrada</value>
+  </data>
+  <data name="error_404_p" xml:space="preserve">
+    <value>Lo sentimos, la página que busca no existe.</value>
+  </data>
+  <data name="error_404_title" xml:space="preserve">
+    <value>Página no encontrada</value>
+  </data>
+  <data name="lang_tag" xml:space="preserve">
+    <value>es</value>
+  </data>
+  <data name="visit_on_gh" xml:space="preserve">
+    <value>Visite OTRMod en GitHub</value>
+  </data>
+  <data name="gimme_cafe" xml:space="preserve">
+    <value>Mantenme despierto</value>
+  </data>
+  <data name="dev_by" xml:space="preserve">
+    <value>Desarrollado por Amaro Martínez (xoascf)</value>
   </data>
 </root>

@@ -1,12 +1,21 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
+﻿@inject IJSRuntime JsRuntime
+@code {
+	protected override async Task OnInitializedAsync() {
+		await JsRuntime.InvokeVoidAsync("setLang", T["lang_tag"].ToString());
+	}
+}
+<Router AppAssembly="@typeof(App).Assembly">
+	<Found Context="routeData">
+		<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+		<FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+	</Found>
+	<NotFound>
+		<PageTitle>@T["error_404_title"]</PageTitle>
+		<LayoutView Layout="@typeof(MainLayout)">
+			<div class="text-center">
+				<h1>@T["error_404_h1"]</h1>
+				<p role="alert">@T["error_404_p"]</p>
+			</div>
+		</LayoutView>
+	</NotFound>
 </Router>
