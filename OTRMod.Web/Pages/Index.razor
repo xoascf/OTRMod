@@ -8,10 +8,16 @@
 <h1>@T["get_otr_h1"]</h1>
 <br />
 <p>
-	<label>@T["sel_script"]<InputFile OnChange="@ProcessScript" accept=".txt" single /></label>
+	<div class="mb-3">
+		<label for="scriptFile" class="form-label">@T["sel_script"]</label>
+		<InputFile class="form-control" type="file" id="scriptFile" OnChange="@ProcessScript" accept=".txt" single />
+	</div>
 </p>
 <p>
-	<label>@T["sel_rom"]<InputFile OnChange="@ProcessROM" accept=".z64,.n64,.v64,.u64,.rom" single /></label>
+	<div class="mb-3">
+		<label for="romFile" class="form-label">@T["sel_rom"]</label>
+		<InputFile class="form-control" type="file" id="romFile" OnChange="@ProcessROM" accept=".z64,.n64,.v64,.u64,.rom" single />
+	</div>
 </p>
 @{
 	string type; string msg;
@@ -35,8 +41,13 @@
 	}
 }
 <div class="alert @type" role="alert">@msg</div>
-<button type="submit" class="btn btn-primary" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateOTR">
-	@(_genStatus == GenerationStatus.Generating ? T["btn_wait"] : T["btn_gen_otr"])
+<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateOTR">
+	@if (_genStatus == GenerationStatus.Generating) {
+		<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+		@($"\n{T["btn_wait"]}\n")
+	} else {
+		@T["btn_gen_otr"]
+	}
 </button>
 @code {
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;

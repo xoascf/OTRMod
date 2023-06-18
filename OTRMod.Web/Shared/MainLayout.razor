@@ -1,6 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using Toolbelt.Blazor.PWA.Updater
+@inherits LayoutComponentBase
 
-<Toolbelt.Blazor.PWA.Updater.PWAUpdater />
+<PWAUpdater Text=@T["upd_txt"] ButtonCaption=@T["upd_btn"] />
 <div class="page">
 	<div class="sidebar">
 		<NavMenu />

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
@@ -21,85 +20,84 @@
 
 <body>
 	<div id="app">
-		<!-- SpinKit XD -->
-		<div class="spinner">
+		<div id="spinner">
 			<div class="cube1"></div>
 			<div class="cube2"></div>
 		</div>
 	</div>
-	<style>
-		.spinner {
-			margin: 100px auto;
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			margin-top: -50px;
-			margin-left: -50px;
-			width: 100px;
-			height: 100px;
+<style>
+	#spinner {
+		height: 58px;
+		width: 58px;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		right: 0;
+		margin: auto;
+		position: absolute;
+	}
+
+	.cube1, .cube2 {
+		background-color: #333;
+		width: 16px;
+		height: 16px;
+		position: absolute;
+		top: 0;
+		left: 0;
+		-webkit-animation: sk-cubemove 1.8s infinite ease-in-out;
+		animation: sk-cubemove 1.8s infinite ease-in-out;
+	}
+
+	.cube2 {
+		-webkit-animation-delay: -0.9s;
+		animation-delay: -0.9s;
+	}
+
+	@-webkit-keyframes sk-cubemove {
+		25% {
+			-webkit-transform: translateX(42px) rotate(-90deg) scale(0.5)
 		}
 
-		.cube1, .cube2 {
-			background-color: #333;
-			width: 25px;
-			height: 25px;
-			position: absolute;
-			top: 0;
-			left: 0;
-			-webkit-animation: sk-cubemove 1.8s infinite ease-in-out;
-			animation: sk-cubemove 1.8s infinite ease-in-out;
+		50% {
+			-webkit-transform: translateX(42px) translateY(42px) rotate(-180deg)
 		}
 
-		.cube2 {
-			-webkit-animation-delay: -0.9s;
-			animation-delay: -0.9s;
+		75% {
+			-webkit-transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5)
 		}
 
-		@-webkit-keyframes sk-cubemove {
-			25% {
-				-webkit-transform: translateX(42px) rotate(-90deg) scale(0.5)
-			}
+		100% {
+			-webkit-transform: rotate(-360deg)
+		}
+	}
 
-			50% {
-				-webkit-transform: translateX(42px) translateY(42px) rotate(-180deg)
-			}
-
-			75% {
-				-webkit-transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5)
-			}
-
-			100% {
-				-webkit-transform: rotate(-360deg)
-			}
+	@keyframes sk-cubemove {
+		25% {
+			-webkit-transform: translateX(42px) rotate(-90deg) scale(0.5);
+			transform: translateX(42px) rotate(-90deg) scale(0.5);
 		}
 
-		@keyframes sk-cubemove {
-			25% {
-				-webkit-transform: translateX(42px) rotate(-90deg) scale(0.5);
-				transform: translateX(42px) rotate(-90deg) scale(0.5);
-			}
-
-			50% {
-				-webkit-transform: translateX(42px) translateY(42px) rotate(-179deg);
-				transform: translateX(42px) translateY(42px) rotate(-179deg);
-			}
-
-			50.1% {
-				-webkit-transform: translateX(42px) translateY(42px) rotate(-180deg);
-				transform: translateX(42px) translateY(42px) rotate(-180deg);
-			}
-
-			75% {
-				-webkit-transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5);
-				transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5);
-			}
-
-			100% {
-				-webkit-transform: rotate(-360deg);
-				transform: rotate(-360deg);
-			}
+		50% {
+			-webkit-transform: translateX(42px) translateY(42px) rotate(-179deg);
+			transform: translateX(42px) translateY(42px) rotate(-179deg);
 		}
-	</style>
+
+		50.1% {
+			-webkit-transform: translateX(42px) translateY(42px) rotate(-180deg);
+			transform: translateX(42px) translateY(42px) rotate(-180deg);
+		}
+
+		75% {
+			-webkit-transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5);
+			transform: translateX(0px) translateY(42px) rotate(-270deg) scale(0.5);
+		}
+
+		100% {
+			-webkit-transform: rotate(-360deg);
+			transform: rotate(-360deg);
+		}
+	}
+</style>
 	<div id="blazor-error-ui">
 		An unhandled error has occurred.
 		<a href="" class="reload">Reload</a>

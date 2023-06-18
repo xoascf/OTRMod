@@ -93,6 +93,10 @@ namespace OTRMod.Web.Shared.Resources {
 
 	public static string sel_script => GetLocalisedString("sel_script");
 
+	public static string upd_btn => GetLocalisedString("upd_btn");
+
+	public static string upd_txt => GetLocalisedString("upd_txt");
+
 	public static string visit_on_gh => GetLocalisedString("visit_on_gh");
 
 	}

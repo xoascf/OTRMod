@@ -142,10 +142,10 @@
     <value>Seleccione un script y ROM para generar un OTR.</value>
   </data>
   <data name="sel_rom" xml:space="preserve">
-    <value>Seleccione su ROM: </value>
+    <value>Elija una ROM: </value>
   </data>
   <data name="sel_script" xml:space="preserve">
-    <value>Seleccione su script: </value>
+    <value>Elija un script: </value>
   </data>
   <data name="get_otr_tab" xml:space="preserve">
     <value>Obtener OTR</value>
@@ -176,5 +176,11 @@
   </data>
   <data name="dev_by" xml:space="preserve">
     <value>Desarrollado por Amaro Martínez (xoascf)</value>
+  </data>
+  <data name="upd_btn" xml:space="preserve">
+    <value>Actualizar ahora</value>
+  </data>
+  <data name="upd_txt" xml:space="preserve">
+    <value>Hay una nueva versión disponible.</value>
   </data>
 </root>
