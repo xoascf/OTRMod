@@ -3,21 +3,19 @@
 using OTRMod;
 using OTRMod.OTR;
 using OTRMod.ROM;
-using static OTRMod.Console.Helper;
-using MS = System.IO.MemoryStream;
 
-static MS Run(string pathImgData, bool romMode, bool calc, out string outName) {
+static MemStream Run(string pathImgData, bool romMode, bool calc, out string outName) {
 	bool decompressOnly = romMode && calc;
 	outName = "Decompressed.z64";
 	try {
 		byte[] iData = File.ReadAllBytes(pathImgData);
 		if (romMode)
 			iData = Decompressor.Data(iData.ToBigEndian(), calc: calc);
-		MS ms;
+		MemStream ms;
 		if (decompressOnly)
-			ms = new MS(iData);
+			ms = new MemStream(iData);
 		else {
-			ms = new MS();
+			ms = new MemStream();
 			ms.SetLength(0);
 			ScriptParser sParser = new() {
 				ScriptStrings = File.ReadAllLines(ReadPath("Script")),
@@ -36,7 +34,7 @@ static MS Run(string pathImgData, bool romMode, bool calc, out string outName) {
 	}
 }
 
-static void Save(MS ms, string path) {
+static void Save(MemStream ms, string path) {
 	using FileStream fs = new(path, FileMode.OpenOrCreate);
 	_ = ms.Seek(0, SeekOrigin.Begin);
 	ms.CopyTo(fs);
@@ -45,11 +43,13 @@ static void Save(MS ms, string path) {
 }
 
 static void TUIRun(bool romMode, bool calc) {
-	using MS genMs = Run(ReadPath("Image"), romMode, calc, out string outName);
+	using MemStream genMs = Run(ReadPath("Image"), romMode, calc, out string outName);
 	Save(genMs, ReadPath($"Output (default: {outName})", outName, false));
 	genMs.Flush();
 	genMs.Close();
+#if NETCOREAPP1_0_OR_GREATER
 	CompactAndCollect();
+#endif
 }
 
 Dictionary<int, Action> options = new() {

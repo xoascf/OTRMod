@@ -30,7 +30,11 @@ public static class Decompressor {
 					continue;
 
 				case 0: /* Already decompressed */
+#if NETCOREAPP2_1_OR_GREATER
 					inROM.Slice(tbl.PStart, tbl.Size).CopyTo(outROM.Slice(tbl.VStart));
+#else
+					outROM.Set(tbl.VStart, inROM.Get(tbl.PStart, tbl.Size));
+#endif
 					break;
 
 				default:
@@ -52,33 +56,46 @@ public static class Decompressor {
 		return outROM;
 	}
 
-	private static void Decode(Span<byte> src, Span<byte> dst, int size) {
-		/* Yaz0: http://amnoid.de/gc/yaz0.txt */
+	/* Yaz0: http://amnoid.de/gc/yaz0.txt */
+#if NETCOREAPP2_1_OR_GREATER
+	private static void Decode(Span<byte> srcArray, Span<byte> dstArray, int size) {
 		int srcPlace = 16;
-		int dstPlace = 0;
+		int dstOffset = 0;
+#else
+	private static void Decode(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		byte[] srcArray = src.Array;
+		byte[] dstArray = dst.Array;
+		int srcPlace = src.Offset + 16;
+		int dstOffset = dst.Offset;
+#endif
+		int dstPlace = dstOffset;
 		int bitCount = 0;
 
 		byte codeByte = 0;
 
-		while (dstPlace < size) {
+		while (dstPlace - dstOffset < size) {
 			if (bitCount == 0) {
-				codeByte = src[srcPlace++];
+				codeByte = srcArray[srcPlace++];
 				bitCount = 8;
 			}
 			if ((codeByte & 0x80u) != 0)
-				dst[dstPlace++] = src[srcPlace++];
+				dstArray[dstPlace++] = srcArray[srcPlace++];
 			else {
-				Span<byte> bytes = src.Slice(srcPlace, 2);
+#if NETCOREAPP2_1_OR_GREATER
+				Span<byte> bytes = srcArray.Slice(srcPlace, 2);
+#else
+				byte[] bytes = srcArray.Get(srcPlace, 2);
+#endif
 				srcPlace += 2;
 
 				int distance = ((bytes[0] & 0xF) << 8) | bytes[1];
 				int copyPlace = dstPlace - (distance + 1);
 				int numBytes = bytes[0] >> 4;
 
-				numBytes = numBytes != 0 ? numBytes + 2 : src[srcPlace++] + 18;
+				numBytes = numBytes != 0 ? numBytes + 2 : srcArray[srcPlace++] + 18;
 
 				for (int i = 0; i < numBytes; i++)
-					dst[dstPlace++] = dst[copyPlace++];
+					dstArray[dstPlace++] = dstArray[copyPlace++];
 			}
 
 			codeByte = (byte)(codeByte << 1);

@@ -10,11 +10,13 @@ internal class Helper {
 		Con.Write("Goodbye!"); Environment.Exit(code);
 	}
 
+#if NETCOREAPP1_0_OR_GREATER
 	internal static void CompactAndCollect() {
 		GCSettings.LargeObjectHeapCompactionMode =
 			GCLargeObjectHeapCompactionMode.CompactOnce;
 		GC.Collect();
 	}
+#endif
 
 	internal static string ReadPath
 		(string name, string fallback = "", bool checkIfExists = true) {
@@ -26,7 +28,11 @@ internal class Helper {
 		} while (string.IsNullOrWhiteSpace(path));
 
 		if (path.StartsWith("\"") && path.EndsWith("\""))
+#if NETCOREAPP3_0_OR_GREATER
 			path = path[1..^1];
+#else
+			path = path.Substring(1, path.Length - 2);
+#endif
 
 		while (checkIfExists && !File.Exists(path)) {
 			Con.WriteLine("File not found!");

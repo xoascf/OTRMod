@@ -1,19 +1,26 @@
 /* Licensed under the Open Software License version 3.0 */
 
 using OTRMod.OTR;
-using War3Net.IO.Mpq;
+using SturmScharf;
 using System.IO;
 
 namespace OTRMod.Utility;
 
 internal static class IO {
 	public static byte[] Get(this byte[] input, int start, int length) {
-		byte[] bytes = new byte[length];
+		if (start < 0 || start >= input.Length || length <= 0) /* Invalid! */
+#if NET40
+			return new byte[0];
+#else
+			return Array.Empty<byte>();
+#endif
+		if (start + length > input.Length)
+			length = input.Length - start; /* If exceeds the size take it all! */
 
-		using MemoryStream s = new(input); s.Seek(start, SeekOrigin.Begin);
-		_ = s.Read(bytes, 0, length);
+		byte[] result = new byte[length];
+		Array.Copy(input, start, result, 0, length);
 
-		return bytes;
+		return result;
 	}
 
 	public static byte[] GetAllFrom(byte[] input, int start) {
@@ -23,18 +30,22 @@ internal static class IO {
 	}
 
 	public static void Set(this byte[] array, int offset, object newData) {
-		using MemoryStream s = new(array);
-		s.Seek(offset, SeekOrigin.Begin);
+		if (offset < 0 || offset >= array.Length || newData == null)
+			return; /* Invalid! */
 
 		switch (newData) {
-			case byte[] bytes: foreach (byte t in bytes) s.WriteByte(t);
+			case byte[] bytes:
+				int length = Math.Min(array.Length - offset, bytes.Length);
+				Array.Copy(bytes, 0, array, offset, length);
 				break;
 
-			case byte data: s.WriteByte(data);
+			case byte data:
+				array[offset] = data;
 				break;
 		}
 	}
 
+#if NETCOREAPP2_1_OR_GREATER
 	public static Span<T> Slice<T>(this T[] input, int start) {
 		return new(input, start, input.Length - start);
 	}
@@ -42,6 +53,30 @@ internal static class IO {
 	public static Span<T> Slice<T>(this T[] input, int start, int length) {
 		return new(input, start, length);
 	}
+#else
+	public static ArraySegment<T> Slice<T>(this T[] input, int start) {
+		if (input == null)
+			throw new ArgumentNullException(nameof(input));
+
+		if (start < 0 || start > input.Length)
+			throw new ArgumentOutOfRangeException(nameof(start));
+
+		return new ArraySegment<T>(input, start, input.Length - start);
+	}
+
+	public static ArraySegment<T> Slice<T>(this T[] input, int start, int length) {
+		if (input == null)
+			throw new ArgumentNullException(nameof(input));
+
+		if (start < 0 || start > input.Length)
+			throw new ArgumentOutOfRangeException(nameof(start));
+
+		if (length < 0 || start + length > input.Length)
+			throw new ArgumentOutOfRangeException(nameof(length));
+
+		return new ArraySegment<T>(input, start, length);
+	}
+#endif
 
 	public static string Concatenate(params string[] paths) {
 		string newPath = paths[0];

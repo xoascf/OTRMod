@@ -2,15 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net40-client</TargetFrameworks>
     <LangVersion>10</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNetZip" Version="1.16.0" />
-    <PackageReference Include="War3Net.IO.Mpq" Version="5.6.1" />
+    <ProjectReference Include="..\SturmScharf\SturmScharf.csproj" />
   </ItemGroup>
 
 </Project>

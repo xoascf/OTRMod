@@ -20,87 +20,87 @@
 	</div>
 </p>
 @{
-	string type; string msg;
-	switch (_genStatus) {
-		case GenerationStatus.NoSelected:
-			type = "alert-primary"; msg = T["info_not_sel"];
-			break;
-		case GenerationStatus.Generating:
-			type = "alert-secondary"; msg = T["info_wait"];
-			break;
-		case GenerationStatus.Finished:
-			type = "alert-success"; msg = T["info_fin"];
-			break;
-		case GenerationStatus.Error:
-			type = "alert-danger"; msg = T["error", _lastError];
-			break;
-		case GenerationStatus.Selected:
-		default:
-			type = "alert-info"; msg = T["info_sel"];
-			break;
-	}
+string type; string msg;
+switch (_genStatus) {
+	case GenerationStatus.NoSelected:
+		type = "alert-primary"; msg = T["info_not_sel"];
+		break;
+	case GenerationStatus.Generating:
+		type = "alert-secondary"; msg = T["info_wait"];
+		break;
+	case GenerationStatus.Finished:
+		type = "alert-success"; msg = T["info_fin"];
+		break;
+	case GenerationStatus.Error:
+		type = "alert-danger"; msg = T["error", _lastError];
+		break;
+	case GenerationStatus.Selected:
+	default:
+		type = "alert-info"; msg = T["info_sel"];
+		break;
+}
 }
 <div class="alert @type" role="alert">@msg</div>
 <button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateOTR">
 	@if (_genStatus == GenerationStatus.Generating) {
-		<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
-		@($"\n{T["btn_wait"]}\n")
-	} else {
-		@T["btn_gen_otr"]
-	}
+	<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+	@($"\n{T["btn_wait"]}\n")
+} else {
+	@T["btn_gen_otr"]
+}
 </button>
 @code {
-	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
-	private readonly string[] _separators = { "\n", "\r\n", "\r" };
-	private string[]? _script;
-	private readonly MemoryStream _scriptMs = new();
-	private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
-	private GenerationStatus _genStatus = GenerationStatus.NoSelected;
-	private string _lastError = string.Empty;
+[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
+private readonly string[] _separators = { "\n", "\r\n", "\r" };
+private string[]? _script;
+private readonly MemoryStream _scriptMs = new();
+private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
+private GenerationStatus _genStatus = GenerationStatus.NoSelected;
+private string _lastError = string.Empty;
 
-	private async void ProcessScript(InputFileChangeEventArgs e) {
-		_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
-		if (_script != null) Array.Clear(_script, 0, _script.Length);
-		await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
-		_genStatus = GenerationStatus.Selected;
-	}
+private async void ProcessScript(InputFileChangeEventArgs e) {
+	_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
+	if (_script != null) Array.Clear(_script, 0, _script.Length);
+	await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
+	_genStatus = GenerationStatus.Selected;
+}
 
-	private async void ProcessROM(InputFileChangeEventArgs e) {
-		_romMs.SetLength(0); IBrowserFile romFile = e.File;
-		await romFile.OpenReadStream(ID.Size.ADec).CopyToAsync(_romMs);
-		_genStatus = GenerationStatus.Selected;
-	}
+private async void ProcessROM(InputFileChangeEventArgs e) {
+	_romMs.SetLength(0); IBrowserFile romFile = e.File;
+	await romFile.OpenReadStream(ID.Size.ADec).CopyToAsync(_romMs);
+	_genStatus = GenerationStatus.Selected;
+}
 
-	private async Task GenerateOTR() {
-		if (_genStatus == GenerationStatus.NoSelected) return;
-		_genStatus = GenerationStatus.Generating;
-		await Task.Delay(10);
-		try {
-			await RunProcess();
-			_genStatus = GenerationStatus.Finished;
-		} catch (Exception ex) {
-			_genStatus = GenerationStatus.Error;
-			_lastError = ex.ToString();
-		}
+private async Task GenerateOTR() {
+	if (_genStatus == GenerationStatus.NoSelected) return;
+	_genStatus = GenerationStatus.Generating;
+	await Task.Delay(10);
+	try {
+		await RunProcess();
+		_genStatus = GenerationStatus.Finished;
+	} catch (Exception ex) {
+		_genStatus = GenerationStatus.Error;
+		_lastError = ex.ToString();
 	}
+}
 
-	private async Task RunProcess() {
-		_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).Split(_separators, StringSplitOptions.None);
-		byte[] decompressed = Decompressor.Data(ReadFully(_romMs).ToBigEndian(), calc: false);
-		ScriptParser sParser = new() {
-			ScriptStrings = _script,
-			ImageData = decompressed,
-		};
-		sParser.ParseScript();
-		_otrMs.SetLength(0);
-		Generate.FromImage(ref _otrMs);
-		await DlFileService.DownloadFile(sParser.OTRFileName, _otrMs, "application/octet-stream");
-	}
+private async Task RunProcess() {
+	_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).Split(_separators, StringSplitOptions.None);
+	byte[] decompressed = Decompressor.Data(ReadFully(_romMs).ToBigEndian(), calc: false);
+	ScriptParser sParser = new() {
+		ScriptStrings = _script,
+		ImageData = decompressed,
+	};
+	sParser.ParseScript();
+	_otrMs.SetLength(0);
+	Generate.FromImage(ref _otrMs);
+	await DlFileService.DownloadFile(sParser.OTRFileName, _otrMs, "application/octet-stream");
+}
 
-	private static byte[] ReadFully(Stream stream) {
-		if (stream is MemoryStream ms) return ms.ToArray();
-		using MemoryStream memoryStream = new();
-		stream.CopyTo(memoryStream);
-		return memoryStream.ToArray();
-	}
+private static byte[] ReadFully(Stream stream) {
+	if (stream is MemoryStream ms) return ms.ToArray();
+	using MemoryStream memoryStream = new();
+	stream.CopyTo(memoryStream);
+	return memoryStream.ToArray();
+}
 }

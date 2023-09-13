@@ -1,0 +1,5 @@
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using MemStream = System.IO.MemoryStream;
+global using static OTRMod.Console.Helper;

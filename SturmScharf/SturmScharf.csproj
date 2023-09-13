@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>0.8.0</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Description>Library for opening and creating MPQ files.</Description>
+    <PackageTags>mpq;warcraft3</PackageTags>
+    <TargetFrameworks>net6.0;net40-client</TargetFrameworks>
+    <LangVersion>10</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="DotNetZip" Version="1.16.0" />
+    <PackageReference Include="Nullable" Version="1.3.1" Condition="'$(TargetFramework)' == 'net40-client'">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

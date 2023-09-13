@@ -66,7 +66,18 @@ public class ScriptParser {
 	}
 
 	private byte[] GetData(object s, object l) => ImageData.Get(s.AsInt(), l.AsInt());
-	private string GetOutPath(string[] expInfo) => Concatenate(SubDir, expInfo[^1]);
+	private string GetOutPath(string[] expInfo) {
+		string path;
+
+#if NETCOREAPP3_0_OR_GREATER
+		path = expInfo[^1];
+#else
+		path = expInfo[expInfo.Length - 1];
+#endif
+
+		return Concatenate(SubDir, path);
+	}
+
 	private const string DefaultFileName = "Mod.otr";
 	public string OTRFileName = DefaultFileName;
 
