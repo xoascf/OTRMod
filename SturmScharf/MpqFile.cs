@@ -1,4 +1,4 @@
-﻿using SturmScharf.Compression.Common;
+using SturmScharf.Compression.Common;
 using SturmScharf.Extensions;
 using System.ComponentModel;
 using System.IO;
@@ -51,17 +51,6 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 			}
 
 			_locale = value;
-		}
-	}
-
-	public MpqCompressionType CompressionType {
-		get => _compressionType;
-		set {
-			if (!value.IsKnownMpqCompressionType()) {
-				throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MpqCompressionType));
-			}
-
-			_compressionType = value;
 		}
 	}
 

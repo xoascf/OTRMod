@@ -29,15 +29,19 @@ static MemStream Run(string pathImgData, bool romMode, bool calc, out string out
 		return ms;
 	}
 	catch (Exception e) {
-		Console.WriteLine(e);
+		Con.WriteLine(e);
 		throw;
 	}
 }
 
-static void Save(MemStream ms, string path) {
+static void Save(Stream s, string path) {
+	string? dir = Path.GetDirectoryName(path);
+	if (!string.IsNullOrEmpty(dir))
+		Directory.CreateDirectory(dir);
+
 	using FileStream fs = new(path, FileMode.OpenOrCreate);
-	_ = ms.Seek(0, SeekOrigin.Begin);
-	ms.CopyTo(fs);
+	_ = s.Seek(0, SeekOrigin.Begin);
+	s.CopyTo(fs);
 	fs.Flush();
 	fs.Close();
 }
@@ -52,34 +56,102 @@ static void TUIRun(bool romMode, bool calc) {
 #endif
 }
 
+static void Extract(string? filePath = null, string? outDir = null) {
+	Dictionary<string, Stream> OTRFiles = new();
+	filePath ??= ReadPath("OTR");
+
+	Con.WriteLine("Loading...");
+	using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	Load.From(fs, ref OTRFiles);
+	outDir ??= ReadPath("Output (default: Extracted)", "Extracted", false);
+
+	Con.WriteLine("Extracting...");
+	foreach (KeyValuePair<string, Stream> file in OTRFiles)
+		Save(file.Value, Path.Combine(outDir, EncodePath(file.Key)));
+
+	OTRFiles.Clear();
+	Con.WriteLine("Extraction complete.");
+}
+
+static void Build(string? inputDir = null, string ? outPath = null) {
+	MemStream ms = new();
+	ms.SetLength(0);
+
+	inputDir ??= ReadPath("Input directory", checkIfExists: false);
+
+	string[] filePaths = Directory.GetFiles(inputDir, "*", SearchOption.AllDirectories);
+
+	foreach (string filePath in filePaths) {
+#if NETCOREAPP3_0_OR_GREATER
+		string newPath = filePath[inputDir.Length..].Replace(@"\", "/");
+		if (newPath.StartsWith("/")) newPath = newPath[1..];
+#else
+		string newPath = filePath.Substring(inputDir.Length).Replace(@"\", "/");
+		if (newPath.StartsWith("/")) newPath = newPath.Substring(1);
+#endif
+		byte[] fileBytes = File.ReadAllBytes(filePath);
+		Generate.AddFile(DecodePath(newPath), fileBytes);
+	}
+
+	Generate.FromImage(ref ms);
+
+	if (outPath == null) {
+		outPath = $"{Path.GetFileName(inputDir)}.otr";
+		outPath = ReadPath($"Output (default: {outPath})", outPath, false);
+	}
+
+	Save(ms, outPath);
+	ms.Flush();
+	ms.Close();
+}
+
+if (args.Length > 0) {
+	string? otr = args.GetArg("--extract", "-e");
+	string? dir = args.GetArg("--dir", "-d");
+
+	if (otr == null && dir == null) {
+		dir = args.GetArg("--build", "-b");
+		otr = args.GetArg("--otr", "-o");
+
+		Build(dir, otr);
+
+	} else Extract(otr, dir);
+
+	return;
+}
+
 Dictionary<int, Action> options = new() {
 	{ 1, () => TUIRun(true, false) },
 	{ 2, () => TUIRun(false, false) },
 	{ 3, () => TUIRun(true, true) },
-	{ 4, () => Exit(0) }
+	{ 4, () => Extract() },
+	{ 5, () => Build() },
+	{ 6, () => Exit(0) }
 };
 
-Console.WriteLine(Console.Title = "OTRMod - Console Mode");
+Con.WriteLine(Con.Title = "OTRMod - Console Mode");
 
 do {
-	Console.Write("\nSelect an option:\n" +
+	Con.Write("\nSelect an option:\n" +
 		"1. Create OTR mod from ROM (with auto-decompress)\n" +
 		"2. Create OTR mod from file\n" +
 		"3. Don't create OTR mod, just auto-decompress ROM\n" +
-		"4. Exit\n");
+		"4. Extract OTR mod\n" +
+		"5. Build OTR from folder\n" +
+		"6. Exit\n");
 
-	if (!int.TryParse(Console.ReadLine(), out int choice)) {
-		Console.WriteLine("Please enter a number.");
+	if (!int.TryParse(Con.ReadLine(), out int choice)) {
+		Con.WriteLine("Please enter a number.");
 		continue;
 	}
 	if (!options.TryGetValue(choice, out Action? action)) {
-		Console.WriteLine("Please select a valid option.");
+		Con.WriteLine("Please select a valid option.");
 		continue;
 	}
 
-	Console.WriteLine();
+	Con.WriteLine();
 	action();
-	Console.WriteLine();
+	Con.WriteLine();
 
 	if (AnsweredYesTo("Do you want to start again?"))
 		continue;

@@ -18,8 +18,8 @@ public sealed class Attributes {
 
 	public AttributesFlags Flags { get; set; }
 	public List<int> Crc32s { get; private set; } = new();
-	public List<DateTime> DateTimes { get; private set; } = new();
-	public List<byte[]> Unk0x04s { get; private set; } = new();
+	public List<long> FileTimes { get; private set; } = new();
+	public List<byte[]> Md5s { get; private set; } = new();
 
 	internal void ReadFrom(BinaryReader reader) {
 		Unk = reader.ReadInt32();
@@ -41,13 +41,13 @@ public sealed class Attributes {
 			bytesPerMpqFile += 4;
 		}
 
-		bool hasDateTime = Flags.HasFlag(AttributesFlags.DateTime);
-		if (hasDateTime) {
+		bool hasFileTime = Flags.HasFlag(AttributesFlags.FileTime);
+		if (hasFileTime) {
 			bytesPerMpqFile += 8;
 		}
 
-		bool hasUnk0x04 = Flags.HasFlag(AttributesFlags.Unk0x04);
-		if (hasUnk0x04) {
+		bool hasMd5 = Flags.HasFlag(AttributesFlags.Md5);
+		if (hasMd5) {
 			bytesPerMpqFile += 16;
 		}
 
@@ -65,15 +65,15 @@ public sealed class Attributes {
 				}
 			}
 
-			if (hasDateTime) {
+			if (hasFileTime) {
 				for (nint i = 0; i < fileCount; i++) {
-					DateTimes.Add(new DateTime(reader.ReadInt64(), DateTimeKind.Unspecified));
+					FileTimes.Add(reader.ReadInt64());
 				}
 			}
 
-			if (hasUnk0x04) {
+			if (hasMd5) {
 				for (nint i = 0; i < fileCount; i++) {
-					Unk0x04s.Add(reader.ReadBytes(16));
+					Md5s.Add(reader.ReadBytes(16));
 				}
 			}
 		}
@@ -92,15 +92,15 @@ public sealed class Attributes {
 			}
 		}
 
-		if (Flags.HasFlag(AttributesFlags.DateTime)) {
-			foreach (DateTime dateTime in DateTimes) {
-				writer.Write(dateTime.Ticks);
+		if (Flags.HasFlag(AttributesFlags.FileTime)) {
+			foreach (long fileTime in FileTimes) {
+				writer.Write(fileTime);
 			}
 		}
 
-		if (Flags.HasFlag(AttributesFlags.Unk0x04)) {
-			foreach (byte[] unk0x04 in Unk0x04s) {
-				writer.Write(unk0x04);
+		if (Flags.HasFlag(AttributesFlags.Md5)) {
+			foreach (byte[] md5 in Md5s) {
+				writer.Write(md5);
 			}
 		}
 	}

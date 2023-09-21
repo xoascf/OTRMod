@@ -39,11 +39,11 @@ public class MpqStream : Stream {
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="MpqStream" /> class.
+	/// Initializes a new instance of the <see cref="MpqStream"/> class.
 	/// </summary>
-	/// <param name="entry">The file's entry in the <see cref="BlockTable" />.</param>
-	/// <param name="baseStream">The <see cref="MpqArchive" />'s stream.</param>
-	/// <param name="blockSize">The <see cref="MpqArchive.BlockSize" />.</param>
+	/// <param name="entry">The file's entry in the <see cref="BlockTable"/>.</param>
+	/// <param name="baseStream">The <see cref="MpqArchive"/>'s stream.</param>
+	/// <param name="blockSize">The <see cref="MpqArchive.BlockSize"/>.</param>
 	internal MpqStream(MpqEntry entry, Stream baseStream, int blockSize) {
 		_canRead = true;
 		_isStreamOwner = false;
@@ -63,17 +63,36 @@ public class MpqStream : Stream {
 		BlockSize = blockSize;
 
 		if (_isSingleUnit) {
-			if (!TryPeekCompressionType(out MpqCompressionType? mpqCompressionType) ||
-				mpqCompressionType.HasValue && !mpqCompressionType.Value.IsKnownMpqCompressionType()) {
-				_canRead = false;
+			// Read the entire file into memory
+			byte[] filedata = new byte[CompressedSize];
+			lock (_stream) {
+				_stream.Seek(FilePosition, SeekOrigin.Begin);
+				int read = _stream.Read(filedata, 0, filedata.Length);
+				if (read != filedata.Length) {
+					throw new MpqParserException("Insufficient data or invalid data length");
+				}
 			}
+
+			if (IsEncrypted && FileSize > 3) {
+				if (_encryptionSeed == 0) {
+					throw new MpqParserException("Unable to determine encryption key");
+				}
+
+				StormBuffer.DecryptBlock(filedata, _encryptionSeed);
+			}
+
+			_currentData = Flags.HasFlag(MpqFileFlags.CompressedMulti) && CompressedSize > 0
+				? DecompressMulti(filedata, FileSize)
+				: filedata;
 		}
 		else {
 			_currentBlockIndex = -1;
 
+			// Compressed files start with an array of offsets to make seeking possible
 			if (IsCompressed) {
 				int blockPositionsCount = (int)((FileSize + BlockSize - 1) / BlockSize) + 1;
 
+				// Files with metadata have an extra block containing block checksums
 				if (Flags.HasFlag(MpqFileFlags.FileHasMetadata)) {
 					blockPositionsCount++;
 				}
@@ -82,22 +101,21 @@ public class MpqStream : Stream {
 
 				lock (_stream) {
 					_stream.Seek(FilePosition, SeekOrigin.Begin);
-					using (BinaryReader reader = new(_stream, Encoding.UTF8, true)) {
-						for (int i = 0; i < _blockPositions.Length; i++) {
-							_blockPositions[i] = reader.ReadUInt32();
+					using (BinaryReader br = new(_stream, new UTF8Encoding(), true)) {
+						for (int i = 0; i < blockPositionsCount; i++) {
+							_blockPositions[i] = br.ReadUInt32();
 						}
 					}
 				}
 
-				uint expectedOffsetFirstBlock = (uint)_blockPositions.Length * 4;
+				uint blockpossize = (uint)blockPositionsCount * 4;
 
-				if (IsEncrypted && _blockPositions.Length > 1) {
-					uint maxOffsetSecondBlock = (uint)BlockSize + expectedOffsetFirstBlock;
+				if (IsEncrypted && blockPositionsCount > 1) {
+					uint maxOffset1 = (uint)BlockSize + blockpossize;
 					if (_encryptionSeed == 0) {
-						if (!entry.TryUpdateEncryptionSeed(_blockPositions[0], _blockPositions[1],
-								expectedOffsetFirstBlock, maxOffsetSecondBlock)) {
-							_canRead = false;
-							return;
+						// This should only happen when the file name is not known.
+						if (!entry.TryUpdateEncryptionSeed(_blockPositions[0], _blockPositions[1], blockpossize, maxOffset1)) {
+							throw new MpqParserException("Unable to determine encyption seed");
 						}
 					}
 
@@ -107,27 +125,13 @@ public class MpqStream : Stream {
 				}
 
 				uint currentPosition = _blockPositions[0];
-				for (int i = 1; i < _blockPositions.Length; i++) {
+				for (int i = 1; i < blockPositionsCount; i++) {
 					uint currentBlockSize = _blockPositions[i] - currentPosition;
 
-					if (currentBlockSize <= 0 || currentBlockSize > BlockSize) {
-						_canRead = false;
-						break;
-					}
-
-					int expectedLength = Math.Min((int)(Length - (i - 1) * BlockSize), BlockSize);
-					if (!TryPeekCompressionType(i - 1, expectedLength,
-							out MpqCompressionType? mpqCompressionType) ||
-						mpqCompressionType.HasValue && !mpqCompressionType.Value.IsKnownMpqCompressionType()) {
-						_canRead = false;
-						break;
-					}
+					_canRead = currentBlockSize > 0 && currentBlockSize <= BlockSize;
 
 					currentPosition = _blockPositions[i];
 				}
-			}
-			else if (IsEncrypted && FileSize >= 4 && _encryptionSeed == 0) {
-				_canRead = false;
 			}
 		}
 	}
@@ -144,9 +148,6 @@ public class MpqStream : Stream {
 	public bool IsCompressed { get; }
 
 	public bool IsEncrypted { get; }
-
-	[Obsolete("Use CanRead instead.")]
-	public bool CanBeDecrypted => !IsEncrypted || FileSize < 4 || _encryptionSeed != 0;
 
 	public uint CompressedSize { get; }
 

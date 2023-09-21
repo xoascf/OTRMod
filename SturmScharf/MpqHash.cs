@@ -1,4 +1,4 @@
-﻿using SturmScharf.Extensions;
+using SturmScharf.Extensions;
 using System.IO;
 using SB = SturmScharf.StormBuffer;
 
@@ -18,15 +18,6 @@ public struct MpqHash {
 	/// </summary>
 	public MpqHash(ulong name, MpqLocale locale, uint blockIndex, uint mask)
 		: this(name, locale, blockIndex) {
-		Mask = mask;
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="MpqHash" /> struct.
-	/// </summary>
-	[Obsolete]
-	public MpqHash(uint name1, uint name2, MpqLocale locale, uint blockIndex, uint mask)
-		: this(CombineNames(name1, name2), locale, blockIndex) {
 		Mask = mask;
 	}
 

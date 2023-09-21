@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace SturmScharf.Extensions; 
 public static class StreamReaderExtensions {

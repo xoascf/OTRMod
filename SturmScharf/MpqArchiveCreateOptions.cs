@@ -1,4 +1,4 @@
-﻿namespace SturmScharf;
+namespace SturmScharf;
 
 public sealed class MpqArchiveCreateOptions {
 	/// <summary>
@@ -12,7 +12,7 @@ public sealed class MpqArchiveCreateOptions {
 		WriteArchiveFirst = true;
 		ListFileCreateMode = null;
 		AttributesCreateMode = null;
-		AttributesFlags = AttributesFlags.Crc32 | AttributesFlags.DateTime;
+		AttributesFlags = AttributesFlags.Crc32 | AttributesFlags.FileTime;
 	}
 
 	/// <summary>

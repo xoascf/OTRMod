@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 using Ionic.Crc;
@@ -59,7 +60,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 
 		if (loadListFile) {
 			if (TryOpenFile(ListFile.FileName, out MpqStream listFileStream)) {
-				using StreamReader listFileReader = new(listFileStream);
+				/* Read the file list as Latin-1 */
+				using StreamReader listFileReader = new(listFileStream, encoding: Encoding.GetEncoding("iso-8859-1"));
 				AddFileNames(listFileReader.ReadListFile().FileNames);
 			}
 		}
@@ -147,149 +149,153 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 			createOptions.HashTableSize ?? Math.Min(fileCount * 8, MpqTable.MaxSize)));
 		BlockTable = new BlockTable();
 
-		using (BinaryWriter writer = new(BaseStream, UTF8EncodingProvider.StrictUTF8, true)) {
-			writer.Seek((int)MpqHeader.Size, SeekOrigin.Current);
+		using BinaryWriter writer = new(BaseStream, UTF8EncodingProvider.StrictUTF8, true);
+		writer.Seek((int)MpqHeader.Size, SeekOrigin.Current);
 
-			uint fileIndex = 0U;
-			uint fileOffset = _archiveFollowsHeader ? MpqHeader.Size : throw new NotImplementedException();
+		uint fileIndex = 0U;
+		uint fileOffset = _archiveFollowsHeader ? MpqHeader.Size : throw new NotImplementedException();
 
-			long endOfStream = BaseStream.Position;
+		long endOfStream = BaseStream.Position;
 
-			void InsertMpqFile(MpqFile mpqFile, bool updateEndOfStream, bool allowMultiple = true) {
-				if (listFile is not null && mpqFile is MpqKnownFile knownFile) {
-					listFile.FileNames.Add(knownFile.FileName);
-				}
+		bool includeCrc32 = false;
+		bool includeFileTime = false;
+		bool includeMd5 = false;
 
-				mpqFile.AddToArchive(this, fileIndex, out MpqEntry mpqEntry, out MpqHash mpqHash);
-				uint hashTableEntries = HashTable.Add(mpqHash, mpqFile.HashIndex, mpqFile.HashCollisions);
-				if (!allowMultiple && hashTableEntries > 1) {
-					throw new Exception();
-				}
-
-				int crc32 = 0;
-				if (attributes is not null && attributes.Flags.HasFlag(AttributesFlags.Crc32) && allowMultiple) {
-					if (mpqFile.MpqStream.CanSeek && mpqFile.MpqStream.CanRead) {
-						mpqFile.MpqStream.Position = 0;
-						crc32 = new CRC32().GetCrc32(mpqFile.MpqStream);
-					}
-				}
-
-				for (int i = 0; i < hashTableEntries; i++) {
-					BlockTable.Add(mpqEntry);
-					if (attributes is not null) {
-						if (attributes.Flags.HasFlag(AttributesFlags.Crc32)) {
-							attributes.Crc32s.Add(crc32);
-						}
-
-						if (attributes.Flags.HasFlag(AttributesFlags.DateTime)) {
-							attributes.DateTimes.Add(DateTime.Now);
-						}
-
-						if (attributes.Flags.HasFlag(AttributesFlags.Unk0x04)) {
-							attributes.Unk0x04s.Add(new byte[16]);
-						}
-					}
-				}
-
-				mpqFile.Dispose();
-
-				fileIndex += hashTableEntries;
-				if (updateEndOfStream) {
-					endOfStream = BaseStream.Position;
-				}
-			}
-
-			List<MpqFile> mpqFixedPositionFiles = new();
-			foreach (MpqFile mpqFile in mpqFiles) {
-				if (mpqFile.IsFilePositionFixed) {
-					mpqFixedPositionFiles.Add(mpqFile);
-				}
-			}
-
-			mpqFixedPositionFiles.Sort((mpqFile1, mpqFile2) => mpqFile1.MpqStream.FilePosition.CompareTo(mpqFile2.MpqStream.FilePosition));
-			if (mpqFixedPositionFiles.Count > 0) {
-				if (mpqFixedPositionFiles[0].MpqStream.FilePosition < 0) {
-					throw new NotSupportedException("Cannot place files in front of the header.");
-				}
-
-				foreach (MpqFile mpqFixedPositionFile in mpqFixedPositionFiles) {
-					uint position = mpqFixedPositionFile.MpqStream.FilePosition;
-					if (position < endOfStream) {
-						throw new ArgumentException(
-							"Fixed position files overlap with each other and/or the header. Archive cannot be created.",
-							nameof(inputFiles));
-					}
-
-					if (position > endOfStream) {
-						long gapSize = position - endOfStream;
-						writer.Seek((int)gapSize, SeekOrigin.Current);
-					}
-
-					InsertMpqFile(mpqFixedPositionFile, true);
-				}
-			}
-
-			foreach (MpqFile mpqFile in mpqFiles) {
-				if (!mpqFile.IsFilePositionFixed) {
-					long selectedPosition = endOfStream;
-					bool selectedGap = false;
-					BaseStream.Position = selectedPosition;
-
-					InsertMpqFile(mpqFile, !selectedGap);
-				}
-			}
-
-			if (listFile is not null) {
-				BaseStream.Position = endOfStream;
-
-				using MemoryStream listFileStream = new();
-				using StreamWriter listFileWriter = new(listFileStream);
-				listFileWriter.NewLine = "\n"; /* Use LF only! */
-				listFileWriter.WriteListFile(listFile);
-				listFileWriter.Flush();
-
-				using MpqFile listFileMpqFile = MpqFile.New(listFileStream, ListFile.FileName);
-				listFileMpqFile.TargetFlags = MpqFileFlags.Exists | MpqFileFlags.CompressedMulti |
-											  MpqFileFlags.Encrypted | MpqFileFlags.BlockOffsetAdjustedKey;
-				InsertMpqFile(listFileMpqFile, true);
-			}
-
-			if (attributes is not null) {
-				BaseStream.Position = endOfStream;
-
-				if (attributes.Flags.HasFlag(AttributesFlags.Crc32)) {
-					attributes.Crc32s.Add(0);
-				}
-
-				if (attributes.Flags.HasFlag(AttributesFlags.DateTime)) {
-					attributes.DateTimes.Add(DateTime.Now);
-				}
-
-				if (attributes.Flags.HasFlag(AttributesFlags.Unk0x04)) {
-					attributes.Unk0x04s.Add(new byte[16]);
-				}
-
-				using MemoryStream attributesStream = new();
-				using BinaryWriter attributesWriter = new(attributesStream);
-				attributesWriter.Write(attributes);
-				attributesWriter.Flush();
-
-				using MpqFile attributesMpqFile = MpqFile.New(attributesStream, Attributes.FileName);
-				attributesMpqFile.TargetFlags = MpqFileFlags.Exists | MpqFileFlags.CompressedMulti |
-												MpqFileFlags.Encrypted | MpqFileFlags.BlockOffsetAdjustedKey;
-				InsertMpqFile(attributesMpqFile, true, false);
-			}
-
-			BaseStream.Position = endOfStream;
-			HashTable.WriteTo(writer);
-			BlockTable.WriteTo(writer);
-
-			writer.Seek((int)_headerOffset, SeekOrigin.Begin);
-
-			Header = new MpqHeader((uint)_headerOffset, (uint)(endOfStream - fileOffset), HashTable.Size,
-				BlockTable.Size, createOptions.BlockSize, _archiveFollowsHeader);
-			Header.WriteTo(writer);
+		if (attributes is not null) {
+			includeCrc32 = attributes.Flags.HasFlag(AttributesFlags.Crc32);
+			includeFileTime = attributes.Flags.HasFlag(AttributesFlags.FileTime);
+			includeMd5 = attributes.Flags.HasFlag(AttributesFlags.Md5);
 		}
+
+		void InsertMpqFile(MpqFile mpqFile, bool updateEndOfStream, bool allowMultiple = true) {
+			if (listFile is not null && mpqFile is MpqKnownFile knownFile) {
+				listFile.FileNames.Add(knownFile.FileName);
+			}
+
+			mpqFile.AddToArchive(this, fileIndex, out MpqEntry mpqEntry, out MpqHash mpqHash);
+			uint hashTableEntries = HashTable.Add(mpqHash, mpqFile.HashIndex, mpqFile.HashCollisions);
+			if (!allowMultiple && hashTableEntries > 1) {
+				throw new Exception();
+			}
+
+			byte[] md5 = new byte[16];
+			int crc32 = 0;
+
+			if ((includeCrc32 || includeMd5) && allowMultiple && mpqFile.MpqStream.CanSeek && mpqFile.MpqStream.CanRead) {
+				mpqFile.MpqStream.Position = 0;
+				if (includeCrc32) crc32 = new CRC32().GetCrc32(mpqFile.MpqStream);
+				if (includeMd5) using (MD5 m = MD5.Create()) md5 = m.ComputeHash(mpqFile.MpqStream);
+			}
+
+			for (int i = 0; i < hashTableEntries; i++) {
+				BlockTable.Add(mpqEntry);
+				if (attributes is not null) {
+					if (includeCrc32)
+						attributes.Crc32s.Add(crc32);
+
+					if (includeFileTime)
+						attributes.FileTimes.Add(DateTime.Now.ToFileTime());
+
+					if (includeMd5)
+						attributes.Md5s.Add(md5);
+				}
+			}
+
+			mpqFile.Dispose();
+
+			fileIndex += hashTableEntries;
+			if (updateEndOfStream) {
+				endOfStream = BaseStream.Position;
+			}
+		}
+
+		List<MpqFile> mpqFixedPositionFiles = new();
+		foreach (MpqFile mpqFile in mpqFiles) {
+			if (mpqFile.IsFilePositionFixed) {
+				mpqFixedPositionFiles.Add(mpqFile);
+			}
+		}
+
+		mpqFixedPositionFiles.Sort((mpqFile1, mpqFile2) => mpqFile1.MpqStream.FilePosition.CompareTo(mpqFile2.MpqStream.FilePosition));
+		if (mpqFixedPositionFiles.Count > 0) {
+			if (mpqFixedPositionFiles[0].MpqStream.FilePosition < 0) {
+				throw new NotSupportedException("Cannot place files in front of the header.");
+			}
+
+			foreach (MpqFile mpqFixedPositionFile in mpqFixedPositionFiles) {
+				uint position = mpqFixedPositionFile.MpqStream.FilePosition;
+				if (position < endOfStream) {
+					throw new ArgumentException(
+						"Fixed position files overlap with each other and/or the header. Archive cannot be created.",
+						nameof(inputFiles));
+				}
+
+				if (position > endOfStream) {
+					long gapSize = position - endOfStream;
+					writer.Seek((int)gapSize, SeekOrigin.Current);
+				}
+
+				InsertMpqFile(mpqFixedPositionFile, true);
+			}
+		}
+
+		foreach (MpqFile mpqFile in mpqFiles) {
+			if (!mpqFile.IsFilePositionFixed) {
+				long selectedPosition = endOfStream;
+				bool selectedGap = false;
+				BaseStream.Position = selectedPosition;
+
+				InsertMpqFile(mpqFile, !selectedGap);
+			}
+		}
+
+		if (listFile is not null) {
+			BaseStream.Position = endOfStream;
+
+			using MemoryStream listFileStream = new();
+			using StreamWriter listFileWriter = new(listFileStream, Encoding.GetEncoding("iso-8859-1")); /* Write the file list as Latin-1 */
+			listFileWriter.NewLine = "\r\n"; /* Use CRLF! */
+			listFileWriter.WriteListFile(listFile);
+			listFileWriter.Flush();
+
+			using MpqFile listFileMpqFile = MpqFile.New(listFileStream, ListFile.FileName);
+			listFileMpqFile.TargetFlags = MpqFileFlags.Exists | MpqFileFlags.CompressedMulti |
+										  MpqFileFlags.Encrypted | MpqFileFlags.BlockOffsetAdjustedKey;
+			InsertMpqFile(listFileMpqFile, true);
+		}
+
+		if (attributes is not null) {
+			BaseStream.Position = endOfStream;
+
+			if (includeCrc32)
+				attributes.Crc32s.Add(0);
+
+			if (includeFileTime)
+				attributes.FileTimes.Add(DateTime.Now.ToFileTime());
+
+			if (includeMd5)
+				attributes.Md5s.Add(new byte[16]);
+
+			using MemoryStream attributesStream = new();
+			using BinaryWriter attributesWriter = new(attributesStream);
+			attributesWriter.Write(attributes);
+			attributesWriter.Flush();
+
+			using MpqFile attributesMpqFile = MpqFile.New(attributesStream, Attributes.FileName);
+			attributesMpqFile.TargetFlags = MpqFileFlags.Exists | MpqFileFlags.CompressedMulti |
+											MpqFileFlags.Encrypted | MpqFileFlags.BlockOffsetAdjustedKey;
+			InsertMpqFile(attributesMpqFile, true, false);
+		}
+
+		BaseStream.Position = endOfStream;
+		HashTable.WriteTo(writer);
+		BlockTable.WriteTo(writer);
+
+		writer.Seek((int)_headerOffset, SeekOrigin.Begin);
+
+		Header = new MpqHeader((uint)_headerOffset, (uint)(endOfStream - fileOffset), HashTable.Size,
+			BlockTable.Size, createOptions.BlockSize, _archiveFollowsHeader);
+		Header.WriteTo(writer);
 	}
 
 	internal Stream BaseStream { get; }
@@ -417,121 +423,6 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	public static MpqArchive Create(Stream? sourceStream, IEnumerable<MpqFile> mpqFiles,
 		MpqArchiveCreateOptions createOptions, bool leaveOpen = false) {
 		return new MpqArchive(sourceStream, mpqFiles, createOptions, leaveOpen);
-	}
-
-	/// <summary>
-	/// Repairs corrupted values in an <see cref="MpqArchive" />.
-	/// </summary>
-	/// <param name="path">Path to the archive file.</param>
-	/// <returns>A stream containing the repaired archive.</returns>
-	[Obsolete]
-	public static MemoryStream Restore(string path) {
-		using FileStream sourceStream = File.OpenRead(path);
-		return Restore(sourceStream);
-	}
-
-	/// <summary>
-	/// Repairs corrupted values in an <see cref="MpqArchive" />.
-	/// </summary>
-	/// <param name="sourceStream">The stream containing the archive that needs to be repaired.</param>
-	/// <param name="leaveOpen">
-	/// If <see langword="false" />, the given <paramref name="sourceStream" /> will be disposed at the
-	/// end of this method.
-	/// </param>
-	/// <returns>A stream containing the repaired archive.</returns>
-	[Obsolete]
-	public static MemoryStream Restore(Stream sourceStream, bool leaveOpen = false) {
-		if (sourceStream is null) {
-			throw new ArgumentNullException(nameof(sourceStream));
-		}
-
-		if (!TryLocateMpqHeader(sourceStream, out MpqHeader? mpqHeader, out long headerOffset)) {
-			throw new MpqParserException("Unable to locate MPQ header.");
-		}
-
-		if (mpqHeader.MpqVersion != 0) {
-			throw new MpqParserException($"MPQ format version {mpqHeader.MpqVersion} is not supported");
-		}
-
-		MemoryStream memoryStream = new();
-		using (BinaryWriter writer = new(memoryStream, UTF8EncodingProvider.StrictUTF8, true)) {
-			writer.Seek((int)MpqHeader.Size, SeekOrigin.Current);
-
-			uint archiveSize = 0U;
-			uint hashTableEntries = mpqHeader.HashTableSize;
-			uint blockTableEntries = mpqHeader.BlockTableSize > MpqTable.MaxSize
-				? mpqHeader.IsArchiveAfterHeader()
-					? mpqHeader.BlockTablePosition < mpqHeader.HeaderOffset
-						? (mpqHeader.HeaderOffset - mpqHeader.BlockTablePosition) / MpqEntry.Size
-						: (uint)(sourceStream.Length - sourceStream.Position) / MpqEntry.Size
-					: throw new MpqParserException("Unable to determine true BlockTable size.")
-				: mpqHeader.BlockTableSize;
-
-			HashTable? hashTable = null;
-			BlockTable? blockTable = null;
-
-			using (BinaryReader reader = new(sourceStream, Encoding.UTF8, true)) {
-				sourceStream.Seek(mpqHeader.HashTablePosition, SeekOrigin.Begin);
-				hashTable = new HashTable(reader, hashTableEntries);
-
-				sourceStream.Seek(mpqHeader.BlockTablePosition, SeekOrigin.Begin);
-				blockTable = new BlockTable(reader, blockTableEntries, (uint)headerOffset);
-
-				for (int i = 0; i < blockTable.Size; i++) {
-					MpqEntry entry = blockTable[i];
-					if ((entry.Flags & MpqFileFlags.Garbage) == 0) {
-						uint size = entry.CompressedSize;
-						MpqFileFlags flags = entry.Flags;
-
-						if (entry.Flags.IsOffsetEncrypted()) {
-							long pos = sourceStream.Position;
-							using (MpqStream mpqStream = new(entry, sourceStream,
-									   BlockSizeModifier << mpqHeader.BlockSize)) {
-								mpqStream.CopyTo(memoryStream);
-							}
-
-							sourceStream.Position = pos + size;
-
-							size = entry.FileSize;
-							flags = entry.Flags & ~(MpqFileFlags.Compressed | MpqFileFlags.Encrypted |
-													MpqFileFlags.BlockOffsetAdjustedKey);
-						}
-						else {
-							sourceStream.Position = entry.FilePosition;
-							writer.Write(reader.ReadBytes((int)size));
-						}
-
-						blockTable[i] = new MpqEntry(null, 0, MpqHeader.Size + archiveSize, size, entry.FileSize,
-							flags);
-						archiveSize += size;
-					}
-					else {
-						blockTable[i] = new MpqEntry(null, 0, MpqHeader.Size + archiveSize, 0, 0, 0);
-					}
-				}
-			}
-
-			for (int i = 0; i < hashTable.Size; i++) {
-				MpqHash hash = hashTable[i];
-				if (!hash.IsEmpty && !hash.IsDeleted && hash.BlockIndex > MpqTable.MaxSize) {
-					hashTable[i] = new MpqHash(hash.Name, MpqLocale.Neutral,
-						hash.BlockIndex & MpqTable.MaxSize - 1, hash.Mask);
-				}
-			}
-
-			hashTable.SerializeTo(memoryStream);
-			blockTable.SerializeTo(memoryStream);
-
-			writer.Seek(0, SeekOrigin.Begin);
-			new MpqHeader(0, archiveSize, hashTableEntries, blockTableEntries, mpqHeader.BlockSize).WriteTo(writer);
-		}
-
-		if (!leaveOpen) {
-			sourceStream.Dispose();
-		}
-
-		memoryStream.Position = 0;
-		return memoryStream;
 	}
 
 	/// <summary>

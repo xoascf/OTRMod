@@ -11,6 +11,9 @@ public class Generate {
 	public static void AddFile(string path, byte[] data)
 		=> Files.Add(path, new MemStream(data));
 
+	public static void AddFile(string path, MemStream data)
+		=> Files.Add(path, data);
+
 	public static void FromImage(ref MemStream otrStream) {
 		MpqArchiveBuilder builder = new();
 		foreach (KeyValuePair<string, MemStream> pair in Files)

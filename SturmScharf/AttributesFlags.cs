@@ -1,8 +1,8 @@
-﻿namespace SturmScharf;
+namespace SturmScharf;
 
 [Flags]
 public enum AttributesFlags {
 	Crc32 = 0x01,
-	DateTime = 0x02,
-	Unk0x04 = 0x04
+	FileTime = 0x02,
+	Md5 = 0x04
 }

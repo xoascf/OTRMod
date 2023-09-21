@@ -1,4 +1,4 @@
-﻿using SturmScharf.Extensions;
+using SturmScharf.Extensions;
 
 namespace SturmScharf;
 
