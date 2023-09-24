@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod", "OTRMod\OTRMod.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod.Web", "OTRMod.Web\OTRMod.Web.csproj", "{F5414982-AE44-400B-8C25-DB7CE43AAA0A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod.Console", "OTRMod.Console\OTRMod.Console.csproj", "{F88FE393-2974-4751-B0C6-D66D2205936E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OTRMod.CLI", "OTRMod.CLI\OTRMod.CLI.csproj", "{F88FE393-2974-4751-B0C6-D66D2205936E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB5C8B82-8A59-4812-93E1-FB2404760B72}"
 	ProjectSection(SolutionItems) = preProject
@@ -43,7 +43,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		RESX_SortFileContentOnSave = False
 		SolutionGuid = {0685CFE9-AD26-47BF-B3C9-A0E722E2D521}
+		RESX_SortFileContentOnSave = False
 	EndGlobalSection
 EndGlobal

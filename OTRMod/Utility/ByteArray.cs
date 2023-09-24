@@ -1,5 +1,6 @@
 /* Licensed under the Open Software License version 3.0 */
 
+using System.Text;
 using static System.BitConverter;
 
 namespace OTRMod.Utility;
@@ -78,5 +79,11 @@ public static class ByteArray {
 		Buffer.BlockCopy(a, 0, b, 0, l);
 
 		return b.DataTo(f, s, l);
+	}
+
+	internal static readonly string[] Separators = { "\n", "\r\n", "\r" };
+
+	public static string[] ToStringArray(this byte[] data, Encoding encoding) {
+		return encoding.GetString(data).Split(Separators, StringSplitOptions.None);
 	}
 }

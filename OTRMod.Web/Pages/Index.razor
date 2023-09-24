@@ -3,6 +3,7 @@
 @using BlazorDownloadFile
 @using OTRMod.ROM
 @using OTRMod.OTR
+@using OTRMod.Utility;
 
 <PageTitle>@T["get_otr_title"]</PageTitle>
 <h1>@T["get_otr_h1"]</h1>
@@ -51,7 +52,6 @@ switch (_genStatus) {
 </button>
 @code {
 [Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
-private readonly string[] _separators = { "\n", "\r\n", "\r" };
 private string[]? _script;
 private readonly MemoryStream _scriptMs = new();
 private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
@@ -85,7 +85,7 @@ private async Task GenerateOTR() {
 }
 
 private async Task RunProcess() {
-	_script = Encoding.ASCII.GetString(ReadFully(_scriptMs)).Split(_separators, StringSplitOptions.None);
+	_script = _scriptMs.ToArray().ToStringArray(Encoding.ASCII);
 	byte[] decompressed = Decompressor.Data(ReadFully(_romMs).ToBigEndian(), calc: false);
 	ScriptParser sParser = new() {
 		ScriptStrings = _script,

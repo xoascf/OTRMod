@@ -52,8 +52,8 @@ public class ScriptParser {
 			return info[1] switch {
 				"Pam" => PlayerAnimation.Export(GetData(info[2], info[3])),
 				"Anm" => Animation.Export(GetData(info[2], info[3])),
-				"Seq" => Audio.ExportSeq(int.Parse(info[2]), int.Parse(info[3]),
-					GetData(info[4], info[5])),
+				//"Seq" => Audio.ExportSeq(int.Parse(info[2]), int.Parse(info[3]),
+					//GetData(info[4], info[5])),
 				_ => throw new Exception("Invalid format to export.")
 			};
 

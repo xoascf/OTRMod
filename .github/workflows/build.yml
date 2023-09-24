@@ -1,0 +1,56 @@
+name: CI
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["**.adoc"]
+  pull_request:
+    paths-ignore: ["**.adoc"]
+  workflow_dispatch:
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux-x64, win-x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build console app
+        run: dotnet publish OTRMod.CLI/OTRMod.CLI.csproj -r ${{ matrix.os }} -f net6.0 -c Release -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false --no-self-contained
+
+      - name: Set output path
+        run: |
+          echo "EXE_NAME=OTRMod.CLI${{ contains(matrix.os, 'win') && '.exe' || '' }}" >> $GITHUB_ENV
+          echo "EXE_PATH=OTRMod.CLI/bin/Release/net6.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: OTRMod.CLI-${{ matrix.os }}
+          path: ${{ env.EXE_PATH }}/${{ env.EXE_NAME }}
+
+      - name: Upload release
+        if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          OWNER: ${{ github.event.repository.owner.login }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          curl -Ls https://gist.githubusercontent.com/xoascf/525b58c632818bfaf705f373ce6be8a5/raw | sh -s \
+          $OWNER \
+          $REPOSITORY_NAME \
+          "$(echo "$COMMIT_MESSAGE" | cut -d " " -f2)" \
+          $GITHUB_TOKEN \
+          $EXE_PATH/$EXE_NAME \
+          $EXE_NAME \
+          application/octet-stream

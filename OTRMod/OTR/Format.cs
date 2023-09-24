@@ -4,7 +4,7 @@ using OTRMod.Utility;
 
 namespace OTRMod.OTR;
 
-internal static class Format {
+public static class Format {
 	private const int HeaderSize = 0x40;
 	private const ulong MagicValue = 0xDEADBEEFDEADBEEF;
 	private static readonly byte[] BeefData = ByteArray.FromU64(MagicValue, big: false);
@@ -110,7 +110,7 @@ internal static class Format {
 		}
 	}
 
-	internal static class Audio {
+	public static class Audio {
 		public static byte[] ExportSft(int index, byte[] input) {
 			int fntSize = input.Length;
 
@@ -124,18 +124,19 @@ internal static class Format {
 			return data;
 		}
 
-		public static byte[] ExportSeq(int index, int font, byte[] input) {
+		public static byte[] ExportSeq(int index, int font, int cachePolicy, byte[] input) {
 			const int footerSize = 0x0C;
 			int seqSize = input.Length;
 
 			byte[] data = new byte[HeaderSize + seqSize + footerSize];
-			byte[] unkBytes = { 0x02, 0x02, 0x01 };
 
 			data.Set(0, GetHeader(ResourceType.AudioSequence, 2));
 			data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
 			data.Set(HeaderSize + 4, input);
 			data.Set(HeaderSize + seqSize + 4, (byte)index);
-			data.Set(HeaderSize + seqSize + 5, unkBytes); // FIXME: This is cachePolicy
+			data.Set(HeaderSize + seqSize + 5, (byte)2); // Medium?
+			data.Set(HeaderSize + seqSize + 6, (byte)cachePolicy);
+			data.Set(HeaderSize + seqSize + 7, (byte)1); // FontIndexSize?
 			data.Set(HeaderSize + seqSize + 11, (byte)font);
 
 			return data;
