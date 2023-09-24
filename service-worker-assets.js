@@ -49,7 +49,7 @@
       "url": "_framework\/icudt.dat"
     },
     {
-      "hash": "sha256-QTvr7HAERj0MFtKto2b7LjoxNzZ467oIGJ7p5cMdlgQ=",
+      "hash": "sha256-BpfyjDyOXcK50oGY2b3tiqJccAhzVQ26O7Ovc0MrYcU=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -133,15 +133,15 @@
       "url": "_framework\/netstandard.dll"
     },
     {
-      "hash": "sha256-9pLdlO9LxBvzr8tzUeXI4GJ38+sXvT8dJk6d468OKQk=",
+      "hash": "sha256-hNpG2X6ySfYTQv\/1yZsYETWr2RfH35v48t9J6GJLuvs=",
       "url": "_framework\/OTRMod.dll"
     },
     {
-      "hash": "sha256-LK5RRUnrZmptA+euvp8GbMYCN4k8aTOmlOVPQL88WUE=",
+      "hash": "sha256-CySydoWyO+KgOopoboQiLo1v1O7gYSwn9+vzn9SoELQ=",
       "url": "_framework\/OTRMod.Web.dll"
     },
     {
-      "hash": "sha256-mcVJB1S\/3o3no1S1adFb6VOKtfKma6Jft6ChKe8OwxY=",
+      "hash": "sha256-rSmIhoGwtfFtRsRY0eJxxCXheZjszPPZSY+PnJ\/fZus=",
       "url": "_framework\/SturmScharf.dll"
     },
     {
@@ -333,7 +333,7 @@
       "url": "_framework\/dotnet.7.0.11.a81wsdje12.js"
     },
     {
-      "hash": "sha256-22Ig8+msB0bdFsUyoRxATdGxm25zIEMJ8uJb20IAe94=",
+      "hash": "sha256-FwfWGFbc90\/va1AvYkmOwmQ4OWKFlIjuQsKD+x77uaE=",
       "url": "_framework\/dotnet.wasm"
     },
     {
@@ -353,5 +353,5 @@
       "url": "_content\/Toolbelt.Blazor.PWA.Updater\/Toolbelt.Blazor.PWA.Updater.bundle.scp.css"
     }
   ],
-  "version": "BvyBmzOo"
+  "version": "sy7HPNYa"
 };
