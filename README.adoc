@@ -1,4 +1,44 @@
+:app: OTRMod
 
-:proj-name: OTRMod
+= {app}
 
-= {proj-name}
+{app} is a versatile tool for creating .otr mods for the PC port of The Legend of Zelda: Ocarina of Time, known as https://en.wikipedia.org/wiki/Ship_of_Harkinian[Ship of Harkinian]. It simplifies the process of creating and exporting features from other N64 ROMs and custom content into SoH.
+
+== Overview
+
+* *Scripting Language*: {app} features a scripting language that enables advanced mod creation and manipulation, allowing you to import custom sequences, textures, game text, and more from N64 Zelda ROMs.
+* *Web Interface*: Access {app} through the web interface at https://soh.xoas.eu.org[soh.xoas.eu.org] for a user-friendly experience without downloading the CLI.
+* *Command-Line Interface (CLI)*: The CLI provides additional functionality like OOTRS conversion and standalone ROM extraction.
+
+== Usage Examples
+
+* {app} enabled the https://dorando.emuverse.com/projects/eduardo_a2j/zelda-ocarina-of-time.html[Spanish translation by eduardo_a2j] for its use in SoH.
+* It’s been featured in streams by https://twitch.tv/rubius[Rubius on Twitch], watch his full walkthrough on https://www.youtube.com/watch?v=XM98fQFQYc8[YouTube].
+* Spanish-speaking Ocarina of Time fans on https://discord.com/invite/shipofharkinian[Discord] and beyond have been enjoying the benefits of {app}.
+
+== Planned Features
+
+We have exciting plans for {app}’s future:
+
+* Downloadable GUI tool
+* Texture conversion from PNG to game format and vice versa
+* Custom audio bank/soundfont support
+* Explore mod content in the web app
+* Modify game scripts entirely through the web app editor
+
+Stay tuned for updates!
+
+== About {app}
+
+{app} empowers users to customize and modify Ship of Harkinian for a unique gaming experience. With its scripting language and a really simple web interface, {app} enables creating mods that alter textures, music sequences, game text, and more.
+
+*Legal Information*:
+
+* {app} is licensed under the https://opensource.org/licenses/OSL-3.0[Open Software License version 3.0 (OSL 3.0)]. Please comply with the license terms when using {app}.
+* We advise against sharing generated .otr files if they have been created from a copyrighted ROM or file. To ensure legal use of generated mods, please share the relevant script and hashes.
+
+=== Related Tool: Retro
+
+You might also be interested in exploring another tool created by the original developers called "Retro." Retro allows for HD textures from PNGs, custom sequences (from the unzipped content of .ootrs), custom debug menu fonts, and the ability to inspect .otr files. While Retro and {app} share some common functionalities, they cater to different aspects of modding. You can find Retro on GitHub at https://github.com/HarbourMasters64/retro.
+
+Feel free to explore these modding tools and enhance your Ship of Harkinian experience!
