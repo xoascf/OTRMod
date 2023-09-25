@@ -1,44 +1,115 @@
 :app: OTRMod
+:handle: OTRMod
+:desc: The OTR mod tool
+:repo: xoascf/{handle}
+:!showtitle:
+:icons: font
+:!toc-title:
+:uri-licence: {uri-repo}/blob/master/LICENSE
+:uri-ci: {uri-repo}/actions/workflows/build.yml
+:uri-shields: https://img.shields.io
+:img-licence-badge: {uri-shields}/github/license/{repo}.svg?label=Licence
+:img-ci-badge: {uri-shields}/github/actions/workflow/status/{repo}/build.yml?label=Build
 
 = {app}
 
-{app} is a versatile tool for creating .otr mods for the PC port of The Legend of Zelda: Ocarina of Time, known as https://en.wikipedia.org/wiki/Ship_of_Harkinian[Ship of Harkinian]. It simplifies the process of creating and exporting features from other N64 ROMs and custom content into SoH.
+ifdef::env-github[]
+[subs=attributes+]
+++++
+<div align="center">
+   <h1>{app}</h1>
+   <h3>{desc}</h3>
+   <br />
+</div>
+<p align="center">
+  <a href="{uri-licence}">
+    <img src="{img-licence-badge}" />
+  </a>
+  <a href="{uri-ci}">
+    <img src="{img-ci-badge}" />
+  </a>
+</p>
+++++
+endif::[]
 
-== Overview
+ifndef::env-github[]
 
-* *Scripting Language*: {app} features a scripting language that enables advanced mod creation and manipulation, allowing you to import custom sequences, textures, game text, and more from N64 Zelda ROMs.
-* *Web Interface*: Access {app} through the web interface at https://soh.xoas.eu.org[soh.xoas.eu.org] for a user-friendly experience without downloading the CLI.
-* *Command-Line Interface (CLI)*: The CLI provides additional functionality like OOTRS conversion and standalone ROM extraction.
+[.text-center]
+[.lead]
+*{app}*
+
+[.text-center]
+{desc}
+
+[.text-center]
+image:{img-licence-badge}[Licence, align=center, link="{uri-licence}"]
+image:{img-ci-badge}[Build Status (GitHub Actions), align=center, link="{uri-ci}"]
+endif::[]
+
+{app} is a versatile tool for creating .otr mods for the PC port of The
+Legend of Zelda: Ocarina of Time, known as
+https://en.wikipedia.org/wiki/Ship_of_Harkinian[Ship of Harkinian]. It
+simplifies the process of creating and exporting features from other N64
+ROMs and custom content into SoH.
+
+== Introduction
+With its scripting language and really simple web interface, {app}
+allows you to create mods that change textures, music sequences, in-game
+text and much more, here are some of the features it offers:
+
+* *Scripting Language*: {app} features a scripting language that
+enables advanced mod creation and manipulation, allowing you to import
+custom sequences, textures, game text, and more from N64 Zelda ROMs.
+* *Web Interface*: Access {app} through the web interface at
+https://soh.xoas.eu.org[soh.xoas.eu.org] for a user-friendly experience
+without downloading the CLI.
+* *Command-Line Interface (CLI)*: The CLI provides additional
+functionality like .ootrs (Ocarina of Time Randomizer Sequence)
+conversion and standalone ROM decompression.
 
 == Usage Examples
-
-* {app} enabled the https://dorando.emuverse.com/projects/eduardo_a2j/zelda-ocarina-of-time.html[Spanish translation by eduardo_a2j] for its use in SoH.
-* It’s been featured in streams by https://twitch.tv/rubius[Rubius on Twitch], watch his full walkthrough on https://www.youtube.com/watch?v=XM98fQFQYc8[YouTube].
-* Spanish-speaking Ocarina of Time fans on https://discord.com/invite/shipofharkinian[Discord] and beyond have been enjoying the benefits of {app}.
+* {app} enabled the
+https://dorando.emuverse.com/projects/eduardo_a2j/zelda-ocarina-of-time.html[Spanish
+translation by eduardo_a2j] for its use in SoH and featured in streams
+by Rubius on Twitch (watch his full walkthrough on
+https://www.youtube.com/watch?v=XM98fQFQYc8[YouTube]).
+* ROMHack translations into Brazilian Portuguese, Italian, Russian, and
+other languages have also been ported by the
+https://cdn.discordapp.com/attachments/958069311132536852/1032451718178410496/NTSC_1.0_OTRMod_Alfa.txt[same
+script].
+* Some non-English-speaking Ocarina of Time fans on
+https://discord.com/invite/shipofharkinian[Discord] and beyond have been
+enjoying reliving the game in their languages thanks to {app}.
 
 == Planned Features
-
-We have exciting plans for {app}’s future:
+There are exciting plans for the future of {app}, including:
 
 * Downloadable GUI tool
 * Texture conversion from PNG to game format and vice versa
 * Custom audio bank/soundfont support
-* Explore mod content in the web app
-* Modify game scripts entirely through the web app editor
+* Explore mod content in the web application
+* Modify game scripts completely through the web app editor
 
 Stay tuned for updates!
 
-== About {app}
-
-{app} empowers users to customize and modify Ship of Harkinian for a unique gaming experience. With its scripting language and a really simple web interface, {app} enables creating mods that alter textures, music sequences, game text, and more.
-
-*Legal Information*:
-
-* {app} is licensed under the https://opensource.org/licenses/OSL-3.0[Open Software License version 3.0 (OSL 3.0)]. Please comply with the license terms when using {app}.
-* We advise against sharing generated .otr files if they have been created from a copyrighted ROM or file. To ensure legal use of generated mods, please share the relevant script and hashes.
-
 === Related Tool: Retro
+You might also be interested in exploring another tool created by the
+original developers called Retro. Retro allows for HD textures from
+PNGs, custom sequences (from the unzipped content of .ootrs), custom
+debug menu fonts, and the ability to inspect .otr files. While Retro and
+{app} share some common functionalities, they cater to different
+aspects of modding. You can find Retro on GitHub at
+https://github.com/HarbourMasters64/retro.
 
-You might also be interested in exploring another tool created by the original developers called "Retro." Retro allows for HD textures from PNGs, custom sequences (from the unzipped content of .ootrs), custom debug menu fonts, and the ability to inspect .otr files. While Retro and {app} share some common functionalities, they cater to different aspects of modding. You can find Retro on GitHub at https://github.com/HarbourMasters64/retro.
+*Friendly reminder*:
 
-Feel free to explore these modding tools and enhance your Ship of Harkinian experience!
+IMPORTANT: Sharing the generated .otr files is discouraged if they are
+created from a ROM or copyrighted file. To ensure legal use of the
+generated mods share the script and the corresponding ROM hashes.
+
+NOTE: Don’t forget to visit the
+https://gamebanana.com/games/16121[GameBanana] page to download really
+nice .otr mods!
+
+Feel free to explore these modding tools and enhance your Ship of
+Harkinian experience!
