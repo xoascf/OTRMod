@@ -78,8 +78,9 @@ public static class Decompressor {
 				codeByte = srcArray[srcPlace++];
 				bitCount = 8;
 			}
-			if ((codeByte & 0x80u) != 0)
+			if ((codeByte & 0x80u) != 0) {
 				dstArray[dstPlace++] = srcArray[srcPlace++];
+			}
 			else {
 #if NETCOREAPP2_1_OR_GREATER
 				Span<byte> bytes = srcArray.Slice(srcPlace, 2);

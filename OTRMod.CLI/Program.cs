@@ -6,8 +6,6 @@ using OTRMod.OTR;
 using OTRMod.ROM;
 using OTRMod.Utility;
 
-using System.Text;
-
 static MemStream Run(string pathImage, bool romMode, bool calc, out string outName) {
 	bool decompressOnly = romMode && calc;
 	outName = "Decompressed.z64";
@@ -16,8 +14,9 @@ static MemStream Run(string pathImage, bool romMode, bool calc, out string outNa
 		if (romMode)
 			iData = Decompressor.Data(iData.ToBigEndian(), calc: calc);
 		MemStream ms;
-		if (decompressOnly)
+		if (decompressOnly) {
 			ms = new MemStream(iData);
+		}
 		else {
 			ms = new MemStream();
 			ms.SetLength(0);
@@ -40,7 +39,7 @@ static MemStream Run(string pathImage, bool romMode, bool calc, out string outNa
 
 static void TUIRun(bool romMode, bool calc) {
 	using MemStream genMs = Run(ReadPath("Image"), romMode, calc, out string outName);
-	genMs.Save(ReadPath($"Output", outName, false));
+	genMs.Save(ReadPath("Output", outName, false));
 	genMs.Flush();
 	genMs.Close();
 #if NETCOREAPP1_0_OR_GREATER
@@ -49,19 +48,19 @@ static void TUIRun(bool romMode, bool calc) {
 }
 
 static void Extract(string? filePath = null, string? outDir = null) {
-	Dictionary<string, Stream> OTRFiles = new();
+	Dictionary<string, Stream> otrFiles = new();
 	filePath ??= ReadPath("OTR");
 
 	Con.WriteLine("Loading...");
 	using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-	Load.From(fs, ref OTRFiles);
+	Load.From(fs, ref otrFiles);
 	outDir ??= ReadPath("Output", "Extracted", false);
 
 	Con.WriteLine("Extracting...");
-	foreach (KeyValuePair<string, Stream> file in OTRFiles)
+	foreach (KeyValuePair<string, Stream> file in otrFiles)
 		file.Value.Save(Path.Combine(outDir, EncodePath(file.Key)));
 
-	OTRFiles.Clear();
+	otrFiles.Clear();
 	Con.WriteLine("Extraction complete.");
 }
 
@@ -72,7 +71,7 @@ static void GenerateGeneric(string inputDir, string? outPath = null) {
 
 	if (outPath is null) {
 		outPath = $"{Path.GetFileName(inputDir)}.otr";
-		outPath = ReadPath($"Output", outPath, false);
+		outPath = ReadPath("Output", outPath, false);
 	}
 
 	ms.Save(outPath);
@@ -83,25 +82,26 @@ static void GenerateGeneric(string inputDir, string? outPath = null) {
 static void AddSequence(string[] meta, string path, byte[] seqData) {
 	string font = meta[1];
 	if (font.StartsWith("0x")) {
-#if NETCOREAPP3_0_OR_GREATER
 		font = font[2..];
-#else
-		font = font.Substring(2);
-#endif
 	}
 	else if (font == "-") {
-		Warn($"Sequence uses custom Audiobank, skipping...", 2, path); /* FIXME */
+		Warn("Sequence uses custom Audiobank, skipping...", 2, path); /* FIXME */
 		return;
 	}
-	else
+	else {
 		Warn("Audiobank index is expected to start with '0x'", 2, path);
+	}
 
 	string? type = meta.GetIfExists(2);
-	if (type is null || string.IsNullOrEmpty(type)) {
+	if (type.IsNullOrEmpty()) {
 		Warn("No sequence type found, using 'bgm'", 3, path);
 		type = "bgm";
 	}
+#if NETCOREAPP3_0_OR_GREATER
+	else if (type.Contains(' ')) {
+#else
 	else if (type.Contains(" ")) {
+#endif
 		Warn("Sequence type contains spaces", 3, path);
 		type = type.Trim();
 	}
@@ -116,7 +116,7 @@ static void AddSequence(string[] meta, string path, byte[] seqData) {
 		seqFont = 0;
 	}
 
-	seqData = Format.Audio.ExportSeq(0, seqFont, cachePolicy, seqData);
+	seqData = OTRMod.Z.Audio.ExportSeq(0, seqFont, cachePolicy, seqData);
 	string name = meta[0].Replace('/', '|');
 	path = $"custom/music/{name}_{type}";
 
@@ -137,35 +137,35 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 			using FileStream fs = new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			using ZipFile zip = ZipFile.Read(fs);
 
-			MemStream seqMS = new();
-			MemStream metaMS = new();
+			MemStream seqMs = new();
+			MemStream metaMs = new();
 			string? metaPath = null;
 
 			foreach (ZipEntry entry in zip.Entries) {
 				if (entry.FileName.EndsWith(".zbank", StringComparison.OrdinalIgnoreCase)) {
-					seqMS.SetLength(0);
-					metaMS.SetLength(0);
+					seqMs.SetLength(0);
+					metaMs.SetLength(0);
 					metaPath = null;
 					Con.WriteLine($"Skipping {file}");
 					break;
 				}
-				if (entry.FileName.EndsWith(".seq", StringComparison.OrdinalIgnoreCase)) {
-					entry.Extract(seqMS);
-				}
+				if (entry.FileName.EndsWith(".seq", StringComparison.OrdinalIgnoreCase))
+					entry.Extract(seqMs);
+
 				if (entry.FileName.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) {
-					entry.Extract(metaMS);
+					entry.Extract(metaMs);
 					metaPath = Path.Combine(file, entry.FileName);
 				}
 			}
 
-			if (seqMS.Length == 0 || metaMS.Length == 0 || metaPath is null)
+			if (seqMs.Length == 0 || metaMs.Length == 0 || metaPath is null)
 				continue;
 
 			Con.WriteLine($"Adding {file}");
 
-			string[] ootrsMetas = metaMS.ToArray().ToStringArray(Encoding.GetEncoding("iso-8859-1"));
+			string[] ootrsMetas = metaMs.ToArray().ToStringArray();
 
-			AddSequence(ootrsMetas, metaPath, seqMS.ToArray());
+			AddSequence(ootrsMetas, metaPath, seqMs.ToArray());
 		}
 
 		if (files.Find(a => a.Contains(".zbank")) is not null) {
@@ -181,7 +181,7 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 
 		Con.WriteLine($"Adding {subFolder}");
 
-		string[] metas = File.ReadAllLines(metaFile, Encoding.GetEncoding("iso-8859-1"));
+		string[] metas = File.ReadAllLines(metaFile, SturmScharf.EncodingProvider.Latin1);
 		byte[] seq = File.ReadAllBytes(seqFile);
 
 		AddSequence(metas, metaFile, seq);
@@ -196,13 +196,9 @@ static void Build(string? inputDir = null, string? outPath = null) {
 	string[] filePaths = Directory.GetFiles(inputDir, "*", SearchOption.AllDirectories);
 
 	foreach (string filePath in filePaths) {
-#if NETCOREAPP3_0_OR_GREATER
 		string newPath = filePath[inputDir.Length..].Replace(@"\", "/");
-		if (newPath.StartsWith("/")) newPath = newPath[1..];
-#else
-		string newPath = filePath.Substring(inputDir.Length).Replace(@"\", "/");
-		if (newPath.StartsWith("/")) newPath = newPath.Substring(1);
-#endif
+		if (newPath.StartsWith("/"))
+			newPath = newPath[1..];
 		byte[] fileBytes = File.ReadAllBytes(filePath);
 		Generate.AddFile(DecodePath(newPath), fileBytes);
 	}

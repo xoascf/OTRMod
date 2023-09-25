@@ -5,75 +5,80 @@ using System.Text;
 namespace SturmScharf.Compat;
 
 public class BinaryWriter : System.IO.BinaryWriter {
-	private readonly bool leaveOpen;
+	private readonly bool _leaveOpen;
 
 	public BinaryWriter(Stream output) : base(output) { }
 
 	public BinaryWriter(Stream output, Encoding encoding, bool leaveOpen)
 		: base(output, encoding) {
-		this.leaveOpen = leaveOpen;
+		this._leaveOpen = leaveOpen;
 	}
 
 	protected override void Dispose(bool disposing) {
-		if (disposing) {
-			if (!leaveOpen) {
+		if (disposing)
+			if (!_leaveOpen)
 				base.Dispose(disposing);
-			}
-		}
 	}
 }
 
 public class BinaryReader : System.IO.BinaryReader {
-	private readonly bool leaveOpen;
+	private readonly bool _leaveOpen;
 	private bool _disposed;
 
 	public BinaryReader(Stream input) : base(input) { }
 
 	public BinaryReader(Stream input, Encoding encoding, bool leaveOpen)
 		: base(input, encoding) {
-		this.leaveOpen = leaveOpen;
+		this._leaveOpen = leaveOpen;
 	}
 
 	protected override void Dispose(bool disposing) {
 		if (!_disposed) {
-			if (disposing && !leaveOpen) {
+			if (disposing && !_leaveOpen)
 				base.Dispose(disposing);
-			}
 			_disposed = true;
 		}
 	}
 }
 
+public static class BitOperations {
+	public static uint RotateLeft(uint value, int count)
+		=> (value << count) | (value >> (32 - count));
+}
+
 public static class HashCode {
-	public static int Combine(params object[] objects) {
-		if (objects == null) {
-			throw new ArgumentNullException(nameof(objects));
-		}
+	public static int Combine<T1>(T1 value1) {
+		uint hc1 = (uint)(value1?.GetHashCode() ?? 0);
 
 		uint hash = MixEmptyState();
-		int shift = 0;
+		hash += 4;
 
-		foreach (object obj in objects) {
-			if (obj != null) {
-				uint hc = (uint)obj.GetHashCode();
-				hash = QueueRound(hash, hc << shift);
-			}
-
-			shift += 3; // Adjust the shift to prevent collisions
-		}
+		hash = QueueRound(hash, hc1);
 
 		hash = MixFinal(hash);
 		return (int)hash;
 	}
 
-	private static uint MixEmptyState() {
-		return (uint)HashCodeSeed;
+	public static int Combine<T1, T2>(T1 value1, T2 value2) {
+		uint hc1 = (uint)(value1?.GetHashCode() ?? 0);
+		uint hc2 = (uint)(value2?.GetHashCode() ?? 0);
+
+		uint hash = MixEmptyState();
+		hash += 8;
+
+		hash = QueueRound(hash, hc1);
+		hash = QueueRound(hash, hc2);
+
+		hash = MixFinal(hash);
+		return (int)hash;
 	}
+
+	private static uint MixEmptyState() => HashCodeSeed;
 
 	private static uint QueueRound(uint hash, uint value) {
 		hash += value;
 		hash *= Prime1;
-		return RotateLeft(hash, 13) * Prime2;
+		return BitOperations.RotateLeft(hash, 13) * Prime2;
 	}
 
 	private static uint MixFinal(uint hash) {
@@ -83,10 +88,6 @@ public static class HashCode {
 		hash *= Prime4;
 		hash ^= hash >> 16;
 		return hash;
-	}
-
-	private static uint RotateLeft(uint value, int count) {
-		return (value << count) | (value >> (32 - count));
 	}
 
 	// Define suitable prime numbers and HashCodeSeed

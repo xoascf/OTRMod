@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 
 namespace SturmScharf.Compression.Common;
 
@@ -34,9 +34,8 @@ public static class EnumConvert<TEnum>
 
 	public static TEnum FromChar(char value) {
 		TEnum result = (TEnum)(object)value;
-		if (!result.IsDefined()) {
+		if (!result.IsDefined())
 			throw new ArgumentException($"Value '{value}' is not defined for enum of type {typeof(TEnum).Name}.");
-		}
 
 		return result;
 	}

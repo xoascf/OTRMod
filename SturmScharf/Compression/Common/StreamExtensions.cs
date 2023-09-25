@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace SturmScharf.Compression.Common;
 
@@ -31,9 +31,8 @@ public static class StreamExtensions {
 		while (bytesToCopy > 0) {
 			int toRead = bytesToCopy > bufferSize ? bufferSize : bytesToCopy;
 			int read = stream.Read(buffer, 0, toRead);
-			if (read == 0) {
+			if (read == 0)
 				break;
-			}
 
 			destination.Write(buffer, 0, read);
 			bytesToCopy -= read;
@@ -70,17 +69,15 @@ public static class StreamExtensions {
 		int lengthRemaining = maxLength;
 		while (lengthRemaining > 0) {
 			int read = stream.Read(output, bytesRead, lengthRemaining);
-			if (read == 0) {
+			if (read == 0)
 				break;
-			}
 
 			bytesRead += read;
 			lengthRemaining -= read;
 		}
 
-		if (lengthRemaining > 0) {
+		if (lengthRemaining > 0)
 			Array.Resize(ref output, bytesRead);
-		}
 
 		return output;
 	}
@@ -89,15 +86,13 @@ public static class StreamExtensions {
 		_ = stream ?? throw new ArgumentNullException(nameof(stream));
 		_ = destination ?? throw new ArgumentNullException(nameof(destination));
 
-		if (destination.Length < offset + bytesToCopy) {
+		if (destination.Length < offset + bytesToCopy)
 			throw new ArgumentException("Destination array is too small.", nameof(destination));
-		}
 
 		while (bytesToCopy > 0) {
 			int read = stream.Read(destination, offset, bytesToCopy);
-			if (read == 0) {
+			if (read == 0)
 				throw new ArgumentException("Could not read enough data from the stream.", nameof(stream));
-			}
 
 			offset += read;
 			bytesToCopy -= read;

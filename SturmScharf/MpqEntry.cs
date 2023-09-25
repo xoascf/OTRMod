@@ -1,4 +1,3 @@
-﻿using SturmScharf.Extensions;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -34,9 +33,8 @@ public class MpqEntry {
 		FileSize = fileSize;
 		Flags = flags;
 
-		if (fileName != null) {
+		if (fileName != null)
 			UpdateEncryptionSeed();
-		}
 	}
 
 	/// <summary>
@@ -123,14 +121,11 @@ public class MpqEntry {
 	}
 
 	/// <inheritdoc />
-	public override string ToString() {
-		return FileName ?? (Flags == 0 ? "(Deleted file)" : $"Unknown file @ {FilePosition}");
-	}
+	public override string ToString() => FileName ?? (Flags == 0 ? "(Deleted file)" : $"Unknown file @ {FilePosition}");
 
 	public void SerializeTo(Stream stream) {
-		using (BinaryWriter writer = new(stream, UTF8EncodingProvider.StrictUTF8, true)) {
-			WriteTo(writer);
-		}
+		using BinaryWriter writer = new(stream, EncodingProvider.StrictUTF8, true);
+		WriteTo(writer);
 	}
 
 	/// <summary>
@@ -138,9 +133,8 @@ public class MpqEntry {
 	/// </summary>
 	/// <param name="writer">The writer to which the entry is written.</param>
 	public void WriteTo(BinaryWriter writer) {
-		if (writer is null) {
+		if (writer is null)
 			throw new ArgumentNullException(nameof(writer));
-		}
 
 		writer.Write(FileOffset);
 		writer.Write(CompressedSize);
@@ -148,23 +142,16 @@ public class MpqEntry {
 		writer.Write((uint)Flags);
 	}
 
-	internal static uint AdjustEncryptionSeed(uint baseSeed, uint fileOffset, uint fileSize) {
-		return baseSeed + fileOffset ^ fileSize;
-	}
+	internal static uint AdjustEncryptionSeed(uint baseSeed, uint fileOffset, uint fileSize) => baseSeed + fileOffset ^ fileSize;
 
-	internal static uint UnadjustEncryptionSeed(uint adjustedSeed, uint fileOffset, uint fileSize) {
-		return (adjustedSeed ^ fileSize) - fileOffset;
-	}
+	internal static uint UnadjustEncryptionSeed(uint adjustedSeed, uint fileOffset, uint fileSize) => (adjustedSeed ^ fileSize) - fileOffset;
 
-	internal static uint CalculateEncryptionSeed(string? fileName) {
-		return CalculateEncryptionSeed(fileName, out uint encryptionSeed) ? encryptionSeed : 0;
-	}
+	internal static uint CalculateEncryptionSeed(string? fileName) => CalculateEncryptionSeed(fileName, out uint encryptionSeed) ? encryptionSeed : 0;
 
 	internal static bool CalculateEncryptionSeed(string? fileName, out uint encryptionSeed) {
 		string? name = fileName.GetFileName();
-		if (!string.IsNullOrEmpty(name) && StormBuffer.TryGetHashString(name, 0x300, out encryptionSeed)) {
+		if (!name.IsNullOrEmpty() && StormBuffer.TryGetHashString(name, 0x300, out encryptionSeed))
 			return true;
-		}
 
 		encryptionSeed = 0;
 		return false;
@@ -172,15 +159,13 @@ public class MpqEntry {
 
 	internal static uint CalculateEncryptionSeed(string? fileName, uint fileOffset, uint fileSize,
 		MpqFileFlags flags) {
-		if (fileName is null) {
+		if (fileName is null)
 			return 0;
-		}
 
 		bool blockOffsetAdjusted = flags.HasFlag(MpqFileFlags.BlockOffsetAdjustedKey);
 		uint seed = CalculateEncryptionSeed(fileName);
-		if (blockOffsetAdjusted) {
+		if (blockOffsetAdjusted)
 			seed = AdjustEncryptionSeed(seed, fileOffset, fileSize);
-		}
 
 		return seed;
 	}

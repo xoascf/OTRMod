@@ -1,7 +1,9 @@
 /* Licensed under the Open Software License version 3.0 */
 
 using OTRMod.Utility;
+using OTRMod.Z;
 using Action = OTRMod.ID.Action;
+using Texture = OTRMod.ID.Texture;
 
 namespace OTRMod;
 
@@ -28,7 +30,7 @@ public class ScriptParser {
 				break;
 
 			case Action.Mrg:
-				Save(Txt.Merge(_var[val[1]], _var[val[2]],bool.Parse(val[3])),
+				Save(Text.Merge(_var[val[1]], _var[val[2]],bool.Parse(val[3])),
 				GetOutPath(val));
 				break;
 
@@ -50,7 +52,7 @@ public class ScriptParser {
 	private byte[] GetExportData(string[] info, bool addHeader) {
 		if (!Enum.TryParse(info[1], out Texture.Codec codec))
 			return info[1] switch {
-				"Pam" => PlayerAnimation.Export(GetData(info[2], info[3])),
+				"Pam" => Animation.PlayerAnimation.Export(GetData(info[2], info[3])),
 				"Anm" => Animation.Export(GetData(info[2], info[3])),
 				//"Seq" => Audio.ExportSeq(int.Parse(info[2]), int.Parse(info[3]),
 					//GetData(info[4], info[5])),
@@ -62,21 +64,11 @@ public class ScriptParser {
 		int w = int.Parse(size[0]);
 		int h = int.Parse(size[1]);
 		byte[] data = GetData(info[2], Texture.GetSize(codec, w * h));
-		return addHeader ? Tex.Export(codec, w, h, data) : data;
+		return addHeader ? Z.Texture.Export(codec, w, h, data) : data;
 	}
 
 	private byte[] GetData(object s, object l) => ImageData.Get(s.AsInt(), l.AsInt());
-	private string GetOutPath(string[] expInfo) {
-		string path;
-
-#if NETCOREAPP3_0_OR_GREATER
-		path = expInfo[^1];
-#else
-		path = expInfo[expInfo.Length - 1];
-#endif
-
-		return Concatenate(SubDir, path);
-	}
+	private string GetOutPath(string[] expInfo) => Concatenate(SubDir, expInfo[^1]);
 
 	private const string DefaultFileName = "Mod.otr";
 	public string OTRFileName = DefaultFileName;

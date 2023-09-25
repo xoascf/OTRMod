@@ -1,6 +1,5 @@
 using SturmScharf.Compression;
 using SturmScharf.Compression.Common;
-using SturmScharf.Extensions;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -68,15 +67,13 @@ public class MpqStream : Stream {
 			lock (_stream) {
 				_stream.Seek(FilePosition, SeekOrigin.Begin);
 				int read = _stream.Read(filedata, 0, filedata.Length);
-				if (read != filedata.Length) {
+				if (read != filedata.Length)
 					throw new MpqParserException("Insufficient data or invalid data length");
-				}
 			}
 
 			if (IsEncrypted && FileSize > 3) {
-				if (_encryptionSeed == 0) {
+				if (_encryptionSeed == 0)
 					throw new MpqParserException("Unable to determine encryption key");
-				}
 
 				StormBuffer.DecryptBlock(filedata, _encryptionSeed);
 			}
@@ -93,31 +90,26 @@ public class MpqStream : Stream {
 				int blockPositionsCount = (int)((FileSize + BlockSize - 1) / BlockSize) + 1;
 
 				// Files with metadata have an extra block containing block checksums
-				if (Flags.HasFlag(MpqFileFlags.FileHasMetadata)) {
+				if (Flags.HasFlag(MpqFileFlags.FileHasMetadata))
 					blockPositionsCount++;
-				}
 
 				_blockPositions = new uint[blockPositionsCount];
 
 				lock (_stream) {
 					_stream.Seek(FilePosition, SeekOrigin.Begin);
-					using (BinaryReader br = new(_stream, new UTF8Encoding(), true)) {
-						for (int i = 0; i < blockPositionsCount; i++) {
-							_blockPositions[i] = br.ReadUInt32();
-						}
-					}
+					using BinaryReader br = new(_stream, new UTF8Encoding(), true);
+					for (int i = 0; i < blockPositionsCount; i++)
+						_blockPositions[i] = br.ReadUInt32();
 				}
 
 				uint blockpossize = (uint)blockPositionsCount * 4;
 
 				if (IsEncrypted && blockPositionsCount > 1) {
 					uint maxOffset1 = (uint)BlockSize + blockpossize;
-					if (_encryptionSeed == 0) {
-						// This should only happen when the file name is not known.
-						if (!entry.TryUpdateEncryptionSeed(_blockPositions[0], _blockPositions[1], blockpossize, maxOffset1)) {
+					if (_encryptionSeed == 0)
+					// This should only happen when the file name is not known.
+						if (!entry.TryUpdateEncryptionSeed(_blockPositions[0], _blockPositions[1], blockpossize, maxOffset1))
 							throw new MpqParserException("Unable to determine encyption seed");
-						}
-					}
 
 					_encryptionSeed = entry.EncryptionSeed;
 					_baseEncryptionSeed = entry.BaseEncryptionSeed;
@@ -199,44 +191,38 @@ public class MpqStream : Stream {
 			bool hasBlockPositions = !singleUnit && (targetFlags & MpqFileFlags.Compressed) != 0;
 			if (hasBlockPositions) {
 				for (int blockIndex = 0; blockIndex < blockPosCount; blockIndex++) {
-					using (BinaryReader reader = new(compressedStream, Encoding.UTF8, true)) {
-						for (int i = 0; i < blockPosCount; i++) {
+					using (BinaryReader reader = new(compressedStream, Encoding.UTF8, true))
+						for (int i = 0; i < blockPosCount; i++)
 							blockPositions[i] = (int)reader.ReadUInt32();
-						}
-					}
 
 					compressedStream.Seek(0, SeekOrigin.Begin);
 				}
 			}
 			else {
-				if (singleUnit) {
+				if (singleUnit)
 					blockPosCount = 2;
-				}
 
 				blockPositions[0] = 0;
-				for (int blockIndex = 2; blockIndex < blockPosCount; blockIndex++) {
+				for (int blockIndex = 2; blockIndex < blockPosCount; blockIndex++)
 					blockPositions[blockIndex - 1] = targetBlockSize * (blockIndex - 1);
-				}
 
 				blockPositions[blockPosCount - 1] = (int)compressedSize;
 			}
 
 			uint encryptionSeed = _baseEncryptionSeed;
-			if (targetFlags.HasFlag(MpqFileFlags.BlockOffsetAdjustedKey)) {
+			if (targetFlags.HasFlag(MpqFileFlags.BlockOffsetAdjustedKey))
 				encryptionSeed = MpqEntry.AdjustEncryptionSeed(encryptionSeed, targetFilePosition, (uint)fileSize);
-			}
 
 			int currentOffset = 0;
-			using (BinaryWriter writer = new(resultStream, UTF8EncodingProvider.StrictUTF8, true)) {
-				for (int blockIndex = hasBlockPositions ? 0 : 1; blockIndex < blockPosCount; blockIndex++) {
-					int toWrite = blockPositions[blockIndex] - currentOffset;
+			using BinaryWriter writer = new(resultStream, EncodingProvider.StrictUTF8, true);
+			for (int blockIndex = hasBlockPositions ? 0 : 1; blockIndex < blockPosCount; blockIndex++) {
+				int toWrite = blockPositions[blockIndex] - currentOffset;
 
-					byte[] data = StormBuffer.EncryptStream(compressedStream,
-						(uint)(encryptionSeed + blockIndex - 1), currentOffset, toWrite);
-					writer.Write(data);
+				byte[] data = StormBuffer.EncryptStream(compressedStream,
+					(uint)(encryptionSeed + blockIndex - 1), currentOffset, toWrite);
+				writer.Write(data);
 
-					currentOffset += toWrite;
-				}
+				currentOffset += toWrite;
 			}
 		}
 		else {
@@ -272,9 +258,8 @@ public class MpqStream : Stream {
 
 			compressedStream.Dispose();
 
-			if (singleUnit) {
+			if (singleUnit)
 				baseStream.Dispose();
-			}
 		}
 
 		uint length = (uint)baseStream.Length;
@@ -302,11 +287,9 @@ public class MpqStream : Stream {
 			}
 
 			resultStream.Position = 0;
-			using (BinaryWriter writer = new(resultStream, UTF8EncodingProvider.StrictUTF8, true)) {
-				for (int blockIndex = 0; blockIndex < blockCount; blockIndex++) {
-					writer.Write(blockOffsets[blockIndex]);
-				}
-			}
+			using BinaryWriter writer = new(resultStream, EncodingProvider.StrictUTF8, true);
+			for (int blockIndex = 0; blockIndex < blockCount; blockIndex++)
+				writer.Write(blockOffsets[blockIndex]);
 		}
 
 		resultStream.Position = 0;
@@ -319,9 +302,8 @@ public class MpqStream : Stream {
 
 	/// <inheritdoc />
 	public override long Seek(long offset, SeekOrigin origin) {
-		if (!CanSeek) {
+		if (!CanSeek)
 			throw new NotSupportedException();
-		}
 
 		long target = origin switch {
 			SeekOrigin.Begin => offset,
@@ -331,41 +313,34 @@ public class MpqStream : Stream {
 			_ => throw new InvalidEnumArgumentException(nameof(origin), (int)origin, typeof(SeekOrigin))
 		};
 
-		if (target < 0) {
+		if (target < 0)
 			throw new ArgumentOutOfRangeException(nameof(offset),
-				"Attempted to Seek before the beginning of the stream");
-		}
+			"Attempted to Seek before the beginning of the stream");
 
-		if (target > Length) {
+		if (target > Length)
 			throw new ArgumentOutOfRangeException(nameof(offset), "Attempted to Seek beyond the end of the stream");
-		}
 
 		return _position = target;
 	}
 
 	/// <inheritdoc />
-	public override void SetLength(long value) {
-		throw new NotSupportedException("SetLength is not supported");
-	}
+	public override void SetLength(long value) => throw new NotSupportedException("SetLength is not supported");
 
 	/// <inheritdoc />
 	public override int Read(byte[] buffer, int offset, int count) {
-		if (!CanRead) {
+		if (!CanRead)
 			throw new NotSupportedException();
-		}
 
-		if (_isSingleUnit) {
+		if (_isSingleUnit)
 			return ReadInternal(buffer, offset, count);
-		}
 
 		int toread = count;
 		int readtotal = 0;
 
 		while (toread > 0) {
 			int read = ReadInternal(buffer, offset, toread);
-			if (read == 0) {
+			if (read == 0)
 				break;
-			}
 
 			readtotal += read;
 			offset += read;
@@ -377,38 +352,32 @@ public class MpqStream : Stream {
 
 	/// <inheritdoc />
 	public override int ReadByte() {
-		if (!CanRead) {
+		if (!CanRead)
 			throw new NotSupportedException();
-		}
 
-		if (_position >= Length) {
+		if (_position >= Length)
 			return -1;
-		}
 
 		BufferData();
 		return _currentData[_isSingleUnit ? _position++ : (int)(_position++ & BlockSize - 1)];
 	}
 
 	/// <inheritdoc />
-	public override void Write(byte[] buffer, int offset, int count) {
-		throw new NotSupportedException("Write is not supported");
-	}
+	public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException("Write is not supported");
 
 	/// <inheritdoc />
 	public override void Close() {
 		base.Close();
-		if (_isStreamOwner) {
+		if (_isStreamOwner)
 			_stream.Close();
-		}
 	}
 
 	/// <summary>
 	/// Copy the base stream, so that the contents do not get decompressed nor decrypted.
 	/// </summary>
 	internal void CopyBaseStreamTo(Stream target) {
-		lock (_stream) {
+		lock (_stream)
 			_stream.CopyTo(target, FilePosition, (int)CompressedSize, StreamExtensions.DefaultBufferSize);
-		}
 	}
 
 	private static byte[] DecompressMulti(byte[] input, uint outputLength) {
@@ -418,8 +387,7 @@ public class MpqStream : Stream {
 	}
 
 	private static Func<Stream, byte[]> GetDecompressionFunction(MpqCompressionType compressionType,
-		uint outputLength) {
-		return compressionType switch {
+		uint outputLength) => compressionType switch {
 			MpqCompressionType.Huffman => HuffmanCoding.Decompress,
 			MpqCompressionType.ZLib => stream => ZLibCompression.Decompress(stream, outputLength),
 			MpqCompressionType.PKLib => stream => PKDecompress(stream, outputLength),
@@ -446,32 +414,27 @@ public class MpqStream : Stream {
 				AdpcmCompression.Decompress(PKDecompress(stream, outputLength), 2),
 
 			_ => throw new NotSupportedException(
-				$"Compression of type 0x{compressionType.ToString("X")} is not yet supported")
+				$"Compression of type 0x{compressionType:X} is not yet supported")
 		};
-	}
 
 	private static byte[] PKDecompress(Stream data, uint expectedLength) {
 		int b1 = data.ReadByte();
 		int b2 = data.ReadByte();
 		int b3 = data.ReadByte();
 		if (b1 == 0 && b2 == 0 && b3 == 0) {
-			using (BinaryReader reader = new(data)) {
-				uint expectedStreamLength = reader.ReadUInt32();
-				if (expectedStreamLength != data.Length) {
-					throw new InvalidDataException("Unexpected stream length value");
-				}
+			using BinaryReader reader = new(data);
+			uint expectedStreamLength = reader.ReadUInt32();
+			if (expectedStreamLength != data.Length)
+				throw new InvalidDataException("Unexpected stream length value");
 
-				if (expectedLength + 8 == expectedStreamLength) {
-					return reader.ReadBytes((int)expectedLength);
-				}
+			if (expectedLength + 8 == expectedStreamLength)
+				return reader.ReadBytes((int)expectedLength);
 
-				MpqCompressionType comptype = (MpqCompressionType)reader.ReadByte();
-				if (comptype != MpqCompressionType.ZLib) {
-					throw new NotImplementedException();
-				}
+			MpqCompressionType comptype = (MpqCompressionType)reader.ReadByte();
+			if (comptype != MpqCompressionType.ZLib)
+				throw new NotImplementedException();
 
-				return ZLibCompression.Decompress(data, expectedLength);
-			}
+			return ZLibCompression.Decompress(data, expectedLength);
 		}
 
 		data.Seek(-3, SeekOrigin.Current);
@@ -479,18 +442,16 @@ public class MpqStream : Stream {
 	}
 
 	private int ReadInternal(byte[] buffer, int offset, int count) {
-		if (_position >= Length) {
+		if (_position >= Length)
 			return 0;
-		}
 
 		BufferData();
 
 		long localPosition = _isSingleUnit ? _position : _position & BlockSize - 1;
 		int canRead = (int)(_currentData.Length - localPosition);
 		int bytesToCopy = canRead > count ? count : canRead;
-		if (bytesToCopy <= 0) {
+		if (bytesToCopy <= 0)
 			return 0;
-		}
 
 		Array.Copy(_currentData, localPosition, buffer, offset, bytesToCopy);
 
@@ -508,8 +469,8 @@ public class MpqStream : Stream {
 				_currentBlockIndex = requiredBlock;
 			}
 		}
-		else if (_currentData is null) {
-			_currentData = LoadSingleUnit();
+		else {
+			_currentData ??= LoadSingleUnit();
 		}
 	}
 
@@ -521,9 +482,8 @@ public class MpqStream : Stream {
 		}
 
 		if (IsEncrypted && FileSize > 3) {
-			if (_encryptionSeed == 0) {
+			if (_encryptionSeed == 0)
 				throw new MpqParserException("Unable to determine encryption key");
-			}
 
 			StormBuffer.DecryptBlock(fileData, _encryptionSeed);
 		}
@@ -555,91 +515,17 @@ public class MpqStream : Stream {
 		}
 
 		if (IsEncrypted && bufferSize > 3) {
-			if (_encryptionSeed == 0) {
+			if (_encryptionSeed == 0)
 				throw new MpqParserException("Unable to determine encryption key");
-			}
 
 			StormBuffer.DecryptBlock(buffer, (uint)(blockIndex + _encryptionSeed));
 		}
 
-		if (IsCompressed && bufferSize != expectedLength) {
+		if (IsCompressed && bufferSize != expectedLength)
 			buffer = Flags.HasFlag(MpqFileFlags.CompressedPK)
-				? PKLibCompression.Decompress(buffer, (uint)expectedLength)
-				: DecompressMulti(buffer, (uint)expectedLength);
-		}
+			? PKLibCompression.Decompress(buffer, (uint)expectedLength)
+			: DecompressMulti(buffer, (uint)expectedLength);
 
 		return buffer;
-	}
-
-	private bool TryPeekCompressionType(out MpqCompressionType? mpqCompressionType) {
-		int bufferSize = Math.Min((int)CompressedSize, 4);
-
-		byte[] buffer = new byte[bufferSize];
-		lock (_stream) {
-			_stream.Seek(FilePosition, SeekOrigin.Begin);
-			int read = _stream.Read(buffer, 0, bufferSize);
-			if (read != bufferSize) {
-				mpqCompressionType = null;
-				return false;
-			}
-		}
-
-		if (IsEncrypted && bufferSize > 3) {
-			if (_encryptionSeed == 0) {
-				mpqCompressionType = null;
-				return false;
-			}
-
-			StormBuffer.DecryptBlock(buffer, _encryptionSeed);
-		}
-
-		if (Flags.HasFlag(MpqFileFlags.CompressedMulti) && bufferSize > 0) {
-			mpqCompressionType = (MpqCompressionType)buffer[0];
-			return true;
-		}
-
-		mpqCompressionType = null;
-		return true;
-	}
-
-	private bool TryPeekCompressionType(int blockIndex, int expectedLength,
-		out MpqCompressionType? mpqCompressionType) {
-		uint offset = _blockPositions[blockIndex];
-		int bufferSize = (int)(_blockPositions[blockIndex + 1] - offset);
-
-		if (bufferSize == expectedLength) {
-			mpqCompressionType = null;
-			return !IsEncrypted || bufferSize < 4 || _encryptionSeed != 0;
-		}
-
-		offset += FilePosition;
-		bufferSize = Math.Min(bufferSize, 4);
-
-		byte[] buffer = new byte[bufferSize];
-		lock (_stream) {
-			_stream.Seek(offset, SeekOrigin.Begin);
-			int read = _stream.Read(buffer, 0, bufferSize);
-			if (read != bufferSize) {
-				mpqCompressionType = null;
-				return false;
-			}
-		}
-
-		if (IsEncrypted && bufferSize > 3) {
-			if (_encryptionSeed == 0) {
-				mpqCompressionType = null;
-				return false;
-			}
-
-			StormBuffer.DecryptBlock(buffer, (uint)(blockIndex + _encryptionSeed));
-		}
-
-		if (Flags.HasFlag(MpqFileFlags.CompressedPK)) {
-			mpqCompressionType = null;
-			return true;
-		}
-
-		mpqCompressionType = (MpqCompressionType)buffer[0];
-		return true;
 	}
 }

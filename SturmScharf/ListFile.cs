@@ -17,15 +17,13 @@ public sealed class ListFile {
 	internal void ReadFrom(StreamReader reader) {
 		while (!reader.EndOfStream) {
 			string? fileName = reader.ReadLine();
-			if (!string.IsNullOrEmpty(fileName)) {
+			if (!fileName.IsNullOrEmpty())
 				FileNames.Add(fileName);
-			}
 		}
 	}
 
 	internal void WriteTo(StreamWriter writer) {
-		foreach (string fileName in FileNames) {
+		foreach (string fileName in FileNames)
 			writer.WriteLine(fileName);
-		}
 	}
 }

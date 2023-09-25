@@ -1,4 +1,4 @@
-﻿namespace SturmScharf;
+namespace SturmScharf;
 
 public class MpqUnknownFile : MpqFile {
 	/// <summary>
@@ -7,15 +7,13 @@ public class MpqUnknownFile : MpqFile {
 	internal MpqUnknownFile(MpqStream mpqStream, MpqFileFlags flags, MpqHash mpqHash, uint hashIndex,
 		uint hashCollisions, uint? encryptionSeed = null)
 		: base(mpqHash.Name, mpqStream, flags, mpqHash.Locale, false) {
-		if (mpqHash.Mask == 0) {
+		if (mpqHash.Mask == 0)
 			throw new ArgumentException(
-				"Expected the Mask value of mpqHash argument to be set to a non-zero value.", nameof(mpqHash));
-		}
+			"Expected the Mask value of mpqHash argument to be set to a non-zero value.", nameof(mpqHash));
 
-		if (flags.HasFlag(MpqFileFlags.Encrypted) && encryptionSeed is null) {
+		if (flags.HasFlag(MpqFileFlags.Encrypted) && encryptionSeed is null)
 			throw new ArgumentException($"Cannot encrypt an {nameof(MpqUnknownFile)} without an encryption seed.",
-				nameof(flags));
-		}
+			nameof(flags));
 
 		Mask = mpqHash.Mask;
 		HashIndex = hashIndex;
@@ -31,9 +29,7 @@ public class MpqUnknownFile : MpqFile {
 
 	protected override uint? EncryptionSeed { get; }
 
-	public MpqKnownFile TryAsKnownFile(string fileName) {
-		throw new NotImplementedException();
-	}
+	public MpqKnownFile TryAsKnownFile(string fileName) => throw new NotImplementedException();
 
 	protected override void GetTableEntries(MpqArchive mpqArchive, uint index, uint relativeFileOffset,
 		uint compressedSize, uint fileSize, out MpqEntry mpqEntry, out MpqHash mpqHash) {

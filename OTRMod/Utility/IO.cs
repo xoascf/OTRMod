@@ -46,13 +46,11 @@ internal static class IO {
 	}
 
 #if NETCOREAPP2_1_OR_GREATER
-	public static Span<T> Slice<T>(this T[] input, int start) {
-		return new(input, start, input.Length - start);
-	}
+	public static Span<T> Slice<T>(this T[] input, int start)
+		=> new(input, start, input.Length - start);
 
-	public static Span<T> Slice<T>(this T[] input, int start, int length) {
-		return new(input, start, length);
-	}
+	public static Span<T> Slice<T>(this T[] input, int start, int length)
+		=> new(input, start, length);
 #else
 	public static ArraySegment<T> Slice<T>(this T[] input, int start) {
 		if (input == null)

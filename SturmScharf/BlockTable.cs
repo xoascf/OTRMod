@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -13,13 +13,13 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	/// </summary>
 	internal const string TableKey = "(block table)";
 
-	internal readonly List<MpqEntry> _entries;
+	internal readonly List<MpqEntry> Entries;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="BlockTable" /> class.
 	/// </summary>
 	internal BlockTable() {
-		_entries = new List<MpqEntry>();
+		Entries = new List<MpqEntry>();
 	}
 
 	/// <summary>
@@ -31,32 +31,28 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	internal BlockTable(BinaryReader reader, uint size, uint headerOffset) {
 		long bytesRemaining = reader.BaseStream.Length - reader.BaseStream.Position;
 		if (bytesRemaining < size * MpqEntry.Size) {
-			if (bytesRemaining % MpqEntry.Size != 0) {
+			if (bytesRemaining % MpqEntry.Size != 0)
 				throw new MpqParserException(
-					$"Remaining amount of bytes ({bytesRemaining}) is not enough for {size} MPQ entries, and is also not a multiple of {MpqEntry.Size}.");
-			}
+				$"Remaining amount of bytes ({bytesRemaining}) is not enough for {size} MPQ entries, and is also not a multiple of {MpqEntry.Size}.");
 
 			size = (uint)bytesRemaining / MpqEntry.Size;
 		}
 
-		_entries = new List<MpqEntry>((int)size);
+		Entries = new List<MpqEntry>((int)size);
 
 		byte[] entrydata = reader.ReadBytes((int)(size * MpqEntry.Size));
 		Decrypt(entrydata);
 
-		using (MemoryStream stream = new(entrydata)) {
-			using (BinaryReader streamReader = new(stream)) {
-				for (int i = 0; i < size; i++) {
-					_entries.Add(MpqEntry.FromReader(streamReader, headerOffset));
-				}
-			}
-		}
+		using MemoryStream stream = new(entrydata);
+		using BinaryReader streamReader = new(stream);
+		for (int i = 0; i < size; i++)
+			Entries.Add(MpqEntry.FromReader(streamReader, headerOffset));
 	}
 
 	/// <summary>
 	/// Gets the capacity of the <see cref="BlockTable" />.
 	/// </summary>
-	public override uint Size => (uint)_entries.Count;
+	public override uint Size => (uint)Entries.Count;
 
 	/// <summary>
 	/// Gets the key used to encrypt and decrypt the <see cref="BlockTable" />.
@@ -74,8 +70,8 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	/// <param name="i">The zero-based index of the <see cref="MpqEntry" /> to get.</param>
 	/// <returns>The <see cref="MpqEntry" /> at index <paramref name="i" /> of the <see cref="BlockTable" />.</returns>
 	public MpqEntry this[int i] {
-		get => _entries[i];
-		set => _entries[i] = value;
+		get => Entries[i];
+		set => Entries[i] = value;
 	}
 
 	/// <summary>
@@ -84,20 +80,17 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	/// <param name="i">The zero-based index of the <see cref="MpqEntry" /> to get.</param>
 	/// <returns>The <see cref="MpqEntry" /> at index <paramref name="i" /> of the <see cref="BlockTable" />.</returns>
 	public MpqEntry this[uint i] {
-		get => _entries[(int)i];
-		set => _entries[(int)i] = value;
+		get => Entries[(int)i];
+		set => Entries[(int)i] = value;
 	}
 
 	/// <inheritdoc />
-	IEnumerator IEnumerable.GetEnumerator() {
-		return _entries.GetEnumerator();
-	}
+	IEnumerator IEnumerable.GetEnumerator() => Entries.GetEnumerator();
 
 	/// <inheritdoc />
 	IEnumerator<MpqEntry> IEnumerable<MpqEntry>.GetEnumerator() {
-		foreach (MpqEntry entry in _entries) {
+		foreach (MpqEntry entry in Entries)
 			yield return entry;
-		}
 	}
 
 	/// <summary>
@@ -110,11 +103,10 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	/// set yet.
 	/// </exception>
 	public void Add(MpqEntry entry) {
-		if (entry is null) {
+		if (entry is null)
 			throw new ArgumentNullException(nameof(entry));
-		}
 
-		_entries.Add(entry);
+		Entries.Add(entry);
 	}
 
 	/// <summary>
@@ -122,7 +114,5 @@ internal sealed class BlockTable : MpqTable, IEnumerable<MpqEntry> {
 	/// </summary>
 	/// <param name="writer">The <see cref="BinaryWriter" /> to write the content to.</param>
 	/// <param name="i">The index of the <see cref="MpqEntry" /> to write.</param>
-	protected override void WriteEntry(BinaryWriter writer, int i) {
-		_entries[i].WriteTo(writer);
-	}
+	protected override void WriteEntry(BinaryWriter writer, int i) => Entries[i].WriteTo(writer);
 }

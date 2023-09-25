@@ -1,13 +1,13 @@
 ﻿@inject IJSRuntime JsRuntime
 @code {
-protected override async Task OnInitializedAsync() {
-	await JsRuntime.InvokeVoidAsync("setLang", T["lang_tag"].ToString());
+	protected override async Task OnInitializedAsync()
+		=> await JsRuntime.InvokeVoidAsync("setLang", T["lang_tag"].ToString());
 }
 }
 <Router AppAssembly="@typeof(App).Assembly">
 	<Found Context="routeData">
-		<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-		<FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+		<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+		<FocusOnNavigate RouteData="@routeData" Selector="h1" />
 	</Found>
 	<NotFound>
 		<PageTitle>@T["error_404_title"]</PageTitle>

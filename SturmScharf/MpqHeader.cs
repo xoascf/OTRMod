@@ -153,9 +153,8 @@ public class MpqHeader {
 	/// <returns>The parsed <see cref="MpqHeader" />.</returns>
 	public static MpqHeader FromReader(BinaryReader reader) {
 		uint id = reader?.ReadUInt32() ?? throw new ArgumentNullException(nameof(reader));
-		if (id != MpqId) {
+		if (id != MpqId)
 			throw new MpqParserException($"Invalid MPQ header signature: {id}");
-		}
 
 		MpqHeader header = new() {
 			ID = id,
@@ -170,10 +169,9 @@ public class MpqHeader {
 		};
 
 		if (header.MpqVersion == 1) {
-			const bool IsInvalidVersion1 = true;
-			if (IsInvalidVersion1) {
+			const bool isInvalidVersion1 = true;
+			if (isInvalidVersion1)
 				header.MpqVersion = 0;
-			}
 		}
 
 #if DEBUG
@@ -195,9 +193,8 @@ public class MpqHeader {
 		}
 #endif
 
-		if (header.MpqVersion != 0) {
+		if (header.MpqVersion != 0)
 			throw new NotSupportedException($"MPQ format version {header.MpqVersion} is not supported");
-		}
 
 		return header;
 	}
@@ -208,9 +205,8 @@ public class MpqHeader {
 	/// <param name="writer">The writer to which the header will be written.</param>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="writer" /> is null.</exception>
 	public void WriteTo(BinaryWriter writer) {
-		if (writer is null) {
+		if (writer is null)
 			throw new ArgumentNullException(nameof(writer));
-		}
 
 		writer.Write(MpqId);
 		writer.Write(DataOffset);
@@ -223,7 +219,5 @@ public class MpqHeader {
 		writer.Write(BlockTableSize);
 	}
 
-	internal bool IsArchiveAfterHeader() {
-		return DataOffset == Size || HashTableOffset != Size;
-	}
+	internal bool IsArchiveAfterHeader() => DataOffset == Size || HashTableOffset != Size;
 }

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace SturmScharf;
 
@@ -36,26 +36,23 @@ public abstract class MpqTable {
 	/// Encrypts the contents of the <see cref="MpqTable" />.
 	/// </summary>
 	/// <param name="data">The unencrypted entries in the table.</param>
-	internal void Encrypt(byte[] data) {
-		StormBuffer.EncryptBlock(data, StormBuffer.HashString(Key, 0x300));
-	}
+	internal void Encrypt(byte[] data)
+		=> StormBuffer.EncryptBlock(data, StormBuffer.HashString(Key, 0x300));
 
 	/// <summary>
 	/// Decrypts the contents of the <see cref="MpqTable" />.
 	/// </summary>
 	/// <param name="data">The encrypted entries in the table.</param>
-	internal void Decrypt(byte[] data) {
-		StormBuffer.DecryptBlock(data, StormBuffer.HashString(Key, 0x300));
-	}
+	internal void Decrypt(byte[] data)
+		=> StormBuffer.DecryptBlock(data, StormBuffer.HashString(Key, 0x300));
 
 	/// <summary>
 	/// Write the entire <see cref="MpqTable" />'s encrypted contents to the <paramref name="stream" />.
 	/// </summary>
 	/// <param name="stream">The <see cref="Stream" /> to write the contents to.</param>
 	internal void SerializeTo(Stream stream) {
-		using (BinaryWriter writer = new(stream, UTF8EncodingProvider.StrictUTF8, true)) {
-			WriteTo(writer);
-		}
+		using BinaryWriter writer = new(stream, EncodingProvider.StrictUTF8, true);
+		WriteTo(writer);
 	}
 
 	/// <summary>
@@ -63,14 +60,11 @@ public abstract class MpqTable {
 	/// </summary>
 	/// <param name="writer">The <see cref="BinaryWriter" /> to write the contents to.</param>
 	internal void WriteTo(BinaryWriter writer) {
-		using (MemoryStream memoryStream = new(GetEncryptedData())) {
-			using (BinaryReader reader = new(memoryStream)) {
-				long end = memoryStream.Length;
-				for (int i = 0; i < end; i++) {
-					writer.Write(reader.ReadByte());
-				}
-			}
-		}
+		using MemoryStream memoryStream = new(GetEncryptedData());
+		using BinaryReader reader = new(memoryStream);
+		long end = memoryStream.Length;
+		for (int i = 0; i < end; i++)
+			writer.Write(reader.ReadByte());
 	}
 
 	/// <summary>
@@ -81,22 +75,17 @@ public abstract class MpqTable {
 	protected abstract void WriteEntry(BinaryWriter writer, int i);
 
 	private byte[] GetEncryptedData() {
-		byte[] data;
+		using MemoryStream memoryStream = new();
 
-		using (MemoryStream memoryStream = new()) {
-			using (BinaryWriter writer = new(memoryStream, UTF8EncodingProvider.StrictUTF8, true)) {
-				for (int i = 0; i < Size; i++) {
-					WriteEntry(writer, i);
-				}
-			}
+		using (BinaryWriter writer = new(memoryStream, EncodingProvider.StrictUTF8, true))
+			for (int i = 0; i < Size; i++)
+				WriteEntry(writer, i);
 
-			memoryStream.Position = 0;
+		memoryStream.Position = 0;
 
-			using (BinaryReader reader = new(memoryStream)) {
-				data = reader.ReadBytes((int)Size * EntrySize);
-				Encrypt(data);
-			}
-		}
+		using BinaryReader reader = new(memoryStream);
+		byte[] data = reader.ReadBytes((int)Size * EntrySize);
+		Encrypt(data);
 
 		return data;
 	}

@@ -1,4 +1,4 @@
-﻿namespace SturmScharf.Compression.Common;
+namespace SturmScharf.Compression.Common;
 
 public static class EnumExtensions {
 	/// <param name="allowNoFlags">
@@ -7,17 +7,14 @@ public static class EnumExtensions {
 	/// </param>
 	public static bool IsDefined<TEnum>(this TEnum @enum, bool allowNoFlags = true)
 		where TEnum : struct, Enum {
-		if (Enum.IsDefined(typeof(TEnum), @enum)) {
+		if (Enum.IsDefined(typeof(TEnum), @enum))
 			return true;
-		}
 
-		if (Attribute.GetCustomAttribute(typeof(TEnum), typeof(FlagsAttribute)) is null) {
+		if (Attribute.GetCustomAttribute(typeof(TEnum), typeof(FlagsAttribute)) is null)
 			return false;
-		}
 
-		if (allowNoFlags && (int)(object)@enum == 0) {
+		if (allowNoFlags && (int)(object)@enum == 0)
 			return true;
-		}
 
 		char firstChar = @enum.ToString()[0];
 		return !char.IsDigit(firstChar) && firstChar != '-';

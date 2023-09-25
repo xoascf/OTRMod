@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 using Ionic.Zlib;
 using SturmScharf.Compression.Common;
@@ -24,13 +24,11 @@ public static class ZLibCompression {
 		MemoryStream outputStream = new();
 
 		using (ZlibStream deflater = new(outputStream, CompressionMode.Compress,
-				   CompressionLevel.BestCompression, true)) {
+				   CompressionLevel.BestCompression, true))
 			inputStream.CopyTo(deflater, bytes, StreamExtensions.DefaultBufferSize);
-		}
 
-		if (!leaveOpen) {
+		if (!leaveOpen)
 			inputStream.Dispose();
-		}
 
 		return outputStream;
 	}

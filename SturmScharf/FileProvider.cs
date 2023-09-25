@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace SturmScharf;
 
@@ -8,9 +8,8 @@ public static class FileProvider {
 	/// </summary>
 	public static FileStream CreateFileAndFolder(string path) {
 		DirectoryInfo directory = new FileInfo(path).Directory!;
-		if (!directory.Exists) {
+		if (!directory.Exists)
 			directory.Create();
-		}
 
 		return File.Create(path);
 	}

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace SturmScharf;
 
@@ -11,7 +11,7 @@ internal sealed class HashTable : MpqTable {
 	/// </summary>
 	internal const string TableKey = "(hash table)";
 
-	internal readonly MpqHash[] _hashes;
+	internal readonly MpqHash[] Hashes;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="HashTable" /> class.
@@ -25,17 +25,15 @@ internal sealed class HashTable : MpqTable {
 	/// <see cref="MpqTable.MaxSize" />.
 	/// </exception>
 	public HashTable(uint size) {
-		if (size > MaxSize) {
+		if (size > MaxSize)
 			throw new ArgumentOutOfRangeException(nameof(size));
-		}
 
 		Mask = GenerateMask(size);
 		size = Size;
 
-		_hashes = new MpqHash[size];
-		for (int i = 0; i < size; i++) {
-			_hashes[i] = MpqHash.NULL;
-		}
+		Hashes = new MpqHash[size];
+		for (int i = 0; i < size; i++)
+			Hashes[i] = MpqHash.NULL;
 	}
 
 	/// <summary>
@@ -91,27 +89,22 @@ internal sealed class HashTable : MpqTable {
 	/// <see cref="MpqTable.MaxSize" />.
 	/// </exception>
 	internal HashTable(BinaryReader reader, uint size) {
-		if (size > MaxSize) {
+		if (size > MaxSize)
 			throw new ArgumentOutOfRangeException(nameof(size));
-		}
 
-		if (size != GenerateMask(size) + 1) {
+		if (size != GenerateMask(size) + 1)
 			throw new ArgumentException($"Size {size} is not a power of two.", nameof(size));
-		}
 
-		_hashes = new MpqHash[size];
+		Hashes = new MpqHash[size];
 		Mask = size - 1;
 
 		byte[] hashdata = reader.ReadBytes((int)(size * MpqHash.Size));
 		Decrypt(hashdata);
 
-		using (MemoryStream stream = new(hashdata)) {
-			using (BinaryReader streamReader = new(stream)) {
-				for (int i = 0; i < size; i++) {
-					_hashes[i] = new MpqHash(streamReader, Mask);
-				}
-			}
-		}
+		using MemoryStream stream = new(hashdata);
+		using BinaryReader streamReader = new(stream);
+		for (int i = 0; i < size; i++)
+			Hashes[i] = new MpqHash(streamReader, Mask);
 	}
 
 	/// <summary>
@@ -140,8 +133,8 @@ internal sealed class HashTable : MpqTable {
 	/// <param name="i">The zero-based index of the <see cref="MpqHash" /> to get.</param>
 	/// <returns>The <see cref="MpqHash" /> at index <paramref name="i" /> of the <see cref="HashTable" />.</returns>
 	internal MpqHash this[int i] {
-		get => _hashes[i];
-		set => _hashes[i] = value;
+		get => Hashes[i];
+		set => Hashes[i] = value;
 	}
 
 	/// <summary>
@@ -150,8 +143,8 @@ internal sealed class HashTable : MpqTable {
 	/// <param name="i">The zero-based index of the <see cref="MpqHash" /> to get.</param>
 	/// <returns>The <see cref="MpqHash" /> at index <paramref name="i" /> of the <see cref="HashTable" />.</returns>
 	internal MpqHash this[uint i] {
-		get => _hashes[i];
-		set => _hashes[i] = value;
+		get => Hashes[i];
+		set => Hashes[i] = value;
 	}
 
 	/// <summary>
@@ -184,18 +177,14 @@ internal sealed class HashTable : MpqTable {
 	/// an unknown filename,
 	/// and the <see cref="HashTable" /> of the <see cref="MpqArchive" /> it came from has a smaller size than this one.
 	/// </returns>
-	public uint Add(MpqHash hash, uint hashIndex, uint hashCollisions) {
-		return AddEntry(hash, hashIndex, hashCollisions, hash.Mask + 1);
-	}
+	public uint Add(MpqHash hash, uint hashIndex, uint hashCollisions) => AddEntry(hash, hashIndex, hashCollisions, hash.Mask + 1);
 
 	/// <summary>
 	/// Writes the <see cref="MpqHash" /> at index <paramref name="i" />.
 	/// </summary>
 	/// <param name="writer">The <see cref="BinaryWriter" /> to write the content to.</param>
 	/// <param name="i">The index of the <see cref="MpqHash" /> to write.</param>
-	protected override void WriteEntry(BinaryWriter writer, int i) {
-		_hashes[i].WriteTo(writer);
-	}
+	protected override void WriteEntry(BinaryWriter writer, int i) => Hashes[i].WriteTo(writer);
 
 	private uint AddEntry(MpqHash hash, uint hashIndex, uint hashCollisions, uint step) {
 		uint copy = 0U;
@@ -211,22 +200,19 @@ internal sealed class HashTable : MpqTable {
 	private void TryAdd(MpqHash hash, uint index, uint hashCollisions) {
 		if (hashCollisions > 0) {
 			int startIndex = (int)index - (int)hashCollisions;
-			if (startIndex < 0) {
+			if (startIndex < 0)
 				startIndex += (int)Size;
-			}
 
 			for (int i = 0; i < hashCollisions; i++) {
 				long j = startIndex + 1 & Mask;
-				if (_hashes[j].IsEmpty) {
-					_hashes[j] = MpqHash.DELETED;
-				}
+				if (Hashes[j].IsEmpty)
+					Hashes[j] = MpqHash.DELETED;
 			}
 		}
 
-		while (!_hashes[index].IsAvailable) {
+		while (!Hashes[index].IsAvailable)
 			index = index + 1 & Mask;
-		}
 
-		_hashes[index] = hash;
+		Hashes[index] = hash;
 	}
 }

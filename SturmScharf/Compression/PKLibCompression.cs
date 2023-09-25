@@ -1,5 +1,3 @@
-#pragma warning disable CA1810
-
 using System.IO;
 
 namespace SturmScharf.Compression; 
@@ -62,42 +60,36 @@ public static class PKLibCompression {
 		using BitStream bitstream = new(data ?? throw new ArgumentNullException(nameof(data)));
 
 		PKLibCompressionType compressionType = (PKLibCompressionType)data.ReadByte();
-		if (compressionType != PKLibCompressionType.Binary && compressionType != PKLibCompressionType.Ascii) {
+		if (compressionType != PKLibCompressionType.Binary && compressionType != PKLibCompressionType.Ascii)
 			throw new InvalidDataException($"Invalid compression type: {compressionType}");
-		}
 
 		int dictSizeBits = data.ReadByte();
 
-		if (dictSizeBits < 4 || dictSizeBits > 6) {
+		if (dictSizeBits < 4 || dictSizeBits > 6)
 			throw new InvalidDataException($"Invalid dictionary size: {dictSizeBits}");
-		}
 
 		byte[] outputbuffer = new byte[expectedLength];
 		Stream outputstream = new MemoryStream(outputbuffer);
 
 		int instruction;
-		while ((instruction = DecodeLit(bitstream, compressionType)) != -1) {
+		while ((instruction = DecodeLit(bitstream, compressionType)) != -1)
 			if (instruction < 0x100) {
 				outputstream.WriteByte((byte)instruction);
 			}
 			else {
 				int copylength = instruction - 0xFE;
 				int moveback = DecodeDist(bitstream, dictSizeBits, copylength);
-				if (moveback == 0) {
+				if (moveback == 0)
 					break;
-				}
 
 				int source = (int)outputstream.Position - moveback;
 
-				while (copylength-- > 0) {
+				while (copylength-- > 0)
 					outputstream.WriteByte(outputbuffer[source++]);
-				}
 			}
-		}
 
-		if (outputstream.Position == expectedLength) {
+		if (outputstream.Position == expectedLength)
 			return outputbuffer;
-		}
 
 		byte[] result = new byte[outputstream.Position];
 		Array.Copy(outputbuffer, 0, result, 0, result.Length);
@@ -128,16 +120,14 @@ public static class PKLibCompression {
 			case 1:
 				int pos = _sPosition2[input.PeekByte()];
 
-				if (input.ReadBits(_sLenBits[pos]) == -1) {
+				if (input.ReadBits(_sLenBits[pos]) == -1)
 					return -1;
-				}
 
 				int nbits = _sExLenBits[pos];
 				if (nbits != 0) {
 					int val2 = input.ReadBits(nbits);
-					if (val2 == -1 && pos + val2 != 0x10e) {
+					if (val2 == -1 && pos + val2 != 0x10e)
 						return -1;
-					}
 
 					pos = _sLenBase[pos] + val2;
 				}
@@ -145,9 +135,8 @@ public static class PKLibCompression {
 				return pos + 0x100;
 
 			case 0:
-				if (compressionType == PKLibCompressionType.Binary) {
+				if (compressionType == PKLibCompressionType.Binary)
 					return input.ReadBits(8);
-				}
 
 				throw new NotImplementedException(
 					$"Text mode (compression of type {PKLibCompressionType.Ascii}) is not yet implemented");
@@ -158,28 +147,24 @@ public static class PKLibCompression {
 	}
 
 	private static int DecodeDist(BitStream input, int dictSizeBits, int length) {
-		if (input.EnsureBits(8) == false) {
+		if (input.EnsureBits(8) == false)
 			return 0;
-		}
 
 		int pos = _sPosition1[input.PeekByte()];
 		byte skip = _sDistBits[pos];
 
-		if (input.ReadBits(skip) == -1) {
+		if (input.ReadBits(skip) == -1)
 			return 0;
-		}
 
 		if (length == 2) {
-			if (input.EnsureBits(2) == false) {
+			if (input.EnsureBits(2) == false)
 				return 0;
-			}
 
 			pos = pos << 2 | input.ReadBits(2);
 		}
 		else {
-			if (input.EnsureBits(dictSizeBits) == false) {
+			if (input.EnsureBits(dictSizeBits) == false)
 				return 0;
-			}
 
 			pos = pos << dictSizeBits | input.ReadBits(dictSizeBits);
 		}

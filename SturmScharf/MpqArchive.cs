@@ -39,9 +39,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		_isStreamOwner = true;
 		BaseStream = sourceStream ?? throw new ArgumentNullException(nameof(sourceStream));
 
-		if (!TryLocateMpqHeader(BaseStream, out MpqHeader? mpqHeader, out _headerOffset)) {
+		if (!TryLocateMpqHeader(BaseStream, out MpqHeader? mpqHeader, out _headerOffset))
 			throw new MpqParserException("Unable to locate MPQ header.");
-		}
 
 		Header = mpqHeader;
 		BlockSize = BlockSizeModifier << Header.BlockSize;
@@ -58,13 +57,12 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		AddFileName(ListFile.FileName);
 		AddFileName(Attributes.FileName);
 
-		if (loadListFile) {
-			if (TryOpenFile(ListFile.FileName, out MpqStream listFileStream)) {
+		if (loadListFile)
+			if (TryOpenFile(ListFile.FileName, out MpqStream? listFileStream)) {
 				/* Read the file list as Latin-1 */
-				using StreamReader listFileReader = new(listFileStream, encoding: Encoding.GetEncoding("iso-8859-1"));
+				using StreamReader listFileReader = new(listFileStream, EncodingProvider.Latin1);
 				AddFileNames(listFileReader.ReadListFile().FileNames);
 			}
-		}
 	}
 
 	/// <summary>
@@ -83,13 +81,11 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// </exception>
 	public MpqArchive(Stream? sourceStream, IEnumerable<MpqFile> inputFiles, MpqArchiveCreateOptions createOptions,
 		bool leaveOpen = false) {
-		if (inputFiles is null) {
+		if (inputFiles is null)
 			throw new ArgumentNullException(nameof(inputFiles));
-		}
 
-		if (createOptions is null) {
+		if (createOptions is null)
 			throw new ArgumentNullException(nameof(createOptions));
-		}
 
 		_isStreamOwner = !leaveOpen;
 		BaseStream = AlignStream(sourceStream);
@@ -109,20 +105,18 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		bool haveAttributes = false;
 		HashSet<MpqFile> mpqFiles = new(MpqFileComparer.Default);
 		foreach (MpqFile mpqFile in inputFiles) {
-			if (mpqFile is MpqOrphanedFile) {
+			if (mpqFile is MpqOrphanedFile)
 				continue;
-			}
+
 			if (mpqFile.Name == listFileName) {
-				if (listFileCreateMode.HasFlag(MpqFileCreateMode.RemoveFlag)) {
+				if (listFileCreateMode.HasFlag(MpqFileCreateMode.RemoveFlag))
 					continue;
-				}
 
 				haveListFile = true;
 			}
 			if (mpqFile.Name == attributesName) {
-				if (attributesCreateMode.HasFlag(MpqFileCreateMode.RemoveFlag)) {
+				if (attributesCreateMode.HasFlag(MpqFileCreateMode.RemoveFlag))
 					continue;
-				}
 
 				haveAttributes = true;
 			}
@@ -135,21 +129,19 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 
 		bool wantGenerateListFile = !haveListFile && listFileCreateMode.HasFlag(MpqFileCreateMode.AddFlag);
 		ListFile? listFile = wantGenerateListFile ? new ListFile() : null;
-		if (wantGenerateListFile) {
+		if (wantGenerateListFile)
 			fileCount++;
-		}
 
 		bool wantGenerateAttributes = !haveAttributes && attributesCreateMode.HasFlag(MpqFileCreateMode.AddFlag);
 		Attributes? attributes = wantGenerateAttributes ? new Attributes(createOptions) : null;
-		if (wantGenerateAttributes) {
+		if (wantGenerateAttributes)
 			fileCount++;
-		}
 
 		HashTable = new HashTable(Math.Max(fileCount,
 			createOptions.HashTableSize ?? Math.Min(fileCount * 8, MpqTable.MaxSize)));
 		BlockTable = new BlockTable();
 
-		using BinaryWriter writer = new(BaseStream, UTF8EncodingProvider.StrictUTF8, true);
+		using BinaryWriter writer = new(BaseStream, EncodingProvider.StrictUTF8, true);
 		writer.Seek((int)MpqHeader.Size, SeekOrigin.Current);
 
 		uint fileIndex = 0U;
@@ -168,15 +160,13 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		}
 
 		void InsertMpqFile(MpqFile mpqFile, bool updateEndOfStream, bool allowMultiple = true) {
-			if (listFile is not null && mpqFile is MpqKnownFile knownFile) {
+			if (listFile is not null && mpqFile is MpqKnownFile knownFile)
 				listFile.FileNames.Add(knownFile.FileName);
-			}
 
 			mpqFile.AddToArchive(this, fileIndex, out MpqEntry mpqEntry, out MpqHash mpqHash);
 			uint hashTableEntries = HashTable.Add(mpqHash, mpqFile.HashIndex, mpqFile.HashCollisions);
-			if (!allowMultiple && hashTableEntries > 1) {
+			if (!allowMultiple && hashTableEntries > 1)
 				throw new Exception();
-			}
 
 			byte[] md5 = new byte[16];
 			int crc32 = 0;
@@ -204,31 +194,26 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 			mpqFile.Dispose();
 
 			fileIndex += hashTableEntries;
-			if (updateEndOfStream) {
+			if (updateEndOfStream)
 				endOfStream = BaseStream.Position;
-			}
 		}
 
 		List<MpqFile> mpqFixedPositionFiles = new();
-		foreach (MpqFile mpqFile in mpqFiles) {
-			if (mpqFile.IsFilePositionFixed) {
+		foreach (MpqFile mpqFile in mpqFiles)
+			if (mpqFile.IsFilePositionFixed)
 				mpqFixedPositionFiles.Add(mpqFile);
-			}
-		}
 
 		mpqFixedPositionFiles.Sort((mpqFile1, mpqFile2) => mpqFile1.MpqStream.FilePosition.CompareTo(mpqFile2.MpqStream.FilePosition));
 		if (mpqFixedPositionFiles.Count > 0) {
-			if (mpqFixedPositionFiles[0].MpqStream.FilePosition < 0) {
+			if (mpqFixedPositionFiles[0].MpqStream.FilePosition < 0)
 				throw new NotSupportedException("Cannot place files in front of the header.");
-			}
 
 			foreach (MpqFile mpqFixedPositionFile in mpqFixedPositionFiles) {
 				uint position = mpqFixedPositionFile.MpqStream.FilePosition;
-				if (position < endOfStream) {
+				if (position < endOfStream)
 					throw new ArgumentException(
-						"Fixed position files overlap with each other and/or the header. Archive cannot be created.",
-						nameof(inputFiles));
-				}
+					"Fixed position files overlap with each other and/or the header. Archive cannot be created.",
+					nameof(inputFiles));
 
 				if (position > endOfStream) {
 					long gapSize = position - endOfStream;
@@ -239,7 +224,7 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 			}
 		}
 
-		foreach (MpqFile mpqFile in mpqFiles) {
+		foreach (MpqFile mpqFile in mpqFiles)
 			if (!mpqFile.IsFilePositionFixed) {
 				long selectedPosition = endOfStream;
 				bool selectedGap = false;
@@ -247,13 +232,12 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 
 				InsertMpqFile(mpqFile, !selectedGap);
 			}
-		}
 
 		if (listFile is not null) {
 			BaseStream.Position = endOfStream;
 
 			using MemoryStream listFileStream = new();
-			using StreamWriter listFileWriter = new(listFileStream, Encoding.GetEncoding("iso-8859-1")); /* Write the file list as Latin-1 */
+			using StreamWriter listFileWriter = new(listFileStream, EncodingProvider.Latin1); /* Write the file list as Latin-1 */
 			listFileWriter.NewLine = "\r\n"; /* Use CRLF! */
 			listFileWriter.WriteListFile(listFile);
 			listFileWriter.Flush();
@@ -317,20 +301,15 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 
 	/// <inheritdoc />
 	public void Dispose() {
-		if (_isStreamOwner) {
+		if (_isStreamOwner)
 			BaseStream?.Close();
-		}
 	}
 
 	/// <inheritdoc />
-	IEnumerator IEnumerable.GetEnumerator() {
-		return (BlockTable as IEnumerable).GetEnumerator();
-	}
+	IEnumerator IEnumerable.GetEnumerator() => (BlockTable as IEnumerable).GetEnumerator();
 
 	/// <inheritdoc />
-	IEnumerator<MpqEntry> IEnumerable<MpqEntry>.GetEnumerator() {
-		return (BlockTable as IEnumerable<MpqEntry>).GetEnumerator();
-	}
+	IEnumerator<MpqEntry> IEnumerable<MpqEntry>.GetEnumerator() => (BlockTable as IEnumerable<MpqEntry>).GetEnumerator();
 
 	/// <summary>
 	/// Opens an existing <see cref="MpqArchive" /> for reading.
@@ -376,9 +355,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// Thrown when the <see cref="MpqHeader" /> could not be found, or when the MPQ
 	/// format version is not 0.
 	/// </exception>
-	public static MpqArchive Open(Stream sourceStream, bool loadListFile = false) {
-		return new MpqArchive(sourceStream, loadListFile);
-	}
+	public static MpqArchive Open(Stream sourceStream, bool loadListFile = false)
+		=> new(sourceStream, loadListFile);
 
 	/// <summary>
 	/// Creates a new <see cref="MpqArchive" />.
@@ -421,9 +399,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <see langword="null" />.
 	/// </exception>
 	public static MpqArchive Create(Stream? sourceStream, IEnumerable<MpqFile> mpqFiles,
-		MpqArchiveCreateOptions createOptions, bool leaveOpen = false) {
-		return new MpqArchive(sourceStream, mpqFiles, createOptions, leaveOpen);
-	}
+		MpqArchiveCreateOptions createOptions, bool leaveOpen = false)
+		=> new(sourceStream, mpqFiles, createOptions, leaveOpen);
 
 	/// <summary>
 	/// Searches the <see cref="MpqArchive" /> for files with the given <paramref name="fileName" />, and sets the
@@ -432,17 +409,14 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <param name="fileName">The name for which to check if any corresponding files exist.</param>
 	/// <returns>The amount of files in the <see cref="BlockTable" /> with the given <paramref name="fileName" />.</returns>
 	public int AddFileName(string fileName) {
-		if (fileName is null) {
+		if (fileName is null)
 			throw new ArgumentNullException(nameof(fileName));
-		}
 
 		IEnumerable<MpqHash> hashes = GetHashEntries(fileName);
 		HashSet<uint> fileIndicesFound = new();
-		foreach (MpqHash hash in hashes) {
-			if (fileIndicesFound.Add(hash.BlockIndex)) {
+		foreach (MpqHash hash in hashes)
+			if (fileIndicesFound.Add(hash.BlockIndex))
 				BlockTable[hash.BlockIndex].FileName = fileName;
-			}
-		}
 
 		return fileIndicesFound.Count;
 	}
@@ -455,9 +429,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <returns>The amount of files in the <see cref="BlockTable" /> with any of the given <paramref name="fileNames" />.</returns>
 	public int AddFileNames(params string[] fileNames) {
 		int totalCount = 0;
-		for (int i = 0; i < fileNames.Length; i++) {
+		for (int i = 0; i < fileNames.Length; i++)
 			totalCount += AddFileName(fileNames[i]);
-		}
 		return totalCount;
 	}
 
@@ -469,9 +442,8 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <returns>The amount of files in the <see cref="BlockTable" /> with any of the given <paramref name="fileNames" />.</returns>
 	public int AddFileNames(IEnumerable<string> fileNames) {
 		int totalCount = 0;
-		foreach (string fileName in fileNames) {
+		foreach (string fileName in fileNames)
 			totalCount += AddFileName(fileName);
-		}
 		return totalCount;
 	}
 
@@ -482,10 +454,9 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <returns>
 	/// <see langword="true" /> if any file with the given <paramref name="fileName" /> exists,
 	/// <see langword="false" /> otherwise.
-	/// </returns>
-	public bool FileExists(string? fileName) {
-		return !string.IsNullOrEmpty(fileName) && AddFileName(fileName) > 0;
-	}
+	/// </returns>	
+	public bool FileExists(string? fileName)
+		=> !fileName.IsNullOrEmpty() && AddFileName(fileName) > 0;
 
 	/// <summary>
 	/// Opens the first matching <see cref="MpqEntry" />.
@@ -504,11 +475,9 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// </param>
 	/// <returns>An <see cref="MpqStream" /> that provides access to the matched <see cref="MpqEntry" />.</returns>
 	/// <exception cref="FileNotFoundException">Thrown when no matching <see cref="MpqEntry" /> exists.</exception>
-	public MpqStream OpenFile(string fileName, MpqLocale? locale = null, bool orderByBlockIndex = true) {
-		return TryOpenFile(fileName, locale, orderByBlockIndex, out MpqStream? stream)
+	public MpqStream OpenFile(string fileName, MpqLocale? locale = null, bool orderByBlockIndex = true) => TryOpenFile(fileName, locale, orderByBlockIndex, out MpqStream? stream)
 			? stream
 			: throw new FileNotFoundException($"File not found: {fileName}");
-	}
 
 	/// <summary>
 	/// Opens the given <see cref="MpqEntry" />.
@@ -516,21 +485,14 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	/// <param name="entry">The <see cref="MpqEntry" /> to open.</param>
 	/// <returns>An <see cref="MpqStream" /> that provides access to the given <paramref name="entry" />.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the given <paramref name="entry" /> is <see langword="null" />.</exception>
-	public MpqStream OpenFile(MpqEntry entry) {
-		return new MpqStream(this, entry ?? throw new ArgumentNullException(nameof(entry)));
-	}
+	public MpqStream OpenFile(MpqEntry entry)
+		=> new(this, entry ?? throw new ArgumentNullException(nameof(entry)));
 
-	public bool TryOpenFile(string fileName, [NotNullWhen(true)] out MpqStream stream) {
-		return TryOpenFile(fileName, null, true, out stream);
-	}
+	public bool TryOpenFile(string fileName, [NotNullWhen(true)] out MpqStream? stream) => TryOpenFile(fileName, null, true, out stream);
 
-	public bool TryOpenFile(string fileName, MpqLocale? locale, [NotNullWhen(true)] out MpqStream stream) {
-		return TryOpenFile(fileName, locale, true, out stream);
-	}
+	public bool TryOpenFile(string fileName, MpqLocale? locale, [NotNullWhen(true)] out MpqStream? stream) => TryOpenFile(fileName, locale, true, out stream);
 
-	public bool TryOpenFile(string fileName, bool orderByBlockIndex, [NotNullWhen(true)] out MpqStream stream) {
-		return TryOpenFile(fileName, null, orderByBlockIndex, out stream);
-	}
+	public bool TryOpenFile(string fileName, bool orderByBlockIndex, [NotNullWhen(true)] out MpqStream? stream) => TryOpenFile(fileName, null, orderByBlockIndex, out stream);
 
 	public bool TryOpenFile(string fileName, MpqLocale? locale, bool orderByBlockIndex,
 		[NotNullWhen(true)] out MpqStream? stream) {
@@ -555,30 +517,24 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		IEnumerable<MpqHash> hashes = GetHashEntries(fileName);
 
 		List<MpqHash> orderedHashes = new();
-		foreach (MpqHash hash in hashes) {
+		foreach (MpqHash hash in hashes)
 			orderedHashes.Add(hash);
-		}
 
-		if (orderByBlockIndex) {
+		if (orderByBlockIndex)
 			orderedHashes.Sort((hash1, hash2) => hash1.BlockIndex.CompareTo(hash2.BlockIndex));
-		}
 
 		foreach (MpqHash hash in orderedHashes) {
 			MpqEntry entry = BlockTable[hash.BlockIndex];
 			entry.FileName = fileName;
 
-			if (!locale.HasValue || locale.Value == hash.Locale) {
+			if (!locale.HasValue || locale.Value == hash.Locale)
 				yield return entry;
-			}
 		}
 
-		if (locale.HasValue && locale.Value != MpqLocale.Neutral) {
-			foreach (MpqHash hash in orderedHashes) {
-				if (hash.Locale == MpqLocale.Neutral) {
+		if (locale.HasValue && locale.Value != MpqLocale.Neutral)
+			foreach (MpqHash hash in orderedHashes)
+				if (hash.Locale == MpqLocale.Neutral)
 					yield return BlockTable[hash.BlockIndex];
-				}
-			}
-		}
 	}
 
 
@@ -619,15 +575,13 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	internal bool TryGetEntryFromHashTable(
 		uint hashTableIndex,
 		[NotNullWhen(true)] out MpqEntry? mpqEntry) {
-		if (hashTableIndex >= HashTable.Size) {
+		if (hashTableIndex >= HashTable.Size)
 			throw new ArgumentOutOfRangeException(nameof(hashTableIndex));
-		}
 
 		MpqHash mpqHash = HashTable[hashTableIndex];
-		if (mpqHash.IsEmpty) {
+		if (mpqHash.IsEmpty)
 			throw new ArgumentException($"The {nameof(MpqHash)} at the given index is empty.",
-				nameof(hashTableIndex));
-		}
+			nameof(hashTableIndex));
 
 		if (mpqHash.IsDeleted) {
 			mpqEntry = null;
@@ -643,10 +597,10 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 		[NotNullWhen(true)] out MpqHeader? mpqHeader,
 		out long headerOffset) {
 		sourceStream.Seek(0, SeekOrigin.Begin);
-		using (BinaryReader reader = new(sourceStream, Encoding.UTF8, true)) {
+		using (BinaryReader reader = new(sourceStream, Encoding.UTF8, true))
 			for (headerOffset = 0;
-				 headerOffset <= sourceStream.Length - MpqHeader.Size;
-				 headerOffset += PreArchiveAlignBytes) {
+			     headerOffset <= sourceStream.Length - MpqHeader.Size;
+			     headerOffset += PreArchiveAlignBytes) {
 				if (reader.ReadUInt32() == MpqHeader.MpqId) {
 					sourceStream.Seek(-4, SeekOrigin.Current);
 					mpqHeader = MpqHeader.FromReader(reader);
@@ -656,7 +610,6 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 
 				sourceStream.Seek(PreArchiveAlignBytes - 4, SeekOrigin.Current);
 			}
-		}
 
 		mpqHeader = null;
 		headerOffset = -1;
@@ -664,37 +617,32 @@ public sealed class MpqArchive : IDisposable, IEnumerable<MpqEntry> {
 	}
 
 	private static Stream AlignStream(Stream? stream, bool leaveOpen = false) {
-		if (stream is null) {
+		if (stream is null)
 			return new MemoryStream();
-		}
 
 		if (!stream.CanWrite) {
 			MemoryStream memoryStream = new();
 
 			stream.Seek(0, SeekOrigin.Begin);
 			stream.CopyTo(memoryStream);
-			if (!leaveOpen) {
+			if (!leaveOpen)
 				stream.Dispose();
-			}
 
 			return memoryStream;
 		}
 
 		stream.Seek(0, SeekOrigin.End);
 		uint i = (uint)stream.Position & PreArchiveAlignBytes - 1;
-		if (i > 0) {
-			for (; i < PreArchiveAlignBytes; i++) {
+		if (i > 0)
+			for (; i < PreArchiveAlignBytes; i++)
 				stream.WriteByte(0);
-			}
-		}
 
 		return stream;
 	}
 
 	private IEnumerable<MpqHash> GetHashEntries(string fileName) {
-		if (!StormBuffer.TryGetHashString(fileName, 0, out uint index)) {
+		if (!StormBuffer.TryGetHashString(fileName, 0, out uint index))
 			yield break;
-		}
 
 		index &= Header.HashTableSize - 1;
 		ulong name = fileName.GetStringHash();

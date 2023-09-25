@@ -36,9 +36,8 @@ public sealed class BitStream : IDisposable {
 
 	/// <inheritdoc />
 	public void Dispose() {
-		if (_isStreamOwner) {
+		if (_isStreamOwner)
 			_baseStream.Dispose();
-		}
 	}
 
 	/// <summary>
@@ -48,13 +47,11 @@ public sealed class BitStream : IDisposable {
 	/// <returns>The bits read, or -1 if at the end of the stream.</returns>
 	/// <exception cref="ArgumentOutOfRangeException">The value of <paramref name="bitCount" /> is greater than 16.</exception>
 	public int ReadBits(int bitCount) {
-		if (bitCount > 16) {
+		if (bitCount > 16)
 			throw new ArgumentOutOfRangeException(nameof(bitCount), $"Maximum {nameof(bitCount)} is {16}");
-		}
 
-		if (!EnsureBits(bitCount)) {
+		if (!EnsureBits(bitCount))
 			return -1;
-		}
 
 		int result = _current & 0xffff >> 16 - bitCount;
 		WasteBits(bitCount);
@@ -65,11 +62,9 @@ public sealed class BitStream : IDisposable {
 	/// Returns the next byte but does not consume it.
 	/// </summary>
 	/// <returns>The next byte to be read, or -1 if at the end of the stream.</returns>
-	public int PeekByte() {
-		return EnsureBits(8)
+	public int PeekByte() => EnsureBits(8)
 			? _current & 0xff
 			: -1;
-	}
 
 	/// <summary>
 	/// Ensures a certain amount of bits are available, by reading from the underlying stream.
@@ -77,13 +72,11 @@ public sealed class BitStream : IDisposable {
 	/// <param name="bitCount">The amount of bits that must be available to read.</param>
 	/// <returns>True if the requested amount of bits are now available, false otherwise.</returns>
 	internal bool EnsureBits(int bitCount) {
-		if (bitCount <= _bitCount) {
+		if (bitCount <= _bitCount)
 			return true;
-		}
 
-		if (_baseStream.Position >= _baseStream.Length) {
+		if (_baseStream.Position >= _baseStream.Length)
 			return false;
-		}
 
 		int nextvalue = _baseStream.ReadByte();
 		_current |= nextvalue << _bitCount;

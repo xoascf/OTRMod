@@ -60,29 +60,25 @@ public static class AdpcmCompression {
 		while (data.Position < data.Length) {
 			byte value = reader.ReadByte();
 
-			if (channelCount == 2) {
+			if (channelCount == 2)
 				channel = 1 - channel;
-			}
 
 			if ((value & 0x80) != 0) {
 				switch (value & 0x7f) {
 					case 0:
-						if (array1[channel] != 0) {
+						if (array1[channel] != 0)
 							array1[channel]--;
-						}
 
 						writer.Write((short)array2[channel]);
 						break;
 
 					case 1:
 						array1[channel] += 8;
-						if (array1[channel] > 0x58) {
+						if (array1[channel] > 0x58)
 							array1[channel] = 0x58;
-						}
 
-						if (channelCount == 2) {
+						if (channelCount == 2)
 							channel = 1 - channel;
-						}
 
 						break;
 
@@ -91,13 +87,11 @@ public static class AdpcmCompression {
 
 					default:
 						array1[channel] -= 8;
-						if (array1[channel] < 0) {
+						if (array1[channel] < 0)
 							array1[channel] = 0;
-						}
 
-						if (channelCount == 2) {
+						if (channelCount == 2)
 							channel = 1 - channel;
-						}
 
 						break;
 				}
@@ -106,42 +100,34 @@ public static class AdpcmCompression {
 				int temp1 = _sLookup[array1[channel]];
 				int temp2 = temp1 >> shift;
 
-				if ((value & 1) != 0) {
+				if ((value & 1) != 0)
 					temp2 += temp1 >> 0;
-				}
 
-				if ((value & 2) != 0) {
+				if ((value & 2) != 0)
 					temp2 += temp1 >> 1;
-				}
 
-				if ((value & 4) != 0) {
+				if ((value & 4) != 0)
 					temp2 += temp1 >> 2;
-				}
 
-				if ((value & 8) != 0) {
+				if ((value & 8) != 0)
 					temp2 += temp1 >> 3;
-				}
 
-				if ((value & 0x10) != 0) {
+				if ((value & 0x10) != 0)
 					temp2 += temp1 >> 4;
-				}
 
-				if ((value & 0x20) != 0) {
+				if ((value & 0x20) != 0)
 					temp2 += temp1 >> 5;
-				}
 
 				int temp3 = array2[channel];
 				if ((value & 0x40) != 0) {
 					temp3 -= temp2;
-					if (temp3 <= short.MinValue) {
+					if (temp3 <= short.MinValue)
 						temp3 = short.MinValue;
-					}
 				}
 				else {
 					temp3 += temp2;
-					if (temp3 >= short.MaxValue) {
+					if (temp3 >= short.MaxValue)
 						temp3 = short.MaxValue;
-					}
 				}
 
 				array2[channel] = temp3;
@@ -149,12 +135,10 @@ public static class AdpcmCompression {
 
 				array1[channel] += _sLookup2[value & 0x1f];
 
-				if (array1[channel] < 0) {
+				if (array1[channel] < 0)
 					array1[channel] = 0;
-				}
-				else if (array1[channel] > 0x58) {
+				else if (array1[channel] > 0x58)
 					array1[channel] = 0x58;
-				}
 			}
 		}
 

@@ -1,6 +1,3 @@
-﻿#pragma warning disable CA1028
-
-
 namespace SturmScharf; 
 /// <summary>
 /// The locale of an <see cref="MpqFile" />.

@@ -83,7 +83,8 @@ public static class ByteArray {
 
 	internal static readonly string[] Separators = { "\n", "\r\n", "\r" };
 
-	public static string[] ToStringArray(this byte[] data, Encoding encoding) {
+	public static string[] ToStringArray(this byte[] data, Encoding? encoding = null) {
+		encoding ??= SturmScharf.EncodingProvider.Latin1;
 		return encoding.GetString(data).Split(Separators, StringSplitOptions.None);
 	}
 }

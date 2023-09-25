@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using System.Text
 @using BlazorDownloadFile
 @using OTRMod.ROM
 @using OTRMod.OTR
@@ -85,8 +84,8 @@ private async Task GenerateOTR() {
 }
 
 private async Task RunProcess() {
-	_script = _scriptMs.ToArray().ToStringArray(Encoding.ASCII);
-	byte[] decompressed = Decompressor.Data(ReadFully(_romMs).ToBigEndian(), calc: false);
+	_script = _scriptMs.ToArray().ToStringArray();
+	byte[] decompressed = Decompressor.Data(_romMs.ToArray().ToBigEndian(), calc: false);
 	ScriptParser sParser = new() {
 		ScriptStrings = _script,
 		ImageData = decompressed,
@@ -95,12 +94,5 @@ private async Task RunProcess() {
 	_otrMs.SetLength(0);
 	Generate.FromImage(ref _otrMs);
 	await DlFileService.DownloadFile(sParser.OTRFileName, _otrMs, "application/octet-stream");
-}
-
-private static byte[] ReadFully(Stream stream) {
-	if (stream is MemoryStream ms) return ms.ToArray();
-	using MemoryStream memoryStream = new();
-	stream.CopyTo(memoryStream);
-	return memoryStream.ToArray();
 }
 }

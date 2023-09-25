@@ -1,4 +1,3 @@
-using SturmScharf.Extensions;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -19,9 +18,8 @@ public class MpqArchiveBuilder : IEnumerable<MpqFile> {
 	}
 
 	public MpqArchiveBuilder(MpqArchive originalMpqArchive) {
-		if (originalMpqArchive is null) {
+		if (originalMpqArchive is null)
 			throw new ArgumentNullException(nameof(originalMpqArchive));
-		}
 
 		_originalHashTableSize = (ushort)originalMpqArchive.HashTable.Size;
 		_originalFiles = new List<MpqFile>(originalMpqArchive.GetMpqFiles());
@@ -38,63 +36,47 @@ public class MpqArchiveBuilder : IEnumerable<MpqFile> {
 	*/
 
 	/// <inheritdoc />
-	public IEnumerator<MpqFile> GetEnumerator() {
-		return GetMpqFiles().GetEnumerator();
-	}
+	public IEnumerator<MpqFile> GetEnumerator() => GetMpqFiles().GetEnumerator();
 
 	/// <inheritdoc />
-	IEnumerator IEnumerable.GetEnumerator() {
-		return GetMpqFiles().GetEnumerator();
-	}
+	IEnumerator IEnumerable.GetEnumerator() => GetMpqFiles().GetEnumerator();
 
-	public void AddFile(MpqFile file) {
-		AddFile(file, MpqFileFlags.Exists | MpqFileFlags.CompressedMulti);
-	}
+	public void AddFile(MpqFile file) => AddFile(file, MpqFileFlags.Exists | MpqFileFlags.CompressedMulti);
 
 	public void AddFile(MpqFile file, MpqFileFlags targetFlags) {
-		if (file is null) {
+		if (file is null)
 			throw new ArgumentNullException(nameof(file));
-		}
 
 		file.TargetFlags = targetFlags;
 		_modifiedFiles.Add(file);
 	}
 
-	public void RemoveFile(ulong hashedFileName) {
-		_removedFiles.Add(hashedFileName);
-	}
+	public void RemoveFile(ulong hashedFileName) => _removedFiles.Add(hashedFileName);
 
-	public void RemoveFile(string fileName) {
-		RemoveFile(fileName.GetStringHash());
-	}
+	public void RemoveFile(string fileName) => RemoveFile(fileName.GetStringHash());
 
 	public void RemoveFile(MpqArchive mpqArchive, int blockIndex) {
-		foreach (MpqHash mpqHash in mpqArchive.HashTable._hashes) {
-			if (mpqHash.BlockIndex == blockIndex) {
+		foreach (MpqHash mpqHash in mpqArchive.HashTable.Hashes)
+			if (mpqHash.BlockIndex == blockIndex)
 				RemoveFile(mpqHash.Name);
-			}
-		}
 	}
 
 	public void RemoveFile(MpqArchive mpqArchive, MpqEntry mpqEntry) {
-		int blockIndex = mpqArchive.BlockTable._entries.IndexOf(mpqEntry);
-		if (blockIndex == -1) {
+		int blockIndex = mpqArchive.BlockTable.Entries.IndexOf(mpqEntry);
+		if (blockIndex == -1)
 			throw new ArgumentException("The given mpq entry could not be found in the archive.", nameof(mpqEntry));
-		}
 
 		RemoveFile(mpqArchive, blockIndex);
 	}
 
 	public void SaveTo(string fileName) {
-		using (FileStream stream = FileProvider.CreateFileAndFolder(fileName)) {
-			SaveTo(stream);
-		}
+		using FileStream stream = FileProvider.CreateFileAndFolder(fileName);
+		SaveTo(stream);
 	}
 
 	public void SaveTo(string fileName, MpqArchiveCreateOptions createOptions) {
-		using (FileStream stream = FileProvider.CreateFileAndFolder(fileName)) {
-			SaveTo(stream, createOptions);
-		}
+		using FileStream stream = FileProvider.CreateFileAndFolder(fileName);
+		SaveTo(stream, createOptions);
 	}
 
 	public void SaveTo(Stream stream, bool leaveOpen = false) {
@@ -107,55 +89,43 @@ public class MpqArchiveBuilder : IEnumerable<MpqFile> {
 	}
 
 	public void SaveTo(Stream stream, MpqArchiveCreateOptions createOptions, bool leaveOpen = false) {
-		if (createOptions == null) {
+		if (createOptions == null)
 			throw new ArgumentNullException(nameof(createOptions));
-		}
 
-		if (!createOptions.ListFileCreateMode.HasValue) {
+		if (!createOptions.ListFileCreateMode.HasValue)
 			createOptions.ListFileCreateMode = _removedFiles.Contains(ListFile.FileName.GetStringHash())
-				? MpqFileCreateMode.Prune
-				: MpqFileCreateMode.Overwrite;
-		}
+			? MpqFileCreateMode.Prune
+			: MpqFileCreateMode.Overwrite;
 
-		if (!createOptions.AttributesCreateMode.HasValue) {
+		if (!createOptions.AttributesCreateMode.HasValue)
 			createOptions.AttributesCreateMode = _removedFiles.Contains(Attributes.FileName.GetStringHash())
-				? MpqFileCreateMode.Prune
-				: MpqFileCreateMode.Overwrite;
-		}
+			? MpqFileCreateMode.Prune
+			: MpqFileCreateMode.Overwrite;
 
-		if (!createOptions.HashTableSize.HasValue) {
+		if (!createOptions.HashTableSize.HasValue)
 			createOptions.HashTableSize = _originalHashTableSize;
-		}
 
 		List<MpqFile> mpqFiles = new();
-		foreach (MpqFile mpqFile in _modifiedFiles) {
-			if (!_removedFiles.Contains(mpqFile.Name)) {
+		foreach (MpqFile mpqFile in _modifiedFiles)
+			if (!_removedFiles.Contains(mpqFile.Name))
 				mpqFiles.Add(mpqFile);
-			}
-		}
 
-		foreach (MpqFile mpqFile in _originalFiles) {
-			if (!_removedFiles.Contains(mpqFile.Name)) {
+		foreach (MpqFile mpqFile in _originalFiles)
+			if (!_removedFiles.Contains(mpqFile.Name))
 				mpqFiles.Add(mpqFile);
-			}
-		}
 
 		MpqArchive.Create(stream, mpqFiles.ToArray(), createOptions, leaveOpen).Dispose();
 	}
 
 	protected virtual IEnumerable<MpqFile> GetMpqFiles() {
 		List<MpqFile> mpqFiles = new();
-		foreach (MpqFile mpqFile in _modifiedFiles) {
-			if (!_removedFiles.Contains(mpqFile.Name)) {
+		foreach (MpqFile mpqFile in _modifiedFiles)
+			if (!_removedFiles.Contains(mpqFile.Name))
 				mpqFiles.Add(mpqFile);
-			}
-		}
 
-		foreach (MpqFile mpqFile in _originalFiles) {
-			if (!_removedFiles.Contains(mpqFile.Name)) {
+		foreach (MpqFile mpqFile in _originalFiles)
+			if (!_removedFiles.Contains(mpqFile.Name))
 				mpqFiles.Add(mpqFile);
-			}
-		}
 
 		return mpqFiles;
 	}

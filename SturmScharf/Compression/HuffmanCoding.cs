@@ -143,9 +143,8 @@ public static class HuffmanCoding {
 	public static byte[] Decompress(Stream data) {
 		int comptype = data?.ReadByte() ?? throw new ArgumentNullException(nameof(data));
 
-		if (comptype == 0) {
+		if (comptype == 0)
 			throw new NotImplementedException($"Compression type {comptype} is not currently supported");
-		}
 
 		LinkedNode tail = BuildList(_sPrime[comptype]);
 		LinkedNode? head = BuildTree(tail);
@@ -178,9 +177,8 @@ public static class HuffmanCoding {
 		LinkedNode node = head;
 		while (node.Child0 != null) {
 			int bit = input.ReadBits(1);
-			if (bit == -1) {
+			if (bit == -1)
 				throw new InvalidDataException("Unexpected end of file");
-			}
 
 			node = bit == 0 ? node.Child0! : node.Child1!;
 		}
@@ -189,16 +187,12 @@ public static class HuffmanCoding {
 	}
 
 	private static LinkedNode BuildList(byte[] primeData) {
-		LinkedNode root;
-
-		root = new LinkedNode(256, 1);
+		LinkedNode root = new(256, 1);
 		root = root.Insert(new LinkedNode(257, 1));
 
-		for (int i = 0; i < primeData.Length; i++) {
-			if (primeData[i] != 0) {
+		for (int i = 0; i < primeData.Length; i++)
+			if (primeData[i] != 0)
 				root = root.Insert(new LinkedNode(i, primeData[i]));
-			}
-		}
 
 		return root;
 	}
@@ -211,9 +205,8 @@ public static class HuffmanCoding {
 		while (current != null) {
 			LinkedNode child0 = current;
 			LinkedNode child1 = current.Prev;
-			if (child1 == null) {
+			if (child1 == null)
 				break;
-			}
 
 			LinkedNode parent = new(0, child0.Weight + child1.Weight);
 			parent.Child0 = child0;
@@ -262,13 +255,11 @@ public static class HuffmanCoding {
 			LinkedNode insertpoint = current;
 			while (true) {
 				prev = insertpoint.Prev;
-				if (prev == null) {
+				if (prev == null)
 					break;
-				}
 
-				if (prev.Weight >= current.Weight) {
+				if (prev.Weight >= current.Weight)
 					break;
-				}
 
 				insertpoint = prev;
 			}
@@ -280,17 +271,15 @@ public static class HuffmanCoding {
 
 #nullable disable
 
-			if (insertpoint.Prev != null) {
+			if (insertpoint.Prev != null)
 				insertpoint.Prev.Next = insertpoint.Next;
-			}
 
 			insertpoint.Next.Prev = insertpoint.Prev;
 
 			insertpoint.Next = current.Next;
 			insertpoint.Prev = current;
-			if (current.Next != null) {
+			if (current.Next != null)
 				current.Next.Prev = insertpoint;
-			}
 
 			current.Next = insertpoint;
 
@@ -306,13 +295,11 @@ public static class HuffmanCoding {
 			LinkedNode currentparent = current.Parent;
 			LinkedNode insertparent = insertpoint.Parent;
 
-			if (currentparent.Child0 == current) {
+			if (currentparent.Child0 == current)
 				currentparent.Child0 = insertpoint;
-			}
 
-			if (currentparent != insertparent && insertparent.Child0 == insertpoint) {
+			if (currentparent != insertparent && insertparent.Child0 == insertpoint)
 				insertparent.Child0 = current;
-			}
 
 #nullable restore
 

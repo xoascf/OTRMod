@@ -8,7 +8,7 @@ namespace SturmScharf;
 public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, IEquatable<MpqFile> {
 	private readonly bool _isStreamOwner;
 	private readonly ulong? _name;
-	private MpqCompressionType _compressionType;
+	private readonly MpqCompressionType _compressionType;
 	private MpqLocale _locale;
 
 	private MpqFileFlags _targetFlags;
@@ -30,14 +30,12 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 	public MpqFileFlags TargetFlags {
 		get => _targetFlags;
 		set {
-			if ((value & MpqFileFlags.Garbage) != 0) {
+			if ((value & MpqFileFlags.Garbage) != 0)
 				throw new ArgumentException("Invalid enum.", nameof(value));
-			}
 
-			if (value.HasFlag(MpqFileFlags.Encrypted) && EncryptionSeed is null) {
+			if (value.HasFlag(MpqFileFlags.Encrypted) && EncryptionSeed is null)
 				throw new ArgumentException("Cannot set encrypted flag when there is no encryption seed.",
-					nameof(value));
-			}
+				nameof(value));
 
 			_targetFlags = value;
 		}
@@ -46,9 +44,8 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 	public MpqLocale Locale {
 		get => _locale;
 		set {
-			if (!value.IsDefined()) {
+			if (!value.IsDefined())
 				throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(MpqLocale));
-			}
 
 			_locale = value;
 		}
@@ -81,28 +78,21 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 	/// </remarks>
 	protected abstract uint? EncryptionSeed { get; }
 
-	public int CompareTo(object? value) {
-		return MpqFileComparer.Default.Compare(this, value);
-	}
+	public int CompareTo(object? value) => MpqFileComparer.Default.Compare(this, value);
 
-	public int CompareTo(MpqFile? mpqFile) {
-		return MpqFileComparer.Default.Compare(this, mpqFile);
-	}
+	public int CompareTo(MpqFile? mpqFile) => MpqFileComparer.Default.Compare(this, mpqFile);
 
 	/// <inheritdoc />
 	public void Dispose() {
 		if (_isStreamOwner) {
 			MpqStream.Dispose();
+			GC.SuppressFinalize(this);
 		}
 	}
 
-	public bool Equals(MpqFile? other) {
-		return MpqFileComparer.Default.Equals(this, other);
-	}
+	public bool Equals(MpqFile? other) => MpqFileComparer.Default.Equals(this, other);
 
-	public static MpqFile New(Stream? stream, string fileName, bool leaveOpen = false) {
-		return New(stream, fileName, MpqLocale.Neutral, leaveOpen);
-	}
+	public static MpqFile New(Stream? stream, string fileName, bool leaveOpen = false) => New(stream, fileName, MpqLocale.Neutral, leaveOpen);
 
 	public static MpqFile New(Stream? stream, string fileName, MpqLocale locale, bool leaveOpen = false) {
 		MpqStream mpqStream =
@@ -122,44 +112,40 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 	}
 
 	public static bool Exists(string path) {
-		if (File.Exists(path)) {
+		if (File.Exists(path))
 			return true;
-		}
 
 		string? subPath = path;
 		string fullPath = new FileInfo(path).FullName;
 		while (!File.Exists(subPath)) {
 			subPath = new FileInfo(subPath).DirectoryName;
-			if (subPath is null) {
+			if (subPath is null)
 				return false;
-			}
 		}
 
 		string relativePath =
-			fullPath.Substring(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1));
+			fullPath[(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1))..];
 
 		using MpqArchive archive = MpqArchive.Open(subPath);
 		return Exists(archive, relativePath);
 	}
 
 	public static bool Exists(MpqArchive archive, string path) {
-		if (archive.FileExists(path)) {
+		if (archive.FileExists(path))
 			return true;
-		}
 
 		string subPath = path;
 		int ignoreLength = new FileInfo(subPath).FullName.Length - path.Length;
 		while (!archive.FileExists(subPath)) {
 			string directoryName = new FileInfo(subPath).DirectoryName ?? string.Empty;
-			if (directoryName.Length <= ignoreLength) {
+			if (directoryName.Length <= ignoreLength)
 				return false;
-			}
 
-			subPath = directoryName.Substring(ignoreLength);
+			subPath = directoryName[ignoreLength..];
 		}
 
 		string relativePath =
-			path.Substring(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1));
+			path[(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1))..];
 
 		using MpqStream subArchiveStream = archive.OpenFile(subPath);
 		using MpqArchive subArchive = MpqArchive.Open(subArchiveStream);
@@ -168,21 +154,19 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 
 	/// <exception cref="FileNotFoundException"></exception>
 	public static Stream OpenRead(string path) {
-		if (File.Exists(path)) {
+		if (File.Exists(path))
 			return File.OpenRead(path);
-		}
 
 		string? subPath = path;
 		string fullPath = new FileInfo(path).FullName;
 		while (!File.Exists(subPath)) {
 			subPath = new FileInfo(subPath).DirectoryName;
-			if (subPath is null) {
+			if (subPath is null)
 				throw new FileNotFoundException($"File not found: {path}");
-			}
 		}
 
 		string relativePath =
-			fullPath.Substring(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1));
+			fullPath[(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1))..];
 
 		using MpqArchive archive = MpqArchive.Open(subPath);
 		return OpenRead(archive, relativePath);
@@ -199,32 +183,28 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 			return new MemoryStream(memoryStream.ToArray(), false);
 		}
 
-		if (archive.FileExists(path)) {
+		if (archive.FileExists(path))
 			return GetArchiveFileStream(archive, path);
-		}
 
 		string subPath = path;
 		int ignoreLength = new FileInfo(subPath).FullName.Length - path.Length;
 		while (!archive.FileExists(subPath)) {
 			string directoryName = new FileInfo(subPath).DirectoryName ?? string.Empty;
-			if (directoryName.Length <= ignoreLength) {
+			if (directoryName.Length <= ignoreLength)
 				throw new FileNotFoundException($"File not found: {path}");
-			}
 
-			subPath = directoryName.Substring(ignoreLength);
+			subPath = directoryName[ignoreLength..];
 		}
 
 		string relativePath =
-			path.Substring(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1));
+			path[(subPath.Length + (subPath.EndsWith(@"\", StringComparison.Ordinal) ? 0 : 1))..];
 
 		using MpqStream subArchiveStream = archive.OpenFile(subPath);
 		using MpqArchive subArchive = MpqArchive.Open(subArchiveStream);
 		return GetArchiveFileStream(subArchive, relativePath);
 	}
 
-	public override int GetHashCode() {
-		return HashCode.Combine(_name, _locale);
-	}
+	public override int GetHashCode() => HashCode.Combine(_name, _locale);
 
 	internal void AddToArchive(MpqArchive mpqArchive, uint index, out MpqEntry mpqEntry, out MpqHash mpqHash) {
 		uint headerOffset = mpqArchive.HeaderOffset;
@@ -238,10 +218,9 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 				out mpqEntry, out mpqHash);
 		}
 		else {
-			if (!MpqStream.CanRead) {
+			if (!MpqStream.CanRead)
 				throw new InvalidOperationException(
-					"Unable to re-encode the mpq file, because its stream cannot be read.");
-			}
+				"Unable to re-encode the mpq file, because its stream cannot be read.");
 
 			using Stream newStream = MpqStream.Transform(_targetFlags, _compressionType, relativeFileOffset,
 				mpqArchive.BlockSize);
@@ -253,4 +232,6 @@ public abstract class MpqFile : IDisposable, IComparable, IComparable<MpqFile>, 
 
 	protected abstract void GetTableEntries(MpqArchive mpqArchive, uint index, uint relativeFileOffset,
 		uint compressedSize, uint fileSize, out MpqEntry mpqEntry, out MpqHash mpqHash);
+
+	public override bool Equals(object? obj) => Equals(obj as MpqFile);
 }

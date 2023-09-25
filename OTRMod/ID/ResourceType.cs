@@ -32,4 +32,5 @@ public enum ResourceType {
 	AudioSoundFont  = 0x4F534654, /* OSFT */
 	AudioSequence   = 0x4F534551, /* OSEQ */
 	Background      = 0x4F424749, /* OBGI */
+	SceneCommand    = 0x4F52434D, /* ORCM */
 }

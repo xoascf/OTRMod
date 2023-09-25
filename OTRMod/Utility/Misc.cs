@@ -39,12 +39,13 @@ public static class Misc
 		return fallback.ToString() ?? string.Empty;
 	}
 
-	public static ushort SwapEndian(this ushort val) => (ushort)(val << 8 | val >> 8);
+	public static ushort SwapEndian(this ushort val)
+		=> (ushort)(val << 8 | val >> 8);
 
-	public static int ToI32BigEndian(byte[] data, int offset) {
-		return data[offset + 0] << 24 |
-		       data[offset + 1] << 16 |
-		       data[offset + 2] << 8 |
-		       data[offset + 3];
-	}
+	public static int ToI32BigEndian(byte[] data, int offset)
+		=>
+		data[offset + 0] << 24 |
+		data[offset + 1] << 16 |
+		data[offset + 2] << 08 |
+		data[offset + 3];
 }

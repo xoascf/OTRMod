@@ -34,11 +34,7 @@ internal static class Helper {
 		} while (string.IsNullOrWhiteSpace(path));
 
 		if (path.StartsWith("\"") && path.EndsWith("\""))
-#if NETCOREAPP3_0_OR_GREATER
 			path = path[1..^1];
-#else
-			path = path.Substring(1, path.Length - 2);
-#endif
 
 		while (checkIfExists && !File.Exists(path)) {
 			Con.WriteLine("File not found!");
@@ -51,13 +47,12 @@ internal static class Helper {
 	internal static bool AnsweredYesTo(string question) {
 		Con.Write($"{question} [Y/n] ");
 		string? res = Con.ReadLine();
-		return string.IsNullOrEmpty(res)
+		return res.IsNullOrEmpty()
 			|| res.StartsWith("y", StringComparison.OrdinalIgnoreCase);
 	}
 
-	internal static string? GetIfExists(this string[] array, int index) {
-		return array.Length > index ? array[index] : null;
-	}
+	internal static string? GetIfExists(this string[] array, int index)
+		=> array.Length > index ? array[index] : null;
 
 	internal static int GetArgIndex(this string[] args, string argMain, char argAlt) {
 		int argIndex = Array.IndexOf(args, $"--{argMain}");
@@ -71,36 +66,27 @@ internal static class Helper {
 		return argIndex != -1 ? args.GetIfExists(argIndex + 1) : null;
 	}
 
-	internal static char[] GetInvalidChars() {
-		return new char[] { '<', '>', '|', ':', '*', '?' };
-	}
+	internal static char[] GetInvalidChars()
+		=> new[] { '<', '>', '|', ':', '*', '?' };
 
-	internal static readonly string InvalidCharsPattern = $"[{Regex.Escape(new string(GetInvalidChars()))}]";
+	internal static readonly string InvalidCharsPattern
+		= $"[{Regex.Escape(new string(GetInvalidChars()))}]";
 
-	internal static string EncodePath(string path) {
-		return Regex.Replace(path, InvalidCharsPattern, m => {
-			return "%" + ((int)m.Value[0]).ToString("X2");
+	internal static string EncodePath(string path)
+		=> Regex.Replace(path, InvalidCharsPattern, m
+		=> "%" + ((int)m.Value[0]).ToString("X2"));
+
+	internal static string DecodePath(string path)
+		=> Regex.Replace(path, "%[0-9A-F]{2}", hex => {
+			char decodedChar = (char)Convert.ToInt32(hex.Value[1..], 16);
+			return Array.IndexOf(GetInvalidChars(), decodedChar) != -1
+			? decodedChar.ToString()
+			: hex.Value;
 		});
-	}
-
-	internal static string DecodePath(string path) {
-		return Regex.Replace(path, "%[0-9A-F]{2}", m => {
-#if NETCOREAPP3_0_OR_GREATER
-			string hexValue = m.Value[1..];
-#else
-			string hexValue = m.Value.Substring(1);
-#endif
-			char decodedChar = (char)Convert.ToInt32(hexValue, 16);
-			if (Array.IndexOf(GetInvalidChars(), decodedChar) != -1)
-				return decodedChar.ToString();
-
-			return m.Value;
-		});
-	}
 
 	internal static void Save(this Stream s, string path) {
 		string? dir = Path.GetDirectoryName(path);
-		if (!string.IsNullOrEmpty(dir))
+		if (!dir.IsNullOrEmpty())
 			Directory.CreateDirectory(dir);
 
 		using FileStream fs = new(path, FileMode.OpenOrCreate);
@@ -110,7 +96,6 @@ internal static class Helper {
 		fs.Close();
 	}
 
-	internal static void Warn(string issue, int line, string file) {
-		Con.WriteLine($"::warning file={file},line={line}::{issue}");
-	}
+	internal static void Warn(string issue, int line, string file)
+		=> Con.WriteLine($"::warning file={file},line={line}::{issue}");
 }

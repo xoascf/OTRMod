@@ -1,5 +1,3 @@
-using SturmScharf.Extensions;
-
 namespace SturmScharf;
 
 public sealed class MpqKnownFile : MpqFile {
@@ -22,9 +20,7 @@ public sealed class MpqKnownFile : MpqFile {
 		? encryptionSeed
 		: null;
 
-	public override string ToString() {
-		return FileName;
-	}
+	public override string ToString() => FileName;
 
 	protected override void GetTableEntries(MpqArchive mpqArchive, uint index, uint relativeFileOffset,
 		uint compressedSize, uint fileSize, out MpqEntry mpqEntry, out MpqHash mpqHash) {

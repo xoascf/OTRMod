@@ -51,11 +51,9 @@ namespace OTRMod.Web.Shared.Resources {
 		get { return resourceCulture; } set { resourceCulture = value; }
 	}
 
-	public static string GetLocalisedString(string str) {
-		return ResourceManager.GetString(str, resourceCulture) ?? str;
-	}
+		public static string GetLocalisedString(string str) => ResourceManager.GetString(str, resourceCulture) ?? str;
 
-	public static string btn_gen_otr => GetLocalisedString("btn_gen_otr");
+		public static string btn_gen_otr => GetLocalisedString("btn_gen_otr");
 
 	public static string btn_wait => GetLocalisedString("btn_wait");
 

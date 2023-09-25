@@ -1,4 +1,3 @@
-﻿using SturmScharf.Extensions;
 using System.Collections.Generic;
 using System.IO;
 
@@ -65,16 +64,13 @@ internal sealed class StormBuffer {
 		return true;
 	}
 
-	internal static string NormalizeString(string input) {
-		return input.ToUpperInvariant();
-	}
+	internal static string NormalizeString(string input) => input.ToUpperInvariant();
 
 	internal static byte[] EncryptStream(Stream stream, uint seed1, int offset, int length) {
 		byte[] data = new byte[length];
 		stream.Seek(offset, SeekOrigin.Begin);
-		if (stream.Read(data, 0, length) != length) {
+		if (stream.Read(data, 0, length) != length)
 			throw new Exception("Insufficient data or invalid data length");
-		}
 
 		EncryptBlock(data, seed1);
 		return data;
@@ -156,9 +152,8 @@ internal sealed class StormBuffer {
 			uint seed2 = 0xeeeeeeee + Buffer[0x400 + (seed1 & 0xff)];
 			uint result = value0 ^ seed1 + seed2;
 
-			if (result != decrypted) {
+			if (result != decrypted)
 				continue;
-			}
 
 			detectedSeed = seed1;
 
@@ -168,9 +163,8 @@ internal sealed class StormBuffer {
 			seed2 += Buffer[0x400 + (seed1 & 0xff)];
 			result = value1 ^ seed1 + seed2;
 
-			if ((result & 0xfffc0000) == 0) {
+			if ((result & 0xfffc0000) == 0)
 				return true;
-			}
 		}
 
 		detectedSeed = 0;
@@ -185,9 +179,8 @@ internal sealed class StormBuffer {
 			uint seed2 = 0xeeeeeeee + Buffer[0x400 + (seed1 & 0xff)];
 			uint result = value0 ^ seed1 + seed2;
 
-			if (result == decrypted) {
+			if (result == decrypted)
 				yield return seed1;
-			}
 		}
 	}
 }

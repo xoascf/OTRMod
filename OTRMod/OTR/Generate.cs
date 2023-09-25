@@ -6,20 +6,20 @@ using MemStream = System.IO.MemoryStream;
 namespace OTRMod.OTR;
 
 public class Generate {
-	private static readonly Dictionary<string, MemStream> Files = new();
+	private static readonly Dictionary<string, MemStream> _files = new();
 
 	public static void AddFile(string path, byte[] data)
-		=> Files.Add(path, new MemStream(data));
+		=> _files.Add(path, new MemStream(data));
 
 	public static void AddFile(string path, MemStream data)
-		=> Files.Add(path, data);
+		=> _files.Add(path, data);
 
 	public static void FromImage(ref MemStream otrStream) {
 		MpqArchiveBuilder builder = new();
-		foreach (KeyValuePair<string, MemStream> pair in Files)
+		foreach (KeyValuePair<string, MemStream> pair in _files)
 			builder.Add(pair.Value, pair.Key.Replace(@"\", "/"));
 
-		Files.Clear();
+		_files.Clear();
 		builder.SaveTo(otrStream, true);
 	}
 }

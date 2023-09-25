@@ -1,6 +1,7 @@
 /* Licensed under the Open Software License version 3.0 */
 
 using OTRMod.Utility;
+using System.Numerics;
 
 namespace OTRMod.ROM;
 
@@ -39,9 +40,6 @@ public class CRC
 		}
 	}
 
-	/* FIXME: Should we update to BitOperations.RotateLeft? */
-	private static uint RoL(uint i, int b) => (i << b) | (i >> 32 - b);
-
 	public void FixCRC() {
 		_newCRCData = _bytes.Get(0, 0x101000);
 		uint[] array = CalculateCRC(_newCRCData);
@@ -56,16 +54,14 @@ public class CRC
 		return ~crc;
 	}
 
-	private static int GetCIC(byte[] bytes) {
-		return CRC32(bytes.Get(0x40, 0xFC0)) switch {
-			0x6170A4A1 => 6101,
-			0x90BB6CB5 => 6102,
-			0x0B050EE0 => 6103,
-			0x98BC2C86 => 6105,
-			0xACC8580A => 6106,
-			_ => 6105,
-		};
-	}
+	private static int GetCIC(byte[] bytes) => CRC32(bytes.Get(0x40, 0xFC0)) switch {
+		0x6170A4A1 => 6101,
+		0x90BB6CB5 => 6102,
+		0x0B050EE0 => 6103,
+		0x98BC2C86 => 6105,
+		0xACC8580A => 6106,
+		_ => 6105,
+	};
 
 	private static uint[] CalculateCRC(byte[] bytes) {
 		uint[] crc = new uint[2];
@@ -77,8 +73,8 @@ public class CRC
 			6106 => CIC6106,
 			_ => throw new Exception("Invalid CIC."),
 		};
-		uint t1, t2, t3, t4, t5, t6;
-		t1 = t2 = t3 = t4 = t5 = t6 = seed;
+		uint t2, t3, t4, t5, t6;
+		uint t1 = t2 = t3 = t4 = t5 = t6 = seed;
 		for (int i = 0x1000; i < 0x101000; i += 4) {
 			uint d = bytes.Get(i, 4).ToU32();
 			if ((t6 + d) < t6)
@@ -86,7 +82,7 @@ public class CRC
 
 			t6 += d;
 			t3 ^= d;
-			uint r = RoL(d, (int)(d & 0x1F));
+			uint r = BitOperations.RotateLeft(d, (int)(d & 0x1F));
 			t5 += r;
 			t2 = (t2 <= d) ? (t2 ^ (t6 ^ d)) : (t2 ^ r);
 			t1 = (cic != 6105) ? (t1 + (t5 ^ d)) :

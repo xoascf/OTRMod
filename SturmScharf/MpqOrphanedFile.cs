@@ -12,7 +12,5 @@ public sealed class MpqOrphanedFile : MpqFile {
 	protected override uint? EncryptionSeed => null;
 
 	protected override void GetTableEntries(MpqArchive mpqArchive, uint index, uint relativeFileOffset,
-		uint compressedSize, uint fileSize, out MpqEntry mpqEntry, out MpqHash mpqHash) {
-		throw new NotSupportedException();
-	}
+		uint compressedSize, uint fileSize, out MpqEntry mpqEntry, out MpqHash mpqHash) => throw new NotSupportedException();
 }

@@ -1,4 +1,3 @@
-using SturmScharf.Extensions;
 using System.IO;
 using SB = SturmScharf.StormBuffer;
 
@@ -58,21 +57,21 @@ public struct MpqHash {
 	/// <summary>
 	/// Gets a value indicating whether the <see cref="MpqHash" /> corresponds to an <see cref="MpqEntry" />.
 	/// </summary>
-	public bool IsEmpty => BlockIndex == 0xFFFFFFFF;
+	public readonly bool IsEmpty => BlockIndex == 0xFFFFFFFF;
 
 	/// <summary>
 	/// Gets a value indicating whether the <see cref="MpqHash" /> has had its corresponding <see cref="MpqEntry" />
 	/// deleted.
 	/// </summary>
-	public bool IsDeleted => BlockIndex == 0xFFFFFFFE;
+	public readonly bool IsDeleted => BlockIndex == 0xFFFFFFFE;
 
 	/// <summary>
 	/// Gets a value indicating whether this <see cref="MpqHash" /> can be overwritten by another hash in the
 	/// <see cref="HashTable" />.
 	/// </summary>
-	public bool IsAvailable => BlockIndex >= 0xFFFFFFFE;
+	public readonly bool IsAvailable => BlockIndex >= 0xFFFFFFFE;
 
-	internal bool IsValidBlockIndex => BlockIndex < 0x00FFFFFF;
+	internal readonly bool IsValidBlockIndex => BlockIndex < 0x00FFFFFF;
 
 	private const string InvalidCharMsg = "Input contains invalid characters larger than 0x200";
 
@@ -83,9 +82,7 @@ public struct MpqHash {
 		return SB.HashString(path, 0);
 	}
 
-	public static uint GetIndex(string path, uint mask) {
-		return GetIndex(path) & mask;
-	}
+	public static uint GetIndex(string path, uint mask) => GetIndex(path) & mask;
 
 	public static ulong GetHashedFileName(string fileName) {
 		if (fileName.ContainsInvalidChar())
@@ -95,17 +92,14 @@ public struct MpqHash {
 	}
 
 	/// <inheritdoc />
-	public override string ToString() {
-		return IsEmpty ? "EMPTY" : IsDeleted ? "DELETED" : $"Entry #{BlockIndex}";
+	public readonly override string ToString() => IsEmpty ? "EMPTY" : IsDeleted ? "DELETED" : $"Entry #{BlockIndex}";
+
+	public readonly void SerializeTo(Stream stream) {
+		using BinaryWriter writer = new(stream, EncodingProvider.StrictUTF8, true);
+		WriteTo(writer);
 	}
 
-	public void SerializeTo(Stream stream) {
-		using (BinaryWriter writer = new(stream, UTF8EncodingProvider.StrictUTF8, true)) {
-			WriteTo(writer);
-		}
-	}
-
-	public void WriteTo(BinaryWriter writer) {
+	public readonly void WriteTo(BinaryWriter writer) {
 		if (writer is null)
 			throw new ArgumentNullException(nameof(writer));
 
@@ -114,7 +108,5 @@ public struct MpqHash {
 		writer.Write(BlockIndex);
 	}
 
-	private static ulong CombineNames(uint name1, uint name2) {
-		return name1 | (ulong)name2 << 32;
-	}
+	private static ulong CombineNames(uint name1, uint name2) => name1 | (ulong)name2 << 32;
 }
