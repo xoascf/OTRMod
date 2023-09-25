@@ -4,7 +4,6 @@ using OTRMod.Utility;
 
 namespace OTRMod.Z;
 
-
 public class Animation : Resource {
 	public enum AnimationType {
 		Normal = 0,

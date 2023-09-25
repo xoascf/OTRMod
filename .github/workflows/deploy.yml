@@ -1,10 +1,9 @@
-name: 'Deploy OTRMod to gh-pages'
+name: Deploy OTRMod to gh-pages
 
 on:
   push:
     branches: [ master ]
-    paths-ignore:
-      - '**/README.adoc'
+    paths-ignore: ["**.adoc"]
 env:
   OUT_DIR: out
 
@@ -12,22 +11,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v3
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v3
-          with:
-            dotnet-version: 6.0.x
-        - name: Restore workload
-          run: dotnet workload restore
-        - name: Publish app
-          run: dotnet publish OTRMod.Web/OTRMod.Web.csproj -c Release -o ${{env.OUT_DIR}}
-        - name: Copy index.html to 404.html
-          run: cp ${{env.OUT_DIR}}/wwwroot/index.html ${{env.OUT_DIR}}/wwwroot/404.html
-        - name: Add .nojekyll file
-          run: touch ${{env.OUT_DIR}}/wwwroot/.nojekyll
-        - name: Commit to gh-pages
-          uses: JamesIves/github-pages-deploy-action@v4.4.2
-          with:
-            GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-            BRANCH: gh-pages
-            FOLDER: ${{env.OUT_DIR}}/wwwroot
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Restore workload
+        run: dotnet workload restore
+
+      - name: Publish app
+        run: dotnet publish OTRMod.Web/OTRMod.Web.csproj -c Release -o ${{env.OUT_DIR}}
+
+      - name: Copy index.html to 404.html
+        run: cp ${{env.OUT_DIR}}/wwwroot/index.html ${{env.OUT_DIR}}/wwwroot/404.html
+
+      - name: Add .nojekyll file
+        run: touch ${{env.OUT_DIR}}/wwwroot/.nojekyll
+
+      - name: Commit to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          BRANCH: gh-pages
+          FOLDER: ${{env.OUT_DIR}}/wwwroot

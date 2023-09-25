@@ -4,7 +4,6 @@ using OTRMod.Utility;
 
 namespace OTRMod.Z;
 
-
 public class Texture : Resource {
 	public static byte[] Export(ID.Texture.Codec codec, int width, int height, byte[] input) {
 		int texSize = input.Length;

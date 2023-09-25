@@ -4,7 +4,6 @@ using OTRMod.Utility;
 
 namespace OTRMod.Z;
 
-// ZText.cpp
 public class Text : Resource {
 	private class MessageEntry {
 		public ushort ID;

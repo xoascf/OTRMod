@@ -110,11 +110,12 @@ static void AddSequence(string[] meta, string path, byte[] seqData) {
 		type = type.ToLower();
 	}
 
-	int cachePolicy = (type is "bgm" ? 2 : 1);
 	if (!int.TryParse(font, System.Globalization.NumberStyles.AllowHexSpecifier, null, out int seqFont)) {
 		Warn("Audiobank index couldn't be parsed as hex, using '0'", 2, path);
 		seqFont = 0;
 	}
+	
+	int cachePolicy = type is "bgm" ? 2 : 1;
 
 	seqData = OTRMod.Z.Audio.ExportSeq(0, seqFont, cachePolicy, seqData);
 	string name = meta[0].Replace('/', '|');

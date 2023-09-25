@@ -1,11 +1,13 @@
 name: CI
+
 on:
   push:
-    branches: [master]
+    branches: [ master ]
     paths-ignore: ["**.adoc"]
   pull_request:
     paths-ignore: ["**.adoc"]
   workflow_dispatch:
+
 jobs:
   build:
     permissions: write-all
@@ -15,7 +17,7 @@ jobs:
         os: [linux-x64, win-x64]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -33,7 +35,7 @@ jobs:
           echo "EXE_PATH=OTRMod.CLI/bin/Release/net6.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: OTRMod.CLI-${{ matrix.os }}
           path: ${{ env.EXE_PATH }}/${{ env.EXE_NAME }}
