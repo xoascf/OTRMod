@@ -28,7 +28,7 @@
       "Microsoft.Win32.SystemEvents.dll": "sha256-56MWX7GCuiW+O0EPzkUo0jj6T\/mhpVB6x+UFQtaS2qE=",
       "netstandard.dll": "sha256-nsPZjQemwG8PKd6+682q7w+dJcznVwDkMMoUFyxvtKM=",
       "OTRMod.dll": "sha256-cPWWwOwP24NG+0PcWqZufFqeG2DIwLrobchoASQLiKg=",
-      "OTRMod.Web.dll": "sha256-LrGQSNYj73OAMRJjRyaQa+qDO61\/GWzzfOixtR76liw=",
+      "OTRMod.Web.dll": "sha256-hrw0TQFMqU9QDb2voAb1hMdRvaC7RBAU2MZGBxz4TcI=",
       "SturmScharf.dll": "sha256-bY\/O1Eb9lUORGqy49cYzXMVP49cznFPWGn7MHwmWe1c=",
       "System.Collections.Concurrent.dll": "sha256-urv1zmEvceevD3lrbcb7VduFJlRHJZgOIGfk\/ZsokEA=",
       "System.Collections.dll": "sha256-Z11my56p0ZyLuAGzYEsI4481gLVDg5pPrB91\/FChFe0=",
@@ -84,7 +84,7 @@
     "runtime": {
       "dotnet.7.0.11.a81wsdje12.js": "sha256-\/4ud+g1LraPXylI4NGHuzLHJkxmWyp8LII+bbLWDeko=",
       "dotnet.timezones.blat": "sha256-gIJRsMe\/q4cM8EeOn+wrpfipBqBOq0niTDjqSBdXsVI=",
-      "dotnet.wasm": "sha256-ymraRPvIMxtttZrwPiL5gme1teOFPT1Yw8cswsaMc6Y=",
+      "dotnet.wasm": "sha256-cH7D3JWSg\/BoRrpfNuN4OgoBT1yw0df8XKYkBVsTBHg=",
       "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
       "icudt_EFIGS.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37\/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs=",
@@ -93,7 +93,7 @@
     "runtimeAssets": {
       "dotnet.wasm": {
         "behavior": "dotnetwasm",
-        "hash": "sha256-ymraRPvIMxtttZrwPiL5gme1teOFPT1Yw8cswsaMc6Y="
+        "hash": "sha256-cH7D3JWSg\/BoRrpfNuN4OgoBT1yw0df8XKYkBVsTBHg="
       }
     },
     "satelliteResources": {
