@@ -5,6 +5,8 @@
 :!showtitle:
 :icons: font
 :!toc-title:
+:uri-gh: https://github.com
+:uri-repo: {uri-gh}/{repo}
 :uri-licence: {uri-repo}/blob/master/LICENSE
 :uri-ci: {uri-repo}/actions/workflows/build.yml
 :uri-shields: https://img.shields.io
