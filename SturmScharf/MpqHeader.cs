@@ -39,7 +39,7 @@ public class MpqHeader {
 		if (archiveBeforeTables) {
 			DataOffset = Size - headerOffset;
 			ArchiveSize = Size + fileArchiveSize + hashTableSize + blockTableSize;
-			MpqVersion = 0;
+			Version = MpqVersion.Original;
 			BlockSize = blockSize;
 			HashTableOffset = Size + fileArchiveSize - headerOffset;
 			BlockTableOffset = Size + fileArchiveSize + hashTableSize - headerOffset;
@@ -49,7 +49,7 @@ public class MpqHeader {
 		else {
 			DataOffset = Size + hashTableSize + blockTableSize - headerOffset;
 			ArchiveSize = Size + fileArchiveSize + hashTableSize + blockTableSize;
-			MpqVersion = 0;
+			Version = MpqVersion.Original;
 			BlockSize = blockSize;
 			HashTableOffset = Size - headerOffset;
 			BlockTableOffset = Size + hashTableSize - headerOffset;
@@ -82,13 +82,13 @@ public class MpqHeader {
 	public uint ArchiveSize { get; internal set; }
 
 	/// <summary>
-	/// Gets the format version of the .mpq file. Currently, only version 0 is supported.
+	/// Gets the <see cref="MpqVersion" /> of the .mpq file.
 	/// </summary>
 	/// <remarks>
 	/// Starting with World of Warcraft Burning Crusade, the version is 1.
-	/// Currently, only version 0 is supported.
+	/// Currently, only versions 0 (read and write) and 1 (read only) are supported.
 	/// </remarks>
-	public ushort MpqVersion { get; private set; }
+	public MpqVersion Version { get; private set; }
 
 	/// <summary>
 	/// Gets the <see cref="MpqArchive" />'s block size.
@@ -156,11 +156,17 @@ public class MpqHeader {
 		if (id != MpqId)
 			throw new MpqParserException($"Invalid MPQ header signature: {id}");
 
+		uint dataOffset = reader.ReadUInt32();
+		uint archiveSize = reader.ReadUInt32();
+		ushort mpqVersion = reader.ReadUInt16();
+		if (!Enum.IsDefined(typeof(MpqVersion), mpqVersion))
+			throw new MpqParserException($"Invalid MPQ format version: {mpqVersion}");
+
 		MpqHeader header = new() {
 			ID = id,
-			DataOffset = reader.ReadUInt32(),
-			ArchiveSize = reader.ReadUInt32(),
-			MpqVersion = reader.ReadUInt16(),
+			DataOffset = dataOffset,
+			ArchiveSize = archiveSize,
+			Version = (MpqVersion)mpqVersion,
 			BlockSize = reader.ReadUInt16(),
 			HashTableOffset = reader.ReadUInt32(),
 			BlockTableOffset = reader.ReadUInt32(),
@@ -168,14 +174,8 @@ public class MpqHeader {
 			BlockTableSize = reader.ReadUInt32()
 		};
 
-		if (header.MpqVersion == 1) {
-			const bool isInvalidVersion1 = true;
-			if (isInvalidVersion1)
-				header.MpqVersion = 0;
-		}
-
 #if DEBUG
-		if (header.MpqVersion == 0)
+		if (header.Version <= MpqVersion.BurningCrusade)
 		{
 			uint expectedHashTableOffset = header.BlockTableOffset - (MpqHash.Size * header.HashTableSize);
 			if (header.HashTableOffset != expectedHashTableOffset)
@@ -193,8 +193,8 @@ public class MpqHeader {
 		}
 #endif
 
-		if (header.MpqVersion != 0)
-			throw new NotSupportedException($"MPQ format version {header.MpqVersion} is not supported");
+		if (header.Version >= MpqVersion.CataclysmBeta)
+			throw new NotSupportedException($"MPQ format version {header.Version} is not supported");
 
 		return header;
 	}
@@ -211,7 +211,7 @@ public class MpqHeader {
 		writer.Write(MpqId);
 		writer.Write(DataOffset);
 		writer.Write(ArchiveSize);
-		writer.Write(MpqVersion);
+		writer.Write((ushort)Version);
 		writer.Write(BlockSize);
 		writer.Write(HashTableOffset);
 		writer.Write(BlockTableOffset);
