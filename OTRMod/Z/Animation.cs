@@ -41,7 +41,7 @@ public class Animation : Resource {
 		bytes.AddRange(ByteArray.FromI16(header.frameCount, false));
 		bytes.AddRange(ByteArray.FromI32(header.frameData.Length / 2, false));
 		bytes.AddRange(Misc.SwapByteArray(header.frameData));
-		bytes.AddRange(new byte[] { 0x2F, 0x00, 0x00, 0x00 }); // Separator??
+		bytes.AddRange(ByteArray.FromI32(header.jointIndices.Length / 6, false));
 		bytes.AddRange(Misc.SwapByteArray(header.jointIndices));
 		bytes.AddRange(ByteArray.FromU16(header.indexMax, false));
 
