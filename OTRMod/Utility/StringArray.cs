@@ -18,4 +18,12 @@ internal static class StringArray {
 
 		return newArray;
 	}
+
+	public static string Join(this string[] array, string separator, int index) {
+		string value = array[index];
+		for (int i = index + 1; i < array.Length; i++)
+			value += separator + array[i];
+
+		return value;
+	}
 }

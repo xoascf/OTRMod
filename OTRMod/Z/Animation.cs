@@ -12,44 +12,44 @@ public class Animation : Resource {
 		Legacy = 3,
 	}
 
-	internal static class PlayerAnimation {
-		public static byte[] Export(byte[] input) {
-			int aniSize = input.Length;
-
-			byte[] data = new byte[HeaderSize + 4 + aniSize];
-
-			data.Set(0, GetHeader(ResourceType.PlayerAnimation));
-			data.Set(HeaderSize, BitConverter.GetBytes(aniSize / 2));
-			data.Set(HeaderSize + 4, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
-
-			return data;
-		}
+	private class AnimationHeader {
+		public short frameCount;
+#pragma warning disable CS8618 // Should we use "required" members soon?
+		public byte[] frameData;
+		public byte[] jointIndices;
+#pragma warning restore CS8618
+		public ushort indexMax;
 	}
 
-	public static byte[] ParseAnimation(byte[] input, AnimationType type) {
-		int aniSize = input.Length;
+	private static void GetAnimationHeader
+		(byte[] data, int offset, out AnimationHeader header) {
+		int framePos = data.ToI16(offset + 6);
+		int jointPos = data.ToI16(offset + 10);
 
-		byte[] data = new byte[HeaderSize + 12 + aniSize];
-
-		data.Set(0, GetHeader(ResourceType.Animation));
-		data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
-		data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
-		data.Set(HeaderSize + 10, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
-
-		return data;
+		header = new AnimationHeader {
+			frameCount = data[offset + 1],
+			frameData = data.Get(framePos, jointPos - framePos),
+			jointIndices = data.Get(jointPos, offset - jointPos - 2),
+			indexMax = data[offset + 13]
+		};
 	}
 
+	private static byte[] GetAnimationData(AnimationHeader header) {
+		List<byte> bytes = new();
+		bytes.AddRange(GetHeader(ResourceType.Animation));
+		bytes.AddRange(ByteArray.FromI32((int)AnimationType.Normal, false));
+		bytes.AddRange(ByteArray.FromI16(header.frameCount, false));
+		bytes.AddRange(ByteArray.FromI32(header.frameData.Length / 2, false));
+		bytes.AddRange(Misc.SwapByteArray(header.frameData));
+		bytes.AddRange(new byte[] { 0x2F, 0x00, 0x00, 0x00 }); // Separator??
+		bytes.AddRange(Misc.SwapByteArray(header.jointIndices));
+		bytes.AddRange(ByteArray.FromU16(header.indexMax, false));
 
-	public static byte[] Export(byte[] input) {
-		int aniSize = input.Length;
+		return bytes.ToArray();
+	}
 
-		byte[] data = new byte[HeaderSize + 12 + aniSize];
-
-		data.Set(0, GetHeader(ResourceType.Animation));
-		data.Set(HeaderSize, AnimationType.Normal); // FIXME: Autodetect!!
-		data.Set(HeaderSize + 4, AnimationType.Normal); // FRAMECOUNT
-		data.Set(HeaderSize + 10, input.CopyAs(ByteOrder.ByteSwapped, l: aniSize));
-
-		return data;
+	public static byte[] Export(byte[] input, int offset) {
+		GetAnimationHeader(input, offset, out AnimationHeader animHeader);
+		return GetAnimationData(animHeader);
 	}
 }

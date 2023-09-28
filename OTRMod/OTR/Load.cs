@@ -16,7 +16,7 @@ public static class Load {
 
 				Stream dataStream = new MemStream();
 				kf.MpqStream.CopyTo(dataStream);
-				kf.MpqStream.Flush();
+				kf.MpqStream.Close();
 				files.Add(kf.FileName, dataStream);
 			}
 	}

@@ -48,4 +48,21 @@ public static class Misc
 		data[offset + 1] << 16 |
 		data[offset + 2] << 08 |
 		data[offset + 3];
+
+	// https://stackoverflow.com/a/29404026
+	public static byte[] SwapByteArray(byte[] a) {
+		// If array is odd we set limit to a.Length - 1.
+		int limit = a.Length - (a.Length % 2);
+		if (limit < 1) throw new Exception("Array too small to be swapped.");
+		for (int i = 0; i < limit - 1; i += 2)
+			(a[i + 1], a[i]) = (a[i], a[i + 1]);
+
+		return a;
+	}
+
+	public static byte[] GetData(this byte[] data, object start, object length)
+		=> data.Get(start.AsInt(), length.AsInt());
+
+	public static TEnum Parse<TEnum>(string value) where TEnum : struct
+		=> (TEnum)Enum.Parse(typeof(TEnum), value);
 }

@@ -16,8 +16,10 @@ public class Generate {
 
 	public static void FromImage(ref MemStream otrStream) {
 		MpqArchiveBuilder builder = new();
-		foreach (KeyValuePair<string, MemStream> pair in _files)
+		foreach (KeyValuePair<string, MemStream> pair in _files) {
 			builder.Add(pair.Value, pair.Key.Replace(@"\", "/"));
+			pair.Value.Close();
+		}
 
 		_files.Clear();
 		builder.SaveTo(otrStream, true);

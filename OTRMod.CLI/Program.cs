@@ -40,7 +40,6 @@ static MemStream Run(string pathImage, bool romMode, bool calc, out string outNa
 static void TUIRun(bool romMode, bool calc) {
 	using MemStream genMs = Run(ReadPath("Image"), romMode, calc, out string outName);
 	genMs.Save(ReadPath("Output", outName, false));
-	genMs.Flush();
 	genMs.Close();
 #if NETCOREAPP1_0_OR_GREATER
 	CompactAndCollect();
@@ -75,7 +74,6 @@ static void GenerateGeneric(string inputDir, string? outPath = null) {
 	}
 
 	ms.Save(outPath);
-	ms.Flush();
 	ms.Close();
 }
 

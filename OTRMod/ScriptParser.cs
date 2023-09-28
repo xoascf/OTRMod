@@ -3,7 +3,6 @@
 using OTRMod.Utility;
 using OTRMod.Z;
 using Action = OTRMod.ID.Action;
-using Texture = OTRMod.ID.Texture;
 
 namespace OTRMod;
 
@@ -18,7 +17,7 @@ public class ScriptParser {
 	private void WorkDo(Action k, string[] val) {
 		switch (k) {
 			case Action.Get:
-				_var.Add(val[1], GetData(val[2], val[3]));
+				_var.Add(val[1], ImageData.GetData(val[2], val[3]));
 				break;
 
 			case Action.Rep:
@@ -26,12 +25,12 @@ public class ScriptParser {
 				break;
 
 			case Action.Set:
-				_def[val[1]] = val[2];
+				_def[val[1]] = val.Join(" ", 2);
 				break;
 
 			case Action.Mrg:
-				Save(Text.Merge(_var[val[1]], _var[val[2]],bool.Parse(val[3])),
-				GetOutPath(val));
+				Save(Text.Merge(_var[val[1]], _var[val[2]], bool.Parse(val[3])),
+					GetOutPath(val));
 				break;
 
 			case Action.Dir:
@@ -43,31 +42,32 @@ public class ScriptParser {
 				break;
 
 			case Action.Exp:
-				_def.GetKey("AddH", out string addH);
-				Save(GetExportData(val, addH.AsBool(true)), GetOutPath(val));
+				Save(GetExportData(val), GetOutPath(val));
 				break;
 		}
 	}
 
-	private byte[] GetExportData(string[] info, bool addHeader) {
-		if (!Enum.TryParse(info[1], out Texture.Codec codec))
-			return info[1] switch {
-				"Pam" => Animation.PlayerAnimation.Export(GetData(info[2], info[3])),
-				"Anm" => Animation.Export(GetData(info[2], info[3])),
-				//"Seq" => Audio.ExportSeq(int.Parse(info[2]), int.Parse(info[3]),
-					//GetData(info[4], info[5])),
-				_ => throw new Exception("Invalid format to export.")
-			};
-
+	private byte[] GetTextureData(byte[] input, ID.Texture.Codec codec, string start) {
+		_def.GetKey("AddH", out string addH);
 		string texS = _def.GetKey("TexS", "texture size", null!, true);
 		string[] size = texS.Split('x');
-		int w = int.Parse(size[0]);
-		int h = int.Parse(size[1]);
-		byte[] data = GetData(info[2], Texture.GetSize(codec, w * h));
-		return addHeader ? Z.Texture.Export(codec, w, h, data) : data;
+		int w = int.Parse(size[0]); int h = int.Parse(size[1]);
+		byte[] data = input.GetData(start, ID.Texture.GetSize(codec, w * h));
+		return addH.AsBool(true) ? Z.Texture.Export(codec, w, h, data) : data;
 	}
 
-	private byte[] GetData(object s, object l) => ImageData.Get(s.AsInt(), l.AsInt());
+	private byte[] GetExportData(string[] info) {
+		if (Enum.TryParse(info[1], out ID.Texture.Codec codec))
+			return GetTextureData(ImageData, codec, info[2]);
+
+		byte[] obj = _var[_def["Obj"]];
+		return info[1] switch {
+			"Anm" => Animation.Export(obj, info[2].AsInt()),
+			"Tex" => GetTextureData(obj, Misc.Parse<ID.Texture.Codec>(info[2]), info[3]),
+			_ => throw new Exception("Invalid format to export.")
+		};
+	}
+
 	private string GetOutPath(string[] expInfo) => Concatenate(SubDir, expInfo[^1]);
 
 	private const string DefaultFileName = "Mod.otr";

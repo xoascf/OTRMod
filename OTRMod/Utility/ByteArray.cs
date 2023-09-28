@@ -11,6 +11,12 @@ public static class ByteArray {
 
 	public static byte[] Reverse(this byte[] data) { Array.Reverse(data); return data; }
 
+	public static byte[] FromI16(short value, bool big = true) /* 2 bytes */
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
+	public static byte[] FromU16(ushort value, bool big = true) /* 2 bytes */
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
 	public static byte[] FromI32(int value, bool big = true) /* 4 bytes */
 		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
 
@@ -22,6 +28,15 @@ public static class ByteArray {
 
 	public static int ToI32(this byte[] data, bool big = true)
 		=> ShouldRev(big) ? ToInt32(Reverse(data), 0) : ToInt32(data, 0);
+
+	public static int ToI32(this byte[] data, int offset, bool big = true)
+		=> ToI32(data.Get(offset, 4), big);
+
+	public static int ToI16(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToInt16(Reverse(data), 0) : ToInt16(data, 0);
+
+	public static int ToI16(this byte[] data, int offset, bool big = true)
+		=> ToI16(data.Get(offset, 2), big);
 
 	public static uint ToU32(this byte[] data, bool big = true)
 		=> ShouldRev(big) ? ToUInt32(Reverse(data), 0) : ToUInt32(data, 0);
