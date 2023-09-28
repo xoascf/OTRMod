@@ -49,7 +49,7 @@
       "url": "_framework\/icudt.dat"
     },
     {
-      "hash": "sha256-AFwR5pEMnfdSMb4blKRL0SsPhPtawAEsjGTuOuEzYn4=",
+      "hash": "sha256-bqO2GhwhfhtKSvTZkQinna\/YVvhLQciT85+iZuaIdzU=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -133,7 +133,7 @@
       "url": "_framework\/netstandard.dll"
     },
     {
-      "hash": "sha256-3f4ptwnKr3kavBRA8lJqJ84QLGw\/aVGKZLYAqSJN2WU=",
+      "hash": "sha256-ka9z5HAkoCWoBL1+pmfwAuSbUS\/qH6HaBAMi7oI6BOE=",
       "url": "_framework\/OTRMod.dll"
     },
     {
@@ -333,7 +333,7 @@
       "url": "_framework\/dotnet.7.0.11.a81wsdje12.js"
     },
     {
-      "hash": "sha256-Lu1iFVpamhTeR16J9lIZuOOz6e3nzmuwjXfSfv3c+Ws=",
+      "hash": "sha256-rHb1Y9XPWmtnIGmAe8Hgq5QmqGktN7iPyfVDQFiBlP4=",
       "url": "_framework\/dotnet.wasm"
     },
     {
@@ -353,5 +353,5 @@
       "url": "_content\/Toolbelt.Blazor.PWA.Updater\/Toolbelt.Blazor.PWA.Updater.bundle.scp.css"
     }
   ],
-  "version": "S4aYg\/np"
+  "version": "1nrax56w"
 };
