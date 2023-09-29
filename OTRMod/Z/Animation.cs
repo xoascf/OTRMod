@@ -13,12 +13,12 @@ public class Animation : Resource {
 	}
 
 	private class AnimationHeader {
-		public short frameCount;
+		public short FrameCount;
 #pragma warning disable CS8618 // Should we use "required" members soon?
-		public byte[] frameData;
-		public byte[] jointIndices;
+		public byte[] FrameData;
+		public byte[] JointIndices;
 #pragma warning restore CS8618
-		public ushort indexMax;
+		public ushort StaticIndexMax;
 	}
 
 	private static void GetAnimationHeader
@@ -27,10 +27,10 @@ public class Animation : Resource {
 		int jointPos = data.ToI16(offset + 10);
 
 		header = new AnimationHeader {
-			frameCount = data[offset + 1],
-			frameData = data.Get(framePos, jointPos - framePos),
-			jointIndices = data.Get(jointPos, offset - jointPos - 2),
-			indexMax = data[offset + 13]
+			FrameCount = data[offset + 1],
+			FrameData = data.Get(framePos, jointPos - framePos),
+			JointIndices = data.Get(jointPos, offset - jointPos - 2),
+			StaticIndexMax = data[offset + 13]
 		};
 	}
 
@@ -38,12 +38,12 @@ public class Animation : Resource {
 		List<byte> bytes = new();
 		bytes.AddRange(GetHeader(ResourceType.Animation));
 		bytes.AddRange(ByteArray.FromI32((int)AnimationType.Normal, false));
-		bytes.AddRange(ByteArray.FromI16(header.frameCount, false));
-		bytes.AddRange(ByteArray.FromI32(header.frameData.Length / 2, false));
-		bytes.AddRange(Misc.SwapByteArray(header.frameData));
-		bytes.AddRange(ByteArray.FromI32(header.jointIndices.Length / 6, false));
-		bytes.AddRange(Misc.SwapByteArray(header.jointIndices));
-		bytes.AddRange(ByteArray.FromU16(header.indexMax, false));
+		bytes.AddRange(ByteArray.FromI16(header.FrameCount, false));
+		bytes.AddRange(ByteArray.FromI32(header.FrameData.Length / 2, false));
+		bytes.AddRange(Misc.SwapByteArray(header.FrameData));
+		bytes.AddRange(ByteArray.FromI32(header.JointIndices.Length / 6, false));
+		bytes.AddRange(Misc.SwapByteArray(header.JointIndices));
+		bytes.AddRange(ByteArray.FromU16(header.StaticIndexMax, false));
 
 		return bytes.ToArray();
 	}
