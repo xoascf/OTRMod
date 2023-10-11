@@ -32,14 +32,23 @@ public static class ByteArray {
 	public static int ToI32(this byte[] data, int offset, bool big = true)
 		=> ToI32(data.Get(offset, 4), big);
 
-	public static int ToI16(this byte[] data, bool big = true)
+	public static short ToI16(this byte[] data, bool big = true)
 		=> ShouldRev(big) ? ToInt16(Reverse(data), 0) : ToInt16(data, 0);
 
-	public static int ToI16(this byte[] data, int offset, bool big = true)
+	public static short ToI16(this byte[] data, int offset, bool big = true)
 		=> ToI16(data.Get(offset, 2), big);
+
+	public static ushort ToU16(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToUInt16(Reverse(data), 0) : ToUInt16(data, 0);
+
+	public static ushort ToU16(this byte[] data, int offset, bool big = true)
+		=> ToU16(data.Get(offset, 2), big);
 
 	public static uint ToU32(this byte[] data, bool big = true)
 		=> ShouldRev(big) ? ToUInt32(Reverse(data), 0) : ToUInt32(data, 0);
+
+	public static uint ToU32(this byte[] data, int offset, bool big = true)
+		=> ToU32(data.Get(offset, 4), big);
 
 	public static byte[] ReadHex(this string hex) {
 		if (hex.Length % 2 != 0)
