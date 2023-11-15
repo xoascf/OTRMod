@@ -24,15 +24,15 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Build console app
-        run: dotnet publish OTRMod.CLI/OTRMod.CLI.csproj -r ${{ matrix.os }} -f net6.0 -c Release -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false --no-self-contained
+        run: dotnet publish OTRMod.CLI/OTRMod.CLI.csproj -r ${{ matrix.os }} -f net8.0 -c Release -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false --no-self-contained
 
       - name: Set output path
         run: |
           echo "EXE_NAME=OTRMod.CLI${{ contains(matrix.os, 'win') && '.exe' || '' }}" >> $GITHUB_ENV
-          echo "EXE_PATH=OTRMod.CLI/bin/Release/net6.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
+          echo "EXE_PATH=OTRMod.CLI/bin/Release/net8.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
