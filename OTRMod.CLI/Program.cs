@@ -190,10 +190,12 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 			if (metaPath is null)
 				continue;
 
-			Con.WriteLine($"Adding {dir}");
+			Con.WriteLine($"Adding {seqPath}");
 
 			string[] metas = File.ReadAllLines(metaPath, SturmScharf.EncodingProvider.Latin1);
 			byte[] seq = File.ReadAllBytes(seqPath);
+
+			ProcessSeq(metas, metaPath, seq);
 		}
 	}
 
