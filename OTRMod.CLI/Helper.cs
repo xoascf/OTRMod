@@ -84,6 +84,9 @@ internal static class Helper {
 			: hex.Value;
 		});
 
+	internal static FileStream GetReadable(this string file)
+		=> new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
 	internal static void Save(this Stream s, string path) {
 		string? dir = Path.GetDirectoryName(path);
 		if (!dir.IsNullOrEmpty())

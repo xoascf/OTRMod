@@ -51,7 +51,7 @@ static void Extract(string? filePath = null, string? outDir = null) {
 	filePath ??= ReadPath("OTR");
 
 	Con.WriteLine("Loading...");
-	using FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	using FileStream fs = filePath.GetReadable();
 	Load.From(fs, ref otrFiles);
 	outDir ??= ReadPath("Output", "Extracted", false);
 
@@ -79,9 +79,8 @@ static void GenerateGeneric(string inputDir, string? outPath = null) {
 
 static void AddSequence(string[] meta, string path, byte[] seqData) {
 	string font = meta[1];
-	if (font.StartsWith("0x")) {
+	if (font.StartsWith("0x"))
 		font = font[2..];
-	}
 	else if (font == "-") {
 		Warn("Sequence uses custom Audiobank, skipping...", 2, path); /* FIXME */
 		return;
@@ -124,16 +123,18 @@ static void AddSequence(string[] meta, string path, byte[] seqData) {
 
 static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 	inputDir ??= ReadPath("Folder path", checkIfExists: false);
-	string[] subFolders = Directory.GetDirectories(inputDir, "*", SearchOption.AllDirectories);
+	List<string> dirList =
+			new(Directory.GetDirectories(inputDir, "*", SearchOption.AllDirectories))
+			{ inputDir };
 
-	foreach (string subFolder in subFolders) {
-		List<string> files = new(Directory.GetFiles(subFolder));
+	foreach (string dir in dirList) {
+		List<string> files = new(Directory.GetFiles(dir));
 
 		foreach (string file in files) {
 			if (!file.EndsWith(".ootrs"))
 				continue;
 
-			using FileStream fs = new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			using FileStream fs = file.GetReadable();
 			using ZipFile zip = ZipFile.Read(fs);
 
 			MemStream seqMs = new();
@@ -168,7 +169,7 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 		}
 
 		if (files.Find(a => a.Contains(".zbank")) is not null) {
-			Con.WriteLine($"Skipping {subFolder}");
+			Con.WriteLine($"Skipping {dir}");
 			continue;
 		}
 
@@ -178,7 +179,7 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 		if (seqFile is null || metaFile is null)
 			continue;
 
-		Con.WriteLine($"Adding {subFolder}");
+		Con.WriteLine($"Adding {dir}");
 
 		string[] metas = File.ReadAllLines(metaFile, SturmScharf.EncodingProvider.Latin1);
 		byte[] seq = File.ReadAllBytes(seqFile);
