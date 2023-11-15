@@ -18,21 +18,25 @@ public partial class Audio : Resource {
 		return data;
 	}
 
-	public static byte[] ExportSeq(int index, int font, int cachePolicy, byte[] input) {
-		const int footerSize = 0x0C;
-		int seqSize = input.Length;
+	public class SequenceAudioEntry {
+		public byte medium;
+		public byte cachePolicy;
+		public List<int> fontIndices = new();
+	}
 
-		byte[] data = new byte[HeaderSize + seqSize + footerSize];
+	public static byte[] ExportSeq(byte index, byte[] seq, SequenceAudioEntry entry) {
+		List<byte> bytes = new();
+		bytes.AddRange(GetHeader(ResourceType.AudioSequence, 2));
+		bytes.AddRange(ByteArray.FromI32(seq.Length, false));
+		bytes.AddRange(seq);
+		bytes.Add(index);
+		bytes.Add(entry.medium);
+		bytes.Add(entry.cachePolicy);
+		bytes.AddRange(ByteArray.FromI32(entry.fontIndices.Count, false));
 
-		data.Set(0, GetHeader(ResourceType.AudioSequence, 2));
-		data.Set(HeaderSize, BitConverter.GetBytes(seqSize));
-		data.Set(HeaderSize + 4, input);
-		data.Set(HeaderSize + seqSize + 4, (byte)index);
-		data.Set(HeaderSize + seqSize + 5, (byte)2); // Medium?
-		data.Set(HeaderSize + seqSize + 6, (byte)cachePolicy);
-		data.Set(HeaderSize + seqSize + 7, (byte)1); // FontIndexSize?
-		data.Set(HeaderSize + seqSize + 11, (byte)font);
+		foreach (int fontIndex in entry.fontIndices)
+			bytes.Add((byte)fontIndex);
 
-		return data;
+		return bytes.ToArray();
 	}
 }

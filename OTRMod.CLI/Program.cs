@@ -77,17 +77,12 @@ static void GenerateGeneric(string inputDir, string? outPath = null) {
 	ms.Close();
 }
 
-static void AddSequence(string[] meta, string path, byte[] seqData) {
+static void ProcessSeq(string[] meta, string path, byte[] seqData) {
 	string font = meta[1];
 	if (font.StartsWith("0x"))
 		font = font[2..];
-	else if (font == "-") {
-		Warn("Sequence uses custom Audiobank, skipping...", 2, path); /* FIXME */
-		return;
-	}
-	else {
+	else
 		Warn("Audiobank index is expected to start with '0x'", 2, path);
-	}
 
 	string? type = meta.GetIfExists(2);
 	if (type.IsNullOrEmpty()) {
@@ -107,14 +102,20 @@ static void AddSequence(string[] meta, string path, byte[] seqData) {
 		type = type.ToLower();
 	}
 
-	if (!int.TryParse(font, System.Globalization.NumberStyles.AllowHexSpecifier, null, out int seqFont)) {
-		Warn("Audiobank index couldn't be parsed as hex, using '0'", 2, path);
-		seqFont = 0;
+	int seqFont = 0x03;
+	if (font == "-") {
+		Warn("Sequence uses custom Audiobank, skipping...", 2, path); /* FIXME */
+		return;
 	}
-	
-	int cachePolicy = type is "bgm" ? 2 : 1;
+	else if (!int.TryParse(font, System.Globalization.NumberStyles.AllowHexSpecifier, null, out seqFont))
+		Warn("Audiobank index couldn't be parsed as hex, using '0x03'", 2, path);
 
-	seqData = OTRMod.Z.Audio.ExportSeq(0, seqFont, cachePolicy, seqData);
+	seqData = OTRMod.Z.Audio.ExportSeq(0, seqData, new() {
+		medium = 2,
+		cachePolicy = (byte)(type is "bgm" ? 2 : 1),
+		fontIndices = new() { seqFont }
+	});
+
 	string name = meta[0].Replace('/', '|');
 	path = $"custom/music/{name}_{type}";
 
@@ -165,7 +166,7 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 
 			string[] ootrsMetas = metaMs.ToArray().ToStringArray();
 
-			AddSequence(ootrsMetas, metaPath, seqMs.ToArray());
+			ProcessSeq(ootrsMetas, metaPath, seqMs.ToArray());
 		}
 
 		if (files.Find(a => a.Contains(".zbank")) is not null) {
@@ -173,18 +174,27 @@ static void AutoGenerate(string? inputDir = null, string? outPath = null) {
 			continue;
 		}
 
-		string? seqFile = files.Find(a => a.Contains(".seq"));
-		string? metaFile = files.Find(a => a.Contains(".meta"));
+		List<string> seqFiles = files.FindAll(file
+			=> Path.GetExtension(file).Equals(".seq", StringComparison.OrdinalIgnoreCase));
 
-		if (seqFile is null || metaFile is null)
-			continue;
+		foreach (string seqPath in seqFiles) {
+			string seqName = Path.GetFileNameWithoutExtension(seqPath);
+			string seqDir = Path.GetDirectoryName(seqPath)!;
+			string? metaPath = null;
 
-		Con.WriteLine($"Adding {dir}");
+			foreach (string file in files)
+				if (Path.GetFileNameWithoutExtension(file) == seqName &&
+					Path.GetExtension(file).Equals(".meta", StringComparison.OrdinalIgnoreCase))
+					{ metaPath = file; break; }
 
-		string[] metas = File.ReadAllLines(metaFile, SturmScharf.EncodingProvider.Latin1);
-		byte[] seq = File.ReadAllBytes(seqFile);
+			if (metaPath is null)
+				continue;
 
-		AddSequence(metas, metaFile, seq);
+			Con.WriteLine($"Adding {dir}");
+
+			string[] metas = File.ReadAllLines(metaPath, SturmScharf.EncodingProvider.Latin1);
+			byte[] seq = File.ReadAllBytes(seqPath);
+		}
 	}
 
 	GenerateGeneric(inputDir, outPath);
