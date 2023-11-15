@@ -5,7 +5,7 @@
   <PropertyGroup>
     <Description>Library for opening and creating MPQ files.</Description>
     <PackageTags>mpq;warcraft3</PackageTags>
-    <TargetFrameworks>net6.0;net40-client</TargetFrameworks>
+    <TargetFrameworks>net8.0;net40-client</TargetFrameworks>
     <LangVersion>10</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
