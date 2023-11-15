@@ -29,7 +29,7 @@ public class ScriptParser {
 				break;
 
 			case Action.Mrg:
-				Save(Text.Merge(_var[val[1]], _var[val[2]], bool.Parse(val[3])),
+				Save(Z.Text.Merge(_var[val[1]], _var[val[2]], bool.Parse(val[3])),
 					GetOutPath(val));
 				break;
 
