@@ -23,6 +23,9 @@ public static class ByteArray {
 	public static byte[] FromU32(uint value, bool big = true) /* 4 bytes */
 		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
 
+	public static byte[] FromF32(float value, bool big = true) /* 4 bytes */
+		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
+
 	public static byte[] FromU64(ulong value, bool big = true) /* 8 bytes */
 		=> ShouldRev(big) ? Reverse(GetBytes(value)) : GetBytes(value);
 
@@ -49,6 +52,12 @@ public static class ByteArray {
 
 	public static uint ToU32(this byte[] data, int offset, bool big = true)
 		=> ToU32(data.Get(offset, 4), big);
+
+	public static float ToF32(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToSingle(Reverse(data), 0) : ToSingle(data, 0);
+
+	public static float ToF32(this byte[] data, int offset, bool big = true)
+		=> ToF32(data.Get(offset, 4), big);
 
 	public static byte[] ReadHex(this string hex) {
 		if (hex.Length % 2 != 0)
