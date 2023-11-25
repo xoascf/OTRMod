@@ -59,6 +59,12 @@ public static class ByteArray {
 	public static float ToF32(this byte[] data, int offset, bool big = true)
 		=> ToF32(data.Get(offset, 4), big);
 
+	public static ulong ToU64(this byte[] data, bool big = true)
+		=> ShouldRev(big) ? ToUInt64(Reverse(data), 0) : ToUInt64(data, 0);
+
+	public static ulong ToU64(this byte[] data, int offset, bool big = true)
+		=> ToU64(data.Get(offset, 8), big);
+
 	public static byte[] ReadHex(this string hex) {
 		if (hex.Length % 2 != 0)
 			throw new ArgumentException("Invalid length.", nameof(hex));

@@ -29,8 +29,8 @@ public class ScriptParser {
 				break;
 
 			case Action.Mrg:
-				Save(Z.Text.Merge(_var[val[1]], _var[val[2]], bool.Parse(val[3])),
-					GetOutPath(val));
+				Z.Text text = new(_var[val[1]], _var[val[2]], bool.Parse(val[3]));
+				Save(text.Formatted(), GetOutPath(val));
 				break;
 
 			case Action.Dir:
@@ -53,7 +53,7 @@ public class ScriptParser {
 		string[] size = texS.Split('x');
 		int w = int.Parse(size[0]); int h = int.Parse(size[1]);
 		byte[] data = input.GetData(start, ID.Texture.GetSize(codec, w * h));
-		return addH.AsBool(true) ? Z.Texture.Export(codec, w, h, data) : data;
+		return addH.AsBool(true) ? new Z.Texture(codec, w, h, data).Formatted() : data;
 	}
 
 	private byte[] GetExportData(string[] info) {
@@ -62,7 +62,7 @@ public class ScriptParser {
 
 		byte[] obj = _var[_def["Obj"]];
 		return info[1] switch {
-			"Anm" => Animation.Export(obj, info[2].AsInt()),
+			"Anm" => new Animation(obj, info[2].AsInt()).Formatted(),
 			"Tex" => GetTextureData(obj, Misc.Parse<ID.Texture.Codec>(info[2]), info[3]),
 			_ => throw new Exception("Invalid format to export.")
 		};

@@ -5,6 +5,14 @@ using OTRMod.Utility;
 namespace OTRMod.Z;
 
 public class Animation : Resource {
+	public byte[] AnimationData { get; set; }
+	public int Offset { get; set; }
+
+	public Animation(byte[] aniData, int offset) : base(ResourceType.Animation) {
+		AnimationData = aniData;
+		Offset = offset;
+	}
+
 	public enum AnimationType {
 		Normal = 0,
 		Link = 1,
@@ -36,7 +44,6 @@ public class Animation : Resource {
 
 	private static byte[] GetAnimationData(AnimationHeader header) {
 		List<byte> bytes = new();
-		bytes.AddRange(GetHeader(ResourceType.Animation));
 		bytes.AddRange(ByteArray.FromI32((int)AnimationType.Normal, false));
 		bytes.AddRange(ByteArray.FromI16(header.FrameCount, false));
 		bytes.AddRange(ByteArray.FromI32(header.FrameData.Length / 2, false));
@@ -48,8 +55,11 @@ public class Animation : Resource {
 		return bytes.ToArray();
 	}
 
-	public static byte[] Export(byte[] input, int offset) {
-		GetAnimationHeader(input, offset, out AnimationHeader animHeader);
-		return GetAnimationData(animHeader);
+	public override byte[] Formatted() {
+		GetAnimationHeader(AnimationData, Offset, out AnimationHeader animHeader);
+
+		Data = GetAnimationData(animHeader);
+
+		return base.Formatted();
 	}
 }

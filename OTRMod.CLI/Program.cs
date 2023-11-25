@@ -110,16 +110,16 @@ static void ProcessSeq(string[] meta, string path, byte[] seqData) {
 	else if (!int.TryParse(font, System.Globalization.NumberStyles.AllowHexSpecifier, null, out seqFont))
 		Warn("Audiobank index couldn't be parsed as hex, using '0x03'", 2, path);
 
-	seqData = OTRMod.Z.Audio.ExportSeq(0, seqData, new() {
-		medium = 2,
-		cachePolicy = (byte)(type is "bgm" ? 2 : 1),
-		fontIndices = new() { seqFont }
+	OTRMod.Z.AudioSequence audioSequence = new(0, seqData, new() {
+		Medium = 2,
+		CachePolicy = (byte)(type is "bgm" ? 2 : 1),
+		FontIndices = new() { seqFont }
 	});
 
 	string name = meta[0].Replace('/', '|');
 	path = $"custom/music/{name}_{type}";
 
-	Generate.AddFile(path, seqData);
+	Generate.AddFile(path, audioSequence.Formatted());
 }
 
 static void AutoGenerate(string? inputDir = null, string? outPath = null) {

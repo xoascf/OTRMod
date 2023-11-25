@@ -1,48 +1,23 @@
 /* Licensed under the Open Software License version 3.0 */
 
-using OTRMod.Utility;
+using static OTRMod.ID.Text;
 
-using Code = OTRMod.ID.Text.Codes;
+using OTRMod.Utility;
 
 namespace OTRMod.Z;
 
 public class Text : Resource {
-	public enum TextBoxType : byte {
-		TEXTBOX_TYPE_BLACK,
-		TEXTBOX_TYPE_WOODEN,
-		TEXTBOX_TYPE_BLUE,
-		TEXTBOX_TYPE_OCARINA,
-		TEXTBOX_TYPE_NONE_BOTTOM,
-		TEXTBOX_TYPE_NONE_NO_SHADOW,
-		TEXTBOX_TYPE_CREDITS = 11
+	public byte[] MessageData { get; set; }
+	public byte[] TableData { get; set; }
+	public bool AddChars { get; set; }
+
+	public Text(byte[] messages, byte[] table, bool addChars) : base(ResourceType.Text) {
+		MessageData = messages;
+		TableData = table;
+		AddChars = addChars;
 	}
 
-	public enum TextBoxPosition : byte {
-		TEXTBOX_POS_VARIABLE,
-		TEXTBOX_POS_TOP,
-		TEXTBOX_POS_MIDDLE,
-		TEXTBOX_POS_BOTTOM
-	}
-
-	private class MessageEntry {
-		public ushort ID;
-		public TextBoxType BoxType;
-		public TextBoxPosition BoxPos;
-		public int Offset;
-		public List<byte>? Content;
-	}
-
-	public static byte[] Export(byte[] input, byte[] sizeBytes) {
-		byte[] data = new byte[HeaderSize + 4 + input.Length];
-
-		data.Set(0, GetHeader(ResourceType.Text));
-		data.Set(HeaderSize, sizeBytes); // 4
-		data.Set(HeaderSize + 4, input);
-
-		return data;
-	}
-
-	public static byte[] Merge(byte[] messageData, byte[] tableData, bool addChars) {
+	public override byte[] Formatted() {
 		List<byte> newData = new();
 		MessageEntry entry = new();
 		int index = 0;
@@ -50,15 +25,15 @@ public class Text : Resource {
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 			"abcdefghijklmnopqrstuvwxyz -.";
 
-		while (index < tableData.Length) {
-			entry.ID = tableData.ToU16(index);
-			entry.BoxType = (TextBoxType)((tableData[index + 2] & 0xF0) >> 4);
-			entry.BoxPos = (TextBoxPosition)(tableData[index + 2] & 0x0F);
-			entry.Offset = tableData.ToI32(index + 4) & 0x00FFFFFF;
+		while (index < TableData.Length) {
+			entry.ID = TableData.ToU16(index);
+			entry.BoxType = (TextBoxType)((TableData[index + 2] & 0xF0) >> 4);
+			entry.BoxPos = (TextBoxPosition)(TableData[index + 2] & 0x0F);
+			entry.Offset = TableData.ToI32(index + 4) & 0x00FFFFFF;
 			entry.Content = new();
 
 			int msg = entry.Offset;
-			byte c = messageData[msg];
+			byte c = MessageData[msg];
 			int extra = 0;
 			bool stop = false;
 
@@ -91,18 +66,16 @@ public class Text : Resource {
 				}
 				else extra--;
 
-				c = messageData[msg];
+				c = MessageData[msg];
 			}
 
 			if (entry.ID is 0xFFFD)
-				if (addChars) {
+				if (AddChars) {
 					entry.ID = 0xFFFC;
 					entry.Content.Clear();
 					entry.Content.AddRange(System.Text.Encoding.ASCII.GetBytes(toAdd));
 				}
-				else {
-					break;
-				}
+				else break;
 
 			if (entry.ID is 0xFFFF) break;
 
@@ -115,6 +88,10 @@ public class Text : Resource {
 			index += 8;
 		}
 
-		return Export(newData.ToArray(), ByteArray.FromI32(index / 8, false));
+		Data = new byte[0x04 + newData.Count];
+		Data.Set(0x00, ByteArray.FromI32(index / 8, false)); // Size
+		Data.Set(0x04, newData.ToArray());
+
+		return base.Formatted();
 	}
 }

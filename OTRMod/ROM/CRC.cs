@@ -1,7 +1,6 @@
 /* Licensed under the Open Software License version 3.0 */
 
 using OTRMod.Utility;
-using System.Numerics;
 
 namespace OTRMod.ROM;
 
@@ -76,7 +75,7 @@ public class CRC
 		uint t2, t3, t4, t5, t6;
 		uint t1 = t2 = t3 = t4 = t5 = t6 = seed;
 		for (int i = 0x1000; i < 0x101000; i += 4) {
-			uint d = bytes.Get(i, 4).ToU32();
+			uint d = bytes.ToU32(i);
 			if ((t6 + d) < t6)
 				t4++;
 
@@ -86,7 +85,7 @@ public class CRC
 			t5 += r;
 			t2 = (t2 <= d) ? (t2 ^ (t6 ^ d)) : (t2 ^ r);
 			t1 = (cic != 6105) ? (t1 + (t5 ^ d)) :
-				(t1 + (bytes.Get(1872 + (i & 0xFF), 4).ToU32() ^ d));
+				(t1 + (bytes.ToU32(1872 + (i & 0xFF)) ^ d));
 		}
 		switch (cic) {
 			case 6103:

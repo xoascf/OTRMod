@@ -1,7 +1,7 @@
 namespace OTRMod.ID;
 
-internal class Text {
-	public enum Codes : byte {
+public static class Text {
+	public enum Code : byte {
 		END = 0x02, BOX_BREAK = 0x04,
 		COLOR, SHIFT, TEXTID,
 		QUICKTEXT_ENABLE, QUICKTEXT_DISABLE,
@@ -26,8 +26,33 @@ internal class Text {
 		BLACK
 	}
 
-	public enum Highscores {
+	public enum Highscore {
 		HS_HORSE_ARCHERY, HS_POE_POINTS, HS_LARGEST_FISH,
 		HS_HORSE_RACE, HS_MARATHON, HS_DAMPE_RACE = 0x06
+	}
+
+	public enum TextBoxType : byte {
+		TEXTBOX_TYPE_BLACK,
+		TEXTBOX_TYPE_WOODEN,
+		TEXTBOX_TYPE_BLUE,
+		TEXTBOX_TYPE_OCARINA,
+		TEXTBOX_TYPE_NONE_BOTTOM,
+		TEXTBOX_TYPE_NONE_NO_SHADOW,
+		TEXTBOX_TYPE_CREDITS = 11
+	}
+
+	public enum TextBoxPosition : byte {
+		TEXTBOX_POS_VARIABLE,
+		TEXTBOX_POS_TOP,
+		TEXTBOX_POS_MIDDLE,
+		TEXTBOX_POS_BOTTOM
+	}
+
+	public class MessageEntry {
+		public ushort ID;
+		public TextBoxType BoxType;
+		public TextBoxPosition BoxPos;
+		public int Offset;
+		public List<byte>? Content;
 	}
 }
