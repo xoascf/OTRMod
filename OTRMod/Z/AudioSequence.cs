@@ -11,7 +11,7 @@ public class AudioSequence : Resource {
 	public byte[] SequenceData { get; set; }
 	public AudioSequenceInfo Info { get; set; }
 
-	public AudioSequence(byte index, byte[] seq, AudioSequenceInfo info) : base(ResourceType.AudioSequence) {
+	public AudioSequence(byte index, byte[] seq, AudioSequenceInfo info) : base(ResourceType.AudioSequence, 2) {
 		Index = index;
 		SequenceData = seq;
 		Info = info;
@@ -20,7 +20,7 @@ public class AudioSequence : Resource {
 	public override byte[] Formatted() {
 		List<byte> seq = new();
 		seq.AddRange(ByteArray.FromI32(SequenceData.Length, false));
-		seq.AddRange(seq);
+		seq.AddRange(SequenceData);
 		seq.Add(Index);
 		seq.Add(Info.Medium);
 		seq.Add(Info.CachePolicy);
