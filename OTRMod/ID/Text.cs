@@ -1,3 +1,4 @@
+using OTRMod.Utility;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -55,7 +56,6 @@ public static class Text {
 		public ushort ID;
 		public TextBoxType BoxType;
 		public TextBoxPosition BoxPos;
-		public int Offset;
 		public List<byte>? Content;
 	}
 
@@ -112,16 +112,6 @@ public static class Text {
 		return sb.ToString().Replace("\u201C", "\"");
 	}
 
-	public static byte[] AddEndAndAlign(byte[] data) {
-		int plusEndSize = data.Length + 1;
-		int paddingSize = (4 - (plusEndSize % 4)) % 4;
-		byte[] newData = new byte[plusEndSize + paddingSize];
-		data.CopyTo(newData, 0); // Copy old data into the new array
-		newData[data.Length] = (byte)Code.END; // Add END control code
-
-		return newData;
-	}
-
 	public static string Endec(byte[] data, bool bin, StringsDict replacements) {
 		string t = bin ? Encoding.UTF8.GetString(data) : SturmScharf.EncodingProvider.Latin1.GetString(data);
 		foreach (KeyValuePair<string, string> rep in replacements)
@@ -143,12 +133,16 @@ public static class Text {
 		return cm;
 	}
 
-	public static void AddSingle(this List<byte> list, MessageEntry entry) {
-		list.AddRange(Utility.ByteArray.FromU16(entry.ID, false));
-		list.Add((byte)entry.BoxType);
-		list.Add((byte)entry.BoxPos);
-		list.AddRange(Utility.ByteArray.FromI32(entry.Content!.Count, false));
-		list.AddRange(entry.Content.ToArray());
+	public static void AddSingle(this List<byte> list, MessageEntry entry, ref int index) {
+		if (entry.Content != null) {
+			list.AddRange(ByteArray.FromU16(entry.ID, false));
+			list.Add((byte)entry.BoxType);
+			list.Add((byte)entry.BoxPos);
+			list.AddRange(ByteArray.FromI32(entry.Content.Count, false));
+			list.AddRange(entry.Content.ToArray());
+
+			index += 8;
+		}
 	}
 
 	public static List<MessageEntry> Parse(string input) {
@@ -159,16 +153,199 @@ public static class Text {
 		Regex regex = new(pattern, RegexOptions.Singleline);
 
 		foreach (Match match in regex.Matches(input)) {
-			ushort textId = Convert.ToUInt16(match.Groups[1].Value, 16);
-			TextBoxType type = (TextBoxType)Enum.Parse(typeof(TextBoxType), match.Groups[2].Value);
-			TextBoxPosition yPos = (TextBoxPosition)Enum.Parse(typeof(TextBoxPosition), match.Groups[3].Value);
-			string messageText = EvalCodes(match.Groups[4].Value.Replace("\n", " ").Replace("\r", " "));
-			List<byte> messageData = new(AddEndAndAlign(SturmScharf.EncodingProvider.Latin1.GetBytes(messageText)));
+			string messageText = EvalCodes(match.Groups[4].Value.Replace("\n", " ").Replace("\r", " ")) + (char)Code.END;
 
 			// Add text message to list
-			textMessages.Add(new MessageEntry { ID = textId, BoxType = type, BoxPos = yPos, Content = messageData });
+			textMessages.Add(
+			new MessageEntry {
+				ID = Convert.ToUInt16(match.Groups[1].Value, 16),
+				BoxType = (TextBoxType)Enum.Parse(typeof(TextBoxType), match.Groups[2].Value),
+				BoxPos = (TextBoxPosition)Enum.Parse(typeof(TextBoxPosition), match.Groups[3].Value),
+				Content = GetContent(0, SturmScharf.EncodingProvider.Latin1.GetBytes(messageText))
+			});
 		}
 
 		return textMessages;
+	}
+
+	public static List<byte> GetContent(int msgOffset, byte[] msgData) {
+		List<byte> content = new();
+
+		int msg = msgOffset;
+		byte c = msgData[msg];
+		int extra = 0;
+		bool stop = false;
+
+		while ((c != '\0' && !stop) || extra > 0) {
+			content.Add(c);
+			msg++;
+
+			if (extra == 0) {
+				if (Enum.IsDefined(typeof(Code), c))
+					switch ((Code)c) {
+						case Code.END:
+							stop = true; break;
+						case Code.COLOR:
+						case Code.SHIFT:
+						case Code.BOX_BREAK_DELAYED:
+						case Code.FADE:
+						case Code.ITEM_ICON:
+						case Code.TEXT_SPEED:
+						case Code.HIGHSCORE:
+							extra = 1; break;
+						case Code.TEXTID:
+							extra = 2; stop = true; break;
+						case Code.FADE2:
+						case Code.SFX:
+							extra = 2; break;
+						case Code.BACKGROUND:
+							extra = 3; break;
+					}
+			}
+			else extra--;
+
+			if (msgData.Length > msg)
+				c = msgData[msg];
+		}
+
+		return content;
+	}
+
+	private static string FormatChar(int value) {
+		return $"\\x{value:X2}";
+	}
+
+	// msgdis.py
+	public static string Decode(byte[] readBytes, StringsDict extractionCharmap) {
+		bool nextIsColor = false;
+		bool nextIsHighscore = false;
+		bool nextIsByteMod = false;
+		int nextIsHwordMod = 0;
+		int nextIsBackground = 0;
+
+		List<string> buf = new();
+		foreach (byte b in readBytes) {
+			char byteChar = (char)b;
+			if (nextIsByteMod) {
+				string value = $"\"{FormatChar(b)}\"";
+				if (nextIsHighscore) {
+					value = ((Highscore)b).ToString();
+					nextIsHighscore = false;
+				}
+				else if (nextIsColor) {
+					value = ((Color)b).ToString();
+					nextIsColor = false;
+				}
+				buf.Add(value + ") \"");
+				nextIsByteMod = false;
+			}
+			else if (nextIsHwordMod == 1) {
+				buf.Add($"\"{FormatChar(b)}");
+				nextIsHwordMod = 2;
+			}
+			else if (nextIsHwordMod == 2) {
+				buf.Add($"{FormatChar(b)}\") \"");
+				nextIsHwordMod = 0;
+			}
+			else if (nextIsBackground == 1) {
+				buf.Add($"\"{FormatChar(b)}\", ");
+				nextIsBackground = 2;
+			}
+			else if (nextIsBackground == 2) {
+				buf.Add($"\"{FormatChar(b)}\", ");
+				nextIsBackground = 3;
+			}
+			else if (nextIsBackground == 3) {
+				buf.Add($"\"{FormatChar(b)}\") \"");
+				nextIsBackground = 0;
+			}
+			else {
+				bool foundControlCode = false;
+				if (byteChar == '\x01') { // new line
+					buf.Add("\n");
+					foundControlCode = true;
+				}
+				else if (Enum.IsDefined(typeof(Code), b)) {
+					string name = ((Code)byteChar).ToString();
+					switch ((Code)b) {
+						case Code.COLOR:
+							buf.Add($"\" {name}(");
+							nextIsColor = true;
+							nextIsByteMod = true;
+							break;
+
+						case Code.SHIFT:
+						case Code.BOX_BREAK_DELAYED:
+						case Code.FADE:
+						case Code.ITEM_ICON:
+						case Code.TEXT_SPEED:
+							buf.Add($"\" {name}(");
+							nextIsByteMod = true;
+							break;
+
+						case Code.HIGHSCORE:
+							buf.Add($"\" {name}(");
+							nextIsHighscore = true;
+							nextIsByteMod = true;
+							break;
+
+						case Code.TEXTID:
+						case Code.FADE2:
+						case Code.SFX:
+							buf.Add($"\" {name}(");
+							nextIsHwordMod = 1;
+							break;
+
+						case Code.BACKGROUND:
+							buf.Add($"\" {name}(");
+							nextIsBackground = 1;
+							break;
+
+						case Code.BOX_BREAK:
+							buf.Add($"\"{name}\"");
+							break;
+
+						default:
+							if (byteChar == '\x02')
+								buf.Add("");
+							else
+								buf.Add($"\" {name} \"");
+							break;
+					}
+					foundControlCode = true;
+				}
+				if (foundControlCode)
+					continue;
+
+				string charVal = ((char)b).ToString();
+
+				// FIXME: Maybe use Endec instead
+				if (extractionCharmap.TryGetKey(charVal, out string key))
+					buf.Add(key);
+				else {
+					string decoded = charVal;
+					if (decoded == "\"")
+						decoded = "\\\"";
+					buf.Add(decoded);
+				}
+			}
+		}
+
+		return string.Concat(buf);
+	}
+
+	public static string FixupMessage(string message) {
+		return Regex.Replace("\"" + message.Replace("\n", "\\n\"\n\"") + "\"", "(?<!\\)(\"\"))", "").Replace("\n ", "\n")
+		   .Replace("\n\"\" ", "\n").Replace("\\\"\"", "\u201C").Replace("\"\"", "")
+		   .Replace("BOX_BREAK\"", "\nBOX_BREAK\n\"").Replace("BOX_BREAK ", "\nBOX_BREAK\n")
+		   .Replace("\u201C", "\\\"\"").Trim();
+	}
+
+	public static string GetTbMsgFormatted(MessageEntry msgEntry, StringsDict extractionCharmap) {
+		return $@"DEFINE_MESSAGE(0x{msgEntry.ID:X4}, {msgEntry.BoxType}, {msgEntry.BoxPos},
+{FixupMessage(Decode(msgEntry.Content.ToArray(), extractionCharmap))}
+)
+
+";
 	}
 }

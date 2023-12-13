@@ -50,6 +50,20 @@ public static class Misc
 		return a;
 	}
 
+	// Plain inefficient
+	// https://stackoverflow.com/a/4003577
+	public static bool TryGetKey<K, V>(this IDictionary<K, V> instance, V value, out K key) {
+		foreach (KeyValuePair<K, V> entry in instance) {
+			if (entry.Value!.Equals(value)) {
+				key = entry.Key;
+				return true;
+			}
+			continue;
+		}
+		key = default!;
+		return false;
+	}
+
 	public static byte[] GetData(this byte[] data, object start, object length)
 		=> data.Get(start.AsInt(), length.AsInt());
 
