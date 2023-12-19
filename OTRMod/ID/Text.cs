@@ -82,18 +82,18 @@ public static class Text {
 				else if ((m = Regex.Match(s, @"^HIGHSCORE\((?<hs>\w+)\)")).Success)
 					sb.Append($"{(char)Code.HIGHSCORE}" +
 						$"{C<Highscore>(m.Groups["hs"].Value)}");
-				else if (s.StartsWith(cn = "ITEM_ICON") || s.StartsWith(cn = "SHIFT") ||
-						 s.StartsWith(cn = "FADE") || s.StartsWith(cn = "TEXT_SPEED") ||
-						 s.StartsWith(cn = "BOX_BREAK_DELAYED")) {
-					m = Regex.Match(s, @$"^{cn}\(\""{hex}\""\)");
-					sb.Append($"{C<Code>(cn)}{C(m.Groups[1].Value)}");
-				}
 				else if (s.StartsWith(cn = "TEXTID") || s.StartsWith(cn = "SFX") ||
 						 s.StartsWith(cn = "FADE2")) { // FADE2 is used in STAFF
 					m = Regex.Match(s, @$"^{cn}\(\""{hex}{hex}\""\)");
 					sb.Append($"{C<Code>(cn)}" +
 						$"{C(m.Groups[1].Value)}" +
 						$"{C(m.Groups[2].Value)}");
+				}
+				else if (s.StartsWith(cn = "ITEM_ICON") || s.StartsWith(cn = "SHIFT") ||
+						 s.StartsWith(cn = "FADE") || s.StartsWith(cn = "TEXT_SPEED") ||
+						 s.StartsWith(cn = "BOX_BREAK_DELAYED")) {
+					m = Regex.Match(s, @$"^{cn}\(\""{hex}\""\)");
+					sb.Append($"{C<Code>(cn)}{C(m.Groups[1].Value)}");
 				}
 				else if (s.StartsWith(cn = "BACKGROUND")) {
 					m = Regex.Match(s,
