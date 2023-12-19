@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "OTRMod.Web",
   "resources": {
-    "hash": "sha256-YwwOXr6Efje1EEMLkmQvwLcctTteIcc8y75msE6veQw=",
+    "hash": "sha256-Y0qdFLkJN7YKFsguiL3j2QpmasjtlgnJYAcOv9xHu7I=",
     "jsModuleNative": {
       "dotnet.native.8.0.0.pvf75o1829.js": "sha256-iGYq7RViaojaodZXb6iMnyYSvmcxmoXy4N33RHLURi0="
     },
@@ -9,7 +9,7 @@
       "dotnet.runtime.8.0.0.t0913f5lcu.js": "sha256-WdSX3HQvnBYF0KJLZoOyHvTzMHetaob6PV0Kn2K+QXw="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-xYdKlpGzEzg/SoOfd5JYG+FEs8QvYuAAefgULEYDxEI="
+      "dotnet.native.wasm": "sha256-oSpFFACIw/GozFX286opVQY7FxfvqPiffSDi2fXyPtg="
     },
     "icu": {
       "icudt.dat": "sha256-tO5O5YzMTVSaKBboxAqezOQL9ewmupzV2JrB5Rkc8a4="
@@ -36,9 +36,9 @@
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-CQVLCKiSxLN5ghyJZG3mhnMGRROdqrbNUjtAXB0nWb8=",
       "Microsoft.Win32.SystemEvents.wasm": "sha256-iBoNrwV9ZVNxtWI/O2q7cu04spIcBga+bLNabjvz3Vg=",
       "netstandard.wasm": "sha256-Ut6xj+nxVe68/DqJaGuh4pEQN2CFGA0NdCeEhtmWYlg=",
-      "OTRMod.wasm": "sha256-GL9PivTTGqZgiDmkZ5C2xBk44KbtMuvTUPCM8XVTYgY=",
-      "OTRMod.Web.wasm": "sha256-qjxcWLKq9FZGHnlQoI2UF4pdKYzYSjNvukhr3iUIuGg=",
-      "SturmScharf.wasm": "sha256-9Qr0/O5QQ72c8/JxDibhRGRXamjHo7UmQvC+pHxaxYs=",
+      "OTRMod.wasm": "sha256-/79TZczCG5hwe0Jixa8AqO0q2/a9N88S0fBgZG8jgEs=",
+      "OTRMod.Web.wasm": "sha256-GJrBTWht+SII0uBqWxNFJ2uCRD1jBbcy9k1Y9caphi8=",
+      "SturmScharf.wasm": "sha256-DDh1pqXJkQ14YLVSwuc+71PSF5i+p2gG8mqwNbivStE=",
       "System.Collections.Concurrent.wasm": "sha256-hd+a6TkijJMpWSzvlmYejeCit4AypeEI2oy4d4sWUX0=",
       "System.Collections.NonGeneric.wasm": "sha256-aCursrhqF6OvKQKga1bLkSotX4ZMYRpb6NEAWOOgCOI=",
       "System.Collections.Specialized.wasm": "sha256-TlmLW/w1R1rOd2aNFDb5GZ7d2aJGKakV9EML11gfPzo=",
@@ -89,7 +89,7 @@
     },
     "satelliteResources": {
       "es": {
-        "OTRMod.Web.resources.wasm": "sha256-O0cYlvl6ppyLxobL8J/ccHoAiKKRJu4L5YAO6mFHEv8="
+        "OTRMod.Web.resources.wasm": "sha256-bSvmJyAQSBHabl+Mrp1AXv97HtJZ5hcz+3fxkgHLGQI="
       }
     }
   },
