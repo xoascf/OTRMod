@@ -77,7 +77,7 @@ by Rubius on Twitch (watch his full walkthrough on
 https://www.youtube.com/watch?v=XM98fQFQYc8[YouTube]).
 * ROMHack translations into Brazilian Portuguese, Italian, Russian, and
 other languages have also been ported by the
-http://web.archive.org/web/20230928162757if_/https://cdn.discordapp.com/attachments/958069311132536852/1032451718178410496/NTSC_1.0_OTRMod_Alfa.txt[same
+http://web.archive.org/web/20231219051632if_/https://cdn.discordapp.com/attachments/958069311132536852/1165028159763271690/NTSC_1.0_OTRMod_Bravo.txt[same
 script].
 * Some non-English-speaking Ocarina of Time fans on
 https://discord.com/invite/shipofharkinian[Discord] and beyond have been
