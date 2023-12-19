@@ -15,8 +15,11 @@ public class Text : Resource {
 	}
 
 	// Used to load from .h file (ZRET format)
-	public Text(byte[] messagesH, string[] charMap) : base(ResourceType.Text) {
-		Entries = Parse(Endec(messagesH, true, replacements: LoadCharMap(charMap)));
+	public Text(byte[] messagesH, StringsDict charMap) : base(ResourceType.Text) {
+		Entries = Parse(Endec(messagesH, true, charMap));
+	}
+	public Text(string messagesH, StringsDict charMap) : base(ResourceType.Text) {
+		Entries = Parse(Endec(messagesH, true, charMap));
 	}
 
 	// Used to load from SoH formatted binary data (the one in the OTR)

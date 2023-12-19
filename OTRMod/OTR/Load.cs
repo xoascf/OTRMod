@@ -7,6 +7,7 @@ using MemStream = System.IO.MemoryStream;
 namespace OTRMod.OTR;
 
 public static class Load {
+	// All from...
 	public static void From(Stream s, ref Dictionary<string, Stream> files) {
 		using MpqArchive archive = MpqArchive.Open(s, true);
 		foreach (MpqFile file in archive.GetMpqFiles())
@@ -14,6 +15,19 @@ public static class Load {
 				if (kf.FileName is "(listfile)" or "(attributes)")
 					continue;
 
+				Stream dataStream = new MemStream();
+				kf.MpqStream.CopyTo(dataStream);
+				kf.MpqStream.Close();
+				files.Add(kf.FileName, dataStream);
+			}
+	}
+
+	// Search like...
+	public static void OnlyFrom
+	(string fileName, Stream s, ref Dictionary<string, Stream> files) {
+		using MpqArchive archive = MpqArchive.Open(s, true);
+		foreach (MpqFile file in archive.GetMpqFiles())
+			if (file is MpqKnownFile kf && kf.FileName.Contains(fileName)) {
 				Stream dataStream = new MemStream();
 				kf.MpqStream.CopyTo(dataStream);
 				kf.MpqStream.Close();

@@ -1,0 +1,60 @@
+﻿@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+
+<div class="nav nav-tabs @CssClass" id="@Id" role="tablist">
+	@foreach (var tab in TabList) {
+		if (tab == selectedTab && isEditingTitle) {
+			<input class="nav-link" @ondblclick="StopEditingTitle" @onblur="StopEditingTitle" @bind="tab.Title" />
+		} else {
+			<button class="nav-link @GetTabClass(tab)" id="@($"{Id}-tab")" @onclick="() => SelectTab(tab)" @ondblclick="() => StartEditingTitle(tab)">
+				@tab.Title
+			</button>
+		}
+	}
+</div>
+
+<div class="tab-content" id="@($"{Id}Content")">
+	@foreach (var tab in TabList) {
+		<div class="tab-pane @GetTabContentClass(tab)" id="@Id" role="tabpanel">
+			@tab.Content
+		</div>
+	}
+</div>
+
+@code {
+	public class TabItem {
+		[Parameter] public string Id { get; set; }
+		[Parameter] public string Title { get; set; }
+		[Parameter] public RenderFragment Content { get; set; }
+		[Parameter] public EventCallback<TabItem> OnSelected { get; set; }
+	}
+	[Parameter] public string CssClass { get; set; } = "";
+	[Parameter] public IEnumerable<TabItem> TabList { get; set; }
+	[Parameter] public string Id { get; set; } = "tabs";
+
+	private TabItem selectedTab;
+
+	private string GetTabClass(TabItem tab) {
+		return tab == selectedTab ? "active" : null;
+	}
+
+	private string GetTabContentClass(TabItem tab) {
+		return tab == selectedTab ? "active show" : null;
+	}
+
+	private async Task SelectTab(TabItem tab) {
+		selectedTab = tab;
+		await tab.OnSelected.InvokeAsync(tab);
+	}
+	
+	private bool isEditingTitle;
+
+	private void StartEditingTitle(TabItem tab) {
+		selectedTab = tab;
+		isEditingTitle = true;
+	}
+
+	private void StopEditingTitle() {
+		isEditingTitle = false;
+	}
+}

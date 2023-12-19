@@ -111,23 +111,35 @@ public static class Text {
 
 		return sb.ToString().Replace("\u201C", "\"");
 	}
-
-	public static string Endec(byte[] data, bool bin, StringsDict replacements) {
-		string t = bin ? Encoding.UTF8.GetString(data) : SturmScharf.EncodingProvider.Latin1.GetString(data);
+	
+	public static string Endec(string t, bool bin, StringsDict replacements) {
 		foreach (KeyValuePair<string, string> rep in replacements)
 			t = bin ? t.Replace(rep.Key, rep.Value) : t.Replace(rep.Value, rep.Key);
 
 		return t;
 	}
 
+	public static string Endec(byte[] data, bool bin, StringsDict replacements) {
+		string t = bin ? Encoding.UTF8.GetString(data) : SturmScharf.EncodingProvider.Latin1.GetString(data);
+
+		return Endec(t, bin, replacements);
+	}
+
 	public static StringsDict LoadCharMap(string[] lines) {
 		StringsDict cm = new();
 
 		foreach (string line in lines) {
-			string[] splitLine = line.Split('=');
-			string key = splitLine[0];
-			string val = Convert.ToChar(Convert.ToUInt32(splitLine[1], 16)).ToString();
-			cm.Add(key, val);
+			if (!line.Contains("="))
+				continue;
+
+			string[] rLine = line.Split(new char[] { '=' }, 2);
+			if (rLine[0].IsNullOrEmpty() || rLine[1].IsNullOrEmpty())
+				continue;
+
+			if (uint.TryParse(rLine[1], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint val))
+				if (val > 0x10FFFF)
+					continue;
+				cm.Add(rLine[0], char.ConvertFromUtf32((int)val));
 		}
 
 		return cm;

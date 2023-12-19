@@ -1,0 +1,27 @@
+﻿@inherits ComponentBase
+
+<div class="accordion" id="@Id">
+	<CascadingValue Value="@this" Name="ParentAccordion">
+		@ChildContent
+	</CascadingValue>
+</div>
+
+@code {
+	[Parameter] public RenderFragment ChildContent { get; set; }
+	[Parameter] public string Id { get; set; } = "accordion";
+
+	private string selectedItem = null;
+
+	public void NotifyItemSelection(string itemId) {
+		if (selectedItem == itemId)
+			selectedItem = null; // Collapse the currently selected item if clicked again
+		else
+			selectedItem = itemId;
+
+		StateHasChanged();
+	}
+
+	public bool IsItemCollapsed(string itemId) {
+		return selectedItem != itemId;
+	}
+}

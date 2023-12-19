@@ -1,0 +1,37 @@
+﻿@inherits ComponentBase
+
+<div class="accordion-item">
+	<h2 class="accordion-header">
+		<button class="accordion-button@(ParentAccordion.IsItemCollapsed(Id) ? " collapsed" : "")"
+				type="button"
+				data-bs-toggle="collapse"
+				data-bs-target="@($"#{Id}")"
+				aria-expanded="@(!ParentAccordion.IsItemCollapsed(Id))"
+				aria-controls="@Id"
+				@onclick="ToggleCollapse">
+			@Header
+		</button>
+	</h2>
+	<div id="@Id" class="accordion-collapse collapse@(ParentAccordion.IsItemCollapsed(Id) ? "" : " show")" aria-labelledby="@($"heading{Id}")">
+		<div class="accordion-body">
+			@ChildContent
+		</div>
+	</div>
+</div>
+
+@code {
+	[CascadingParameter(Name = "ParentAccordion")] public Accordion ParentAccordion { get; set; }
+	[Parameter] public string Header { get; set; }
+	[Parameter] public RenderFragment ChildContent { get; set; }
+	[Parameter] public string Id { get; set; }
+	[Parameter] public bool IsInitiallyOpen { get; set; } = false;
+
+	protected override void OnInitialized() {
+		if (IsInitiallyOpen)
+			ParentAccordion.NotifyItemSelection(Id);
+	}
+
+	private void ToggleCollapse() {
+		ParentAccordion.NotifyItemSelection(Id);
+	}
+}

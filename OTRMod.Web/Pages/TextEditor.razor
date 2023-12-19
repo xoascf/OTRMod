@@ -1,0 +1,176 @@
+﻿@page "/text-editor"
+@using BlazorDownloadFile
+@using OTRMod.Web.Shared.Components
+@using OTRMod.OTR
+@using OTRMod.Utility
+
+<PageTitle>OTRMod Web - Text Editor (OoT)</PageTitle>
+<h3>Text Editor (OoT)</h3>
+Import and export compatible game text formats.
+<br />
+<br />
+<Accordion Id="selectionAccordion">
+	<AccordionItem Header="Load from OTR" Id="loadOtr" IsInitiallyOpen=true>
+		<InputFile class="form-control" type="file" id="otrFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, true))" accept=".otr" single />
+	</AccordionItem>
+	<AccordionItem Header="Load from .h message file" Id="loadH">
+		<InputFile class="form-control" type="file" id="zretTextFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, false))" accept=".h" single />
+	</AccordionItem>
+</Accordion>
+<br />
+<div class="row g-3" visi>
+	<div class="col-sm-3" style="width: 190px;">
+		<label for="charMap" class="form-label">Replacements:</label>
+		<InputTextArea class="form-control" id="charMap" rows="14" cols="16" @bind-Value="@charReplacements" @oninput="LoadTextArray" disabled="@_working"></InputTextArea>
+	</div>
+	<div class="col">
+		<label for="tabMessageFiles" class="form-label">Text Editor:</label>
+		<Tabs CssClass="border-0" TabList="@tabList" Id="tabMessageFiles" />
+		@if (tabList.Count != _textFiles.Count)
+			foreach (KeyValuePair<string, OTRMod.Z.Text> msg in _textFiles)
+				tabList.Add(new TextDataItem { Id = msg.Key, Title = msg.Key, Content =@<p>Loading...</p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnTabSelected(e)) });
+	</div>
+</div>
+<br />
+<label for="msgPath" class="form-label">Output OTR message path:</label>
+<input class="form-control" list="msgPaths" id="msgPath" @bind="@_msgPathInOTR" aria-describedby="validationMsgPath" required />
+<div id="validationMsgPath" class="invalid-feedback">Message OTR path cannot be blank!</div>
+<datalist id="msgPaths">
+	<option value="@DEFAULT_MESSAGE_OTR_PATH">
+	</option>
+	<option value="text/ger_message_data_static/ger_message_data_static">
+	</option>
+	<option value="text/fra_message_data_static/fra_message_data_static">
+	</option>
+	<option value="text/staff_message_data_static/staff_message_data_static">
+	</option>
+</datalist>
+<br />
+<button class="btn btn-primary" type="submit" @onclick="ExportToOTR" disabled="@(currentTab == null || !currentTab.IsLoaded)">
+	Save OTR file
+</button>
+<button class="btn btn-primary" type="submit" @onclick="GetH" disabled="@(currentTab == null || !currentTab.IsLoaded)">
+	Save .h message file
+</button>
+<br />
+@code {
+	public class TextDataItem : Tabs.TabItem {
+		public bool IsLoaded { get; set; }
+		public string PreContent { get; set; }
+	}
+
+	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
+	private MemoryStream _otrMs = new();
+	private List<TextDataItem> tabList = new List<TextDataItem> { };
+	private Dictionary<string, OTRMod.Z.Text> _textFiles = new();
+	private Dictionary<string, string> _replacements = new();
+	private bool _working = false;
+	private const string DEFAULT_MESSAGE_OTR_PATH = "text/nes_message_data_static/nes_message_data_static";
+	private string _msgPathInOTR = DEFAULT_MESSAGE_OTR_PATH;
+	private string currentHContent = "";
+	private bool _needReplacements = false;
+	private TextDataItem? currentTab;
+	private string charReplacements = DecodeBase64("XG49MDEK4oC+PTdGCsOAPTgwCsOuPTgxCsOCPTgyCsOEPTgzCsOHPTg0CsOIPTg1CsOJPTg2CsOKPTg3CsOLPTg4CsOPPTg5CsOUPThBCsOWPThCCsOZPThDCsObPThECsOcPThFCsOfPThGCsOgPTkwCsOhPTkxCsOiPTkyCsOkPTkzCsOnPTk0CsOoPTk1CsOpPTk2CsOqPTk3CsOrPTk4CsOvPTk5CsO0PTlBCsO2PTlCCsO5PTlDCsO7PTlECsO8PTlFCltBXT05RgpbQl09QTAKW0NdPUExCltMXT1BMgpbUl09QTMKW1pdPUE0CltDLVVwXT1BNQpbQy1Eb3duXT1BNgpbQy1MZWZ0XT1BNwpbQy1SaWdodF09QTgK4pa8PUE5CltDb250cm9sLVBhZF09QUEKW0QtUGFkXT1BQg==");
+
+	RenderFragment LoadMsg() {
+		return @<InputTextArea class="form-control" rows="12" cols="96" @bind-Value="@currentHContent" disabled="@_working" style="border-radius: 0 var(--bs-border-radius) var(--bs-border-radius);"></InputTextArea>;
+	}
+
+	private void OnTabSelected(Tabs.TabItem e) {
+		if (currentTab != null)
+			currentTab.PreContent = currentHContent;
+
+		var tab = e as TextDataItem;
+		Console.WriteLine($"Tab selected: {tab.Id}");
+		if (!tab.IsLoaded || _needReplacements) {
+			tab.PreContent = _textFiles[tab.Id].ToHumanReadable(_replacements);
+			_needReplacements = false;
+			tab.IsLoaded = true;
+		}
+
+		currentHContent = tab.PreContent;
+		_msgPathInOTR = $"text/{tab.Title}/{tab.Title}";
+		tab.Content = LoadMsg();
+		currentTab = tab;
+	}
+
+	private static string DecodeBase64(string base64String) {
+		byte[] data = Convert.FromBase64String(base64String);
+		return System.Text.Encoding.UTF8.GetString(data);
+	}
+
+	private void LoadTextArray(ChangeEventArgs e) {
+		charReplacements = e.Value.ToString();
+		SetReplacements();
+	}
+
+	private void SetReplacements() {
+		var charMapTemp = OTRMod.ID.Text.LoadCharMap(charReplacements.ToStringArray());
+		var diffKeys = charMapTemp.Where(kv => !_replacements.ContainsKey(kv.Key) || !_replacements[kv.Key].Equals(kv.Value)).ToDictionary(kv => kv.Key, kv => kv.Value);
+
+		if (diffKeys.Any()) {
+			_replacements = charMapTemp;
+			_needReplacements = true;
+			Console.WriteLine($"Replacements updated:");
+			foreach (var kv in diffKeys)
+				Console.WriteLine($"Key: {kv.Key}, Value: {kv.Value}");
+		}
+	}
+
+	protected override void OnInitialized() {
+		SetReplacements();
+	}
+
+	private async void ProcessInput(InputFileChangeEventArgs e, bool isOTR) {
+		IBrowserFile inputFile = e.File;
+		tabList.Clear();
+		_textFiles.Clear();
+
+		MemoryStream dataMs = new();
+		if (isOTR) {
+			await inputFile.OpenReadStream(0x4000000).CopyToAsync(dataMs); // is 64 MiB too much for your OTR?
+			Dictionary<string, Stream> msgResFiles = new();
+			await Task.Delay(10);
+			Load.OnlyFrom("message_data_static", dataMs, ref msgResFiles);
+			foreach (var msgRes in msgResFiles) {
+				await Task.Delay(10);
+				var otrRes = OTRMod.Z.Resource.Read(((MemoryStream)msgRes.Value).ToArray());
+				var otrResText = OTRMod.Z.Text.LoadFrom(otrRes);
+				var otrResFileName = Path.GetFileName(msgRes.Key);
+
+				_textFiles.Add(otrResFileName, otrResText);
+				msgRes.Value.Flush();
+			}
+		}
+		else {
+			await inputFile.OpenReadStream(0x100000).CopyToAsync(dataMs); // 1 MiB is more than enough for .h files
+			var otrResText = new OTRMod.Z.Text(dataMs.ToArray(), _replacements);
+			var otrResFileName = Path.GetFileNameWithoutExtension(inputFile.Name);
+
+			_textFiles.Add(otrResFileName, otrResText);
+		}
+
+		StateHasChanged();
+
+		dataMs.Flush();
+	}
+
+	private async Task GetH() {
+		_working = true;
+		await Task.Delay(10);
+		string hFileName = $"{currentTab.Title}.h";
+		await DlFileService.DownloadFileFromText(hFileName, currentHContent, System.Text.Encoding.UTF8, "text/plain");
+		_working = false;
+	}
+
+	private async Task ExportToOTR() {
+		_working = true;
+		_otrMs.SetLength(0);
+		var otrResText = new OTRMod.Z.Text(currentHContent, _replacements);
+		await Task.Delay(10);
+		Generate.AddFile(_msgPathInOTR, otrResText.Formatted());
+		Generate.FromImage(ref _otrMs);
+		await DlFileService.DownloadFile("GeneratedMessages.otr", _otrMs, "application/octet-stream");
+		_working = false;
+	}
+}
