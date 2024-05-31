@@ -4,37 +4,37 @@
 @using OTRMod.OTR
 @using OTRMod.Utility
 
-<PageTitle>OTRMod Web - Text Editor (OoT)</PageTitle>
-<h3>Text Editor (OoT)</h3>
-Import and export compatible game text formats.
+<PageTitle>@T["txt_editor_title"]</PageTitle>
+<h3>@T["txt_editor_h3"]</h3>
+@T["txt_editor_desc"]
 <br />
 <br />
 <Accordion Id="selectionAccordion">
-	<AccordionItem Header="Load from OTR" Id="loadOtr" IsInitiallyOpen=true>
+	<AccordionItem Header="@T["load_from_otr"]" Id="loadOtr" IsInitiallyOpen=true>
 		<InputFile class="form-control" type="file" id="otrFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, true))" accept=".otr" single />
 	</AccordionItem>
-	<AccordionItem Header="Load from .h message file" Id="loadH">
+	<AccordionItem Header="@T["load_from_h"]" Id="loadH">
 		<InputFile class="form-control" type="file" id="zretTextFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, false))" accept=".h" single />
 	</AccordionItem>
 </Accordion>
 <br />
 <div class="row g-3" visi>
 	<div class="col-sm-3" style="width: 190px;">
-		<label for="charMap" class="form-label">Replacements:</label>
+		<label for="charMap" class="form-label">@T["replacements"]</label>
 		<InputTextArea class="form-control" id="charMap" rows="14" cols="16" @bind-Value="@charReplacements" @oninput="LoadTextArray" disabled="@_working"></InputTextArea>
 	</div>
 	<div class="col">
-		<label for="tabMessageFiles" class="form-label">Text Editor:</label>
+		<label for="tabMessageFiles" class="form-label">@T["txt_editor"]</label>
 		<Tabs CssClass="border-0" TabList="@tabList" Id="tabMessageFiles" />
 		@if (tabList.Count != _textFiles.Count)
 			foreach (KeyValuePair<string, OTRMod.Z.Text> msg in _textFiles)
-				tabList.Add(new TextDataItem { Id = msg.Key, Title = msg.Key, Content =@<p>Loading...</p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnTabSelected(e)) });
+				tabList.Add(new TextDataItem { Id = msg.Key, Title = msg.Key, Content =@<p>@T["loading"]</p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnTabSelected(e)) });
 	</div>
 </div>
 <br />
-<label for="msgPath" class="form-label">Output OTR message path:</label>
+<label for="msgPath" class="form-label">@T["out_msg_path_in_otr"]</label>
 <input class="form-control" list="msgPaths" id="msgPath" @bind="@_msgPathInOTR" aria-describedby="validationMsgPath" required />
-<div id="validationMsgPath" class="invalid-feedback">Message OTR path cannot be blank!</div>
+<div id="validationMsgPath" class="invalid-feedback">@T["out_msg_path_invalid"]</div>
 <datalist id="msgPaths">
 	<option value="@DEFAULT_MESSAGE_OTR_PATH">
 	</option>
@@ -47,10 +47,10 @@ Import and export compatible game text formats.
 </datalist>
 <br />
 <button class="btn btn-primary" type="submit" @onclick="ExportToOTR" disabled="@(currentTab == null || !currentTab.IsLoaded)">
-	Save OTR file
+	@T["btn_save_otr"]
 </button>
 <button class="btn btn-primary" type="submit" @onclick="GetH" disabled="@(currentTab == null || !currentTab.IsLoaded)">
-	Save .h message file
+	@T["btn_save_h"]
 </button>
 <br />
 @code {

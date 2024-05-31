@@ -9,7 +9,7 @@
   "author": "Amaro (xoascf)",
   "license": "OSL-3.0",
   "description": "OTR mod generator from ROM images (for Ship of Harkinian)",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "keywords": [ "modding", "development" ],
   "icons": [
     {
