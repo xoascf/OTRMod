@@ -1,0 +1,61 @@
+@using OTRMod.Web.Services
+@inject CultureService CultureService
+@inject NavigationManager Navigation
+
+<div class="dropdown d-inline-block" @onclick:stopPropagation>
+	<a class="dropdown-toggle text-nowrap" href="#" role="button" @onclick="ToggleDropdown" @onclick:preventDefault>
+		@GetLanguageCode(_currentCulture)
+	</a>
+	@if (_isOpen) {
+		<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;" @onclick="CloseDropdown"></div>
+		<ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start end-0 show" style="z-index: 1050;">
+			@foreach (var culture in _cultures) {
+				<li>
+					<a class="dropdown-item" href="#" @onclick="async () => await ChangeCulture(culture.Code)" @onclick:preventDefault>
+						@culture.Code.ToUpper() - @culture.Name
+						@if (GetBaseCulture(_currentCulture) == culture.Code) {
+							<i class="fa fa-check text-success ms-2"></i>
+						}
+					</a>
+				</li>
+			}
+		</ul>
+	}
+</div>
+
+@code {
+	private string _currentCulture = "en";
+	private bool _isOpen = false;
+
+	private class Culture {
+		public string Code { get; set; } = "";
+		public string Name { get; set; } = "";
+	}
+
+	private readonly Culture[] _cultures = {
+		new() { Code = "en", Name = "English" },
+		new() { Code = "es", Name = "español" }
+	};
+
+	protected override void OnInitialized() => _currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+
+	private void ToggleDropdown() => _isOpen = !_isOpen;
+
+	private void CloseDropdown() => _isOpen = false;
+
+	private string GetBaseCulture(string cultureCode) => cultureCode.Split('-')[0];
+
+	private string GetLanguageCode(string code) {
+		var baseCode = GetBaseCulture(code);
+		return _cultures.FirstOrDefault(c => c.Code == baseCode)?.Code.ToUpper() ?? "EN";
+	}
+
+	private async Task ChangeCulture(string culture) {
+		_isOpen = false;
+		var baseCulture = GetBaseCulture(_currentCulture);
+		if (baseCulture != culture) {
+			await CultureService.SetCultureAsync(culture);
+			Navigation.NavigateTo(Navigation.Uri, true);
+		}
+	}
+}

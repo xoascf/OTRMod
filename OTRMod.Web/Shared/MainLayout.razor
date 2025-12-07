@@ -1,4 +1,5 @@
 ﻿@using Toolbelt.Blazor.PWA.Updater
+@using OTRMod.Web.Shared.Components
 @inherits LayoutComponentBase
 
 <PWAUpdater Text=@T["upd_txt"] ButtonCaption=@T["upd_btn"] />
@@ -9,8 +10,11 @@
 	<main>
 		<div class="top-row px-4">
 			@T["dev_by"]
-			<a href="https://ko-fi.com/xoascf" target="_blank" title="@T["gimme_cafe"]"><i aria-hidden="true" class="fa-solid fa-mug-saucer"></i></a>
-			<a href="https://github.com/xoascf/OTRMod" target="_blank" title="@T["visit_on_gh"]"><i aria-hidden="true" class="fa-brands fa-github-alt"></i></a>
+			<div class="ms-3">
+				<LanguageSelector />
+			</div>
+			<a class="a-icon" href="https://ko-fi.com/xoascf" target="_blank" title="@T["gimme_cafe"]"><i aria-hidden="true" class="fa-solid fa-mug-saucer"></i></a>
+			<a class="a-icon" href="https://github.com/xoascf/OTRMod" target="_blank" title="@T["visit_on_gh"]"><i aria-hidden="true" class="fa-brands fa-github-alt"></i></a>
 		</div>
 		<article class="content px-4">
 			@Body
