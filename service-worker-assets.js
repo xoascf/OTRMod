@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "y+R+Jbcq",
+  "version": "WAv4k05V",
   "assets": [
     {
       "hash": "sha256-dAXnzAybBi8JhjJHGOGC6CVSE2g+5A6ffjeGQ/b5HWQ=",
@@ -98,16 +98,16 @@ self.assetsManifest = {
       "url": "_framework/Microsoft.Win32.SystemEvents.vqtrv05074.wasm"
     },
     {
-      "hash": "sha256-E/kSXr/MMKxZWtwK8XIYmIz+4l3/RY2A9yTmXNLR43s=",
-      "url": "_framework/OTRMod.Web.7rglpmyn5b.wasm"
+      "hash": "sha256-dDo8pBazSnJVw82r4hKDsJ8wU5fUXOh6NXyOIl4MfxA=",
+      "url": "_framework/OTRMod.Web.wlavjc15dn.wasm"
     },
     {
-      "hash": "sha256-1shr+60MFR6nhapOPJ3thufYqPHjWzaJdGhjJ0KaSXM=",
-      "url": "_framework/OTRMod.ezrey0tuys.wasm"
+      "hash": "sha256-31a3iPbKETDTxJy8hihfbwGi069UBGHskb+Al9VCdus=",
+      "url": "_framework/OTRMod.h4gy770dl5.wasm"
     },
     {
-      "hash": "sha256-wLlFxLNM01gPbhXa24M1J/IZQuDMbOHG0uyhJPqywSk=",
-      "url": "_framework/SturmScharf.8q967zbvqg.wasm"
+      "hash": "sha256-F8JxxmGIuB99MllrZlAoPaLAFFyh4UgMFvoLJJxJL4E=",
+      "url": "_framework/SturmScharf.rj976s27rv.wasm"
     },
     {
       "hash": "sha256-U5w6PthN4uLIdmBE++V5Vyaq4YWa1lFns6ARRKXP0HU=",
@@ -310,12 +310,12 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.js"
     },
     {
-      "hash": "sha256-Yxjy9mHf9UJ6uFeMDxj5HVfJRj/QaAiw+U3dfbtlRqo=",
+      "hash": "sha256-nVnDPTxhBhh382bOdxF/ME5C2X5WO4qk34TXbEJTHg0=",
       "url": "_framework/dotnet.js"
     },
     {
-      "hash": "sha256-HpZQU71yaeTr6vKCRqADg2+9MDsE4AmENJxeLfuG9g0=",
-      "url": "_framework/dotnet.native.2guzhd2jji.wasm"
+      "hash": "sha256-O/e+bfs0b7DfEu53sCg+jxaIAhAqEujrR+XLMM5kKo0=",
+      "url": "_framework/dotnet.native.h5clkp05cl.wasm"
     },
     {
       "hash": "sha256-TgcexwMrPjIsEiVdejcP509EcKBobN4IDKwd3kLptC0=",
@@ -326,8 +326,8 @@ self.assetsManifest = {
       "url": "_framework/dotnet.runtime.o0qy896u8v.js"
     },
     {
-      "hash": "sha256-lxDPquqrnJ6mUW9b2wtXE5TbyJntdthEbSeeEsCNQz4=",
-      "url": "_framework/es/OTRMod.Web.resources.xu1o8isq32.wasm"
+      "hash": "sha256-v8DMjaPHUZAdInKSgSi1+8zJIfkAwc+W9/bzQn8oaZM=",
+      "url": "_framework/es/OTRMod.Web.resources.fc8uf3ahmm.wasm"
     },
     {
       "hash": "sha256-tO5O5YzMTVSaKBboxAqezOQL9ewmupzV2JrB5Rkc8a4=",
