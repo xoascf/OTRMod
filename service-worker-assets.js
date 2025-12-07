@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "WAv4k05V",
+  "version": "wGM2eGKs",
   "assets": [
     {
       "hash": "sha256-dAXnzAybBi8JhjJHGOGC6CVSE2g+5A6ffjeGQ/b5HWQ=",
@@ -98,16 +98,16 @@ self.assetsManifest = {
       "url": "_framework/Microsoft.Win32.SystemEvents.vqtrv05074.wasm"
     },
     {
-      "hash": "sha256-dDo8pBazSnJVw82r4hKDsJ8wU5fUXOh6NXyOIl4MfxA=",
-      "url": "_framework/OTRMod.Web.wlavjc15dn.wasm"
+      "hash": "sha256-OGCDBXZKCuCEKDosADozxj34w2DlOhGY7C9CE4yZQ84=",
+      "url": "_framework/OTRMod.Web.4d33kmgz8t.wasm"
     },
     {
-      "hash": "sha256-31a3iPbKETDTxJy8hihfbwGi069UBGHskb+Al9VCdus=",
-      "url": "_framework/OTRMod.h4gy770dl5.wasm"
+      "hash": "sha256-KO5uthHLrgqmDGuUK0mFNASf6u8SO4bZnE2xtlX6ilM=",
+      "url": "_framework/OTRMod.g2og4opv1j.wasm"
     },
     {
-      "hash": "sha256-F8JxxmGIuB99MllrZlAoPaLAFFyh4UgMFvoLJJxJL4E=",
-      "url": "_framework/SturmScharf.rj976s27rv.wasm"
+      "hash": "sha256-SqaXsRtT70cEMQonand+XdadnoA20FB7jrHzA45X+rY=",
+      "url": "_framework/SturmScharf.qcw6hnpvga.wasm"
     },
     {
       "hash": "sha256-U5w6PthN4uLIdmBE++V5Vyaq4YWa1lFns6ARRKXP0HU=",
@@ -310,12 +310,12 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.js"
     },
     {
-      "hash": "sha256-nVnDPTxhBhh382bOdxF/ME5C2X5WO4qk34TXbEJTHg0=",
+      "hash": "sha256-6rjJ1820O6I1Mjd8r2qVKDFac9s2zWeMJ7ikEuS36kc=",
       "url": "_framework/dotnet.js"
     },
     {
-      "hash": "sha256-O/e+bfs0b7DfEu53sCg+jxaIAhAqEujrR+XLMM5kKo0=",
-      "url": "_framework/dotnet.native.h5clkp05cl.wasm"
+      "hash": "sha256-Y6pGdXpb8j38J57eQxcNIBMv5uXfm8teQ5AZpJIrqxo=",
+      "url": "_framework/dotnet.native.13bmsidmfo.wasm"
     },
     {
       "hash": "sha256-TgcexwMrPjIsEiVdejcP509EcKBobN4IDKwd3kLptC0=",
@@ -326,8 +326,8 @@ self.assetsManifest = {
       "url": "_framework/dotnet.runtime.o0qy896u8v.js"
     },
     {
-      "hash": "sha256-v8DMjaPHUZAdInKSgSi1+8zJIfkAwc+W9/bzQn8oaZM=",
-      "url": "_framework/es/OTRMod.Web.resources.fc8uf3ahmm.wasm"
+      "hash": "sha256-H2PJFP8N+jgyTgXfurSWNw4IRi4gBZPOo2+A/EsQnJ0=",
+      "url": "_framework/es/OTRMod.Web.resources.rdbafvgjwe.wasm"
     },
     {
       "hash": "sha256-tO5O5YzMTVSaKBboxAqezOQL9ewmupzV2JrB5Rkc8a4=",
