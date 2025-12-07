@@ -17,25 +17,25 @@ jobs:
         os: [linux-x64, win-x64]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Build console app
-        run: dotnet publish OTRMod.CLI/OTRMod.CLI.csproj -r ${{ matrix.os }} -f net8.0 -c Release -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false --no-self-contained
+        run: dotnet publish OTRMod.CLI/OTRMod.CLI.csproj -r ${{ matrix.os }} -f net10.0 -c Release -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false --no-self-contained
 
       - name: Set output path
         run: |
           echo "EXE_NAME=OTRMod.CLI${{ contains(matrix.os, 'win') && '.exe' || '' }}" >> $GITHUB_ENV
-          echo "EXE_PATH=OTRMod.CLI/bin/Release/net8.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
+          echo "EXE_PATH=OTRMod.CLI/bin/Release/net10.0/${{ matrix.os }}/publish" >> $GITHUB_ENV
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: OTRMod.CLI-${{ matrix.os }}
           path: ${{ env.EXE_PATH }}/${{ env.EXE_NAME }}
