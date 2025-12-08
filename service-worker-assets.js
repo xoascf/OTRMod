@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "kV12lL/s",
+  "version": "EPboYYsA",
   "assets": [
     {
       "hash": "sha256-B8+Qhcsyy0rqP1ul/pqymgJUddbmOyqaMY8HC07h/cA=",
@@ -102,16 +102,16 @@ self.assetsManifest = {
       "url": "_framework/Microsoft.Win32.SystemEvents.vqtrv05074.wasm"
     },
     {
-      "hash": "sha256-KQIfkZJXu800q/0+rwjgby+wYs4IPUzi4OtoDvqOJXw=",
-      "url": "_framework/OTRMod.Web.557sfkfztx.wasm"
+      "hash": "sha256-34u0TJJl1bJVAZrlnPrvj+yRYsUaDtpNxDDiNLackN0=",
+      "url": "_framework/OTRMod.Web.3bx1p9ju9o.wasm"
     },
     {
-      "hash": "sha256-7ceQuRANfYJcpTUK7WFIYDdl584BgNCy6ldso3/4vVQ=",
-      "url": "_framework/OTRMod.phfypzep8l.wasm"
+      "hash": "sha256-BisCJ43zcEIknFpJHTLhNXJqWhYmeTlQGws3SlWHpuw=",
+      "url": "_framework/OTRMod.aviybr6klh.wasm"
     },
     {
-      "hash": "sha256-VDbiGOIsw8lDEYIdKEgPcpfiYUb0ijVzjsMtVPotqbI=",
-      "url": "_framework/SturmScharf.w584s2duxj.wasm"
+      "hash": "sha256-Qd/bmWKAYV3EIGZaV717D6mvy1YKUrudh95qX45TKKE=",
+      "url": "_framework/SturmScharf.7mq4h4g29z.wasm"
     },
     {
       "hash": "sha256-U5w6PthN4uLIdmBE++V5Vyaq4YWa1lFns6ARRKXP0HU=",
@@ -314,12 +314,12 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.js"
     },
     {
-      "hash": "sha256-tKPaS/ZMcOliPYIsinUfCw7emUPSM+jM4xShn+fIeQw=",
+      "hash": "sha256-iksk4G+rlIncHW0VyT5ogfGNJpgK8wlc8n8OMZaHzU8=",
       "url": "_framework/dotnet.js"
     },
     {
-      "hash": "sha256-+ipeTRkfuEQJpIpl3e0GS4/wvoaKZuSxgwVLbqT9xfA=",
-      "url": "_framework/dotnet.native.ia840yua3v.wasm"
+      "hash": "sha256-a0ACxgZx3q8RgSVADhKtCZSmTFb1GrkfwIiHNvhL0Kc=",
+      "url": "_framework/dotnet.native.j2xghxafvq.wasm"
     },
     {
       "hash": "sha256-MyqAiKeK0ZRfOuxMlcPWfxIoFmT2q5KCrZd5DLrN4wQ=",
@@ -330,8 +330,8 @@ self.assetsManifest = {
       "url": "_framework/dotnet.runtime.o0qy896u8v.js"
     },
     {
-      "hash": "sha256-c9IA4VyFFvXp/gpwhxWUYiPXnbZi8jJhJqOkXi55I0Y=",
-      "url": "_framework/es/OTRMod.Web.resources.1rkicunrsm.wasm"
+      "hash": "sha256-glEkMALLykKXYjRr/uMBBFTf9JGkZrqKgyXJyrXU2k8=",
+      "url": "_framework/es/OTRMod.Web.resources.uguhi2mofj.wasm"
     },
     {
       "hash": "sha256-tO5O5YzMTVSaKBboxAqezOQL9ewmupzV2JrB5Rkc8a4=",
@@ -354,7 +354,7 @@ self.assetsManifest = {
       "url": "icon-192.png"
     },
     {
-      "hash": "sha256-fOplAlUXDzMyWgoniU/r+gWGJqURsH7pvtND5Oomok4=",
+      "hash": "sha256-qC8ymTtGfzCu7ZlbXn1C0MgLXBokceIWkeP7Ia5iLhU=",
       "url": "index.html"
     },
     {

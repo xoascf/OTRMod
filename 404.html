@@ -15,6 +15,9 @@
 	<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
 	<script>
 		window.setLang = (langCode) => document.documentElement.lang = langCode;
+		navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then(registration => {
+			Toolbelt.Blazor.PWA.Updater.handleRegistration(registration);
+		});
 	</script>
 </head>
 
@@ -32,7 +35,7 @@
 		<a class="dismiss">🗙</a>
 	</div>
 	<script src="_framework/blazor.webassembly.js"></script>
-	<script src="_content/Toolbelt.Blazor.PWA.Updater.Service/script.min.js"></script>
+	<script src="_content/Toolbelt.Blazor.PWA.Updater.Service/script.min.js" no-register></script>
 </body>
 
 </html>
