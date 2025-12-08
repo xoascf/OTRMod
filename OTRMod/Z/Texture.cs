@@ -44,6 +44,9 @@ public class Texture : Resource {
 	}
 
 	public static Texture LoadFrom(Resource res) {
+		if (res.Data == null)
+			throw new ArgumentException("Resource data cannot be null.", nameof(res));
+
 		Codec codec = (Codec)res.Data.ToI32(0x00, res.Big);
 		int width = res.Data.ToI32(0x04, res.Big);
 		int height = res.Data.ToI32(0x08, res.Big);

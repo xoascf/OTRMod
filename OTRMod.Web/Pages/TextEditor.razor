@@ -64,7 +64,7 @@
 @code {
 	public class TextDataItem : Tabs.TabItem {
 		public bool IsLoaded { get; set; }
-		public string PreContent { get; set; }
+		public string PreContent { get; set; } = "";
 	}
 
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
@@ -102,6 +102,9 @@
 			currentTab.PreContent = currentHContent;
 
 		var tab = e as TextDataItem;
+		if (tab == null)
+			return;
+
 		Console.WriteLine($"Tab selected: {tab.Id}");
 		if (!tab.IsLoaded || _needReplacements) {
 			tab.PreContent = _textFiles[tab.Id].ToHumanReadable(_replacements);
@@ -121,7 +124,7 @@
 	}
 
 	private void LoadTextArray(ChangeEventArgs e) {
-		charReplacements = e.Value.ToString();
+		charReplacements = e.Value?.ToString() ?? "";
 		SetReplacements();
 	}
 
@@ -185,6 +188,9 @@
 	}
 
 	private async Task GetH() {
+		if (currentTab == null)
+			return;
+
 		_working = true;
 		await Task.Delay(10);
 		string hFileName = $"{currentTab.Title}.h";

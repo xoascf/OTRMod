@@ -20,10 +20,10 @@
 </div>
 
 @code {
-	[CascadingParameter(Name = "ParentAccordion")] public Accordion ParentAccordion { get; set; }
-	[Parameter] public string Header { get; set; }
-	[Parameter] public RenderFragment ChildContent { get; set; }
-	[Parameter] public string Id { get; set; }
+	[CascadingParameter(Name = "ParentAccordion")] public Accordion ParentAccordion { get; set; } = null!;
+	[Parameter, EditorRequired] public string Header { get; set; } = null!;
+	[Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
+	[Parameter, EditorRequired] public string Id { get; set; } = null!;
 	[Parameter] public bool IsInitiallyOpen { get; set; } = false;
 
 	protected override void OnInitialized() {

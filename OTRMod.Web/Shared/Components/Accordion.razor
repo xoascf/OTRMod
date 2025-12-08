@@ -7,10 +7,10 @@
 </div>
 
 @code {
-	[Parameter] public RenderFragment ChildContent { get; set; }
+	[Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
 	[Parameter] public string Id { get; set; } = "accordion";
 
-	private string selectedItem = null;
+	private string? selectedItem = null;
 
 	public void NotifyItemSelection(string itemId) {
 		if (selectedItem == itemId)

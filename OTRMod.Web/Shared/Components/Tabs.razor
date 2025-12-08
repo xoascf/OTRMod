@@ -23,23 +23,23 @@
 
 @code {
 	public class TabItem {
-		[Parameter] public string Id { get; set; }
-		[Parameter] public string Title { get; set; }
-		[Parameter] public RenderFragment Content { get; set; }
-		[Parameter] public EventCallback<TabItem> OnSelected { get; set; }
+		public string Id { get; set; } = "";
+		public string Title { get; set; } = "";
+		public RenderFragment? Content { get; set; }
+		public EventCallback<TabItem> OnSelected { get; set; }
 	}
 	[Parameter] public string CssClass { get; set; } = "";
-	[Parameter] public IEnumerable<TabItem> TabList { get; set; }
+	[Parameter, EditorRequired] public IEnumerable<TabItem> TabList { get; set; } = null!;
 	[Parameter] public string Id { get; set; } = "tabs";
 
-	private TabItem selectedTab;
+	private TabItem? selectedTab;
 
 	private string GetTabClass(TabItem tab) {
-		return tab == selectedTab ? "active" : null;
+		return tab == selectedTab ? "active" : "";
 	}
 
 	private string GetTabContentClass(TabItem tab) {
-		return tab == selectedTab ? "active show" : null;
+		return tab == selectedTab ? "active show" : "";
 	}
 
 	private async Task SelectTab(TabItem tab) {

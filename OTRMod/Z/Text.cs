@@ -62,6 +62,9 @@ public class Text : Resource {
 	}
 
 	public static Text LoadFrom(Resource res) {
+		if (res.Data == null)
+			throw new ArgumentException("Resource data cannot be null.", nameof(res));
+
 		List<MessageEntry> entries = new();
 		short totalMessagesCount = res.Data.ToI16(0x00, false);
 		short currentMessagesCount = 0;

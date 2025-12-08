@@ -354,6 +354,9 @@ public static class Text {
 	}
 
 	public static string GetTbMsgFormatted(MessageEntry msgEntry, StringsDict extractionCharmap) {
+		if (msgEntry.Content == null)
+			throw new ArgumentException("Message content cannot be null.", nameof(msgEntry));
+
 		return $@"DEFINE_MESSAGE(0x{msgEntry.ID:X4}, {msgEntry.BoxType}, {msgEntry.BoxPos},
 {FixupMessage(Decode(msgEntry.Content.ToArray(), extractionCharmap))}
 )
