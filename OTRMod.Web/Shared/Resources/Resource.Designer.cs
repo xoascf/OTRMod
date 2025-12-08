@@ -54,11 +54,11 @@ namespace OTRMod.Web.Shared.Resources {
 
 	public static string GetLocalisedString(string str) => ResourceManager.GetString(str, resourceCulture) ?? str;
 
-	public static string btn_gen_otr => GetLocalisedString("btn_gen_otr");
+	public static string btn_gen_mod => GetLocalisedString("btn_gen_mod");
 
 	public static string btn_save_h => GetLocalisedString("btn_save_h");
 
-	public static string btn_save_otr => GetLocalisedString("btn_save_otr");
+	public static string btn_save_mod => GetLocalisedString("btn_save_mod");
 
 	public static string btn_wait => GetLocalisedString("btn_wait");
 
@@ -72,11 +72,11 @@ namespace OTRMod.Web.Shared.Resources {
 
 	public static string error_404_title => GetLocalisedString("error_404_title");
 
-	public static string get_otr_h1 => GetLocalisedString("get_otr_h1");
+	public static string get_mod_h1 => GetLocalisedString("get_mod_h1");
 
-	public static string get_otr_tab => GetLocalisedString("get_otr_tab");
+	public static string get_mod_tab => GetLocalisedString("get_mod_tab");
 
-	public static string get_otr_title => GetLocalisedString("get_otr_title");
+	public static string get_mod_title => GetLocalisedString("get_mod_title");
 
 	public static string gimme_cafe => GetLocalisedString("gimme_cafe");
 
@@ -92,17 +92,19 @@ namespace OTRMod.Web.Shared.Resources {
 
 	public static string load_from_h => GetLocalisedString("load_from_h");
 
-	public static string load_from_otr => GetLocalisedString("load_from_otr");
+	public static string load_from_mod => GetLocalisedString("load_from_mod");
 
 	public static string loading => GetLocalisedString("loading");
 
 	public static string nav_menu => GetLocalisedString("nav_menu");
 
-	public static string out_msg_path_in_otr => GetLocalisedString("out_msg_path_in_otr");
+	public static string out_msg_path_in_mod => GetLocalisedString("out_msg_path_in_mod");
 
 	public static string out_msg_path_invalid => GetLocalisedString("out_msg_path_invalid");
 
 	public static string replacements => GetLocalisedString("replacements");
+
+	public static string sel_format => GetLocalisedString("sel_format");
 
 	public static string sel_rom => GetLocalisedString("sel_rom");
 

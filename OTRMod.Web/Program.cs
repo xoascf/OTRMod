@@ -18,6 +18,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new(builder.Host
 builder.Services.AddBlazorDownloadFile();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<CultureService>();
+builder.Services.AddScoped<SettingsService>();
 
 WebAssemblyHost host = builder.Build();
 

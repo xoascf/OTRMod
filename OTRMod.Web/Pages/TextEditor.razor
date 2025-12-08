@@ -3,6 +3,7 @@
 @using OTRMod.Web.Shared.Components
 @using OTRMod.OTR
 @using OTRMod.Utility
+@using OTRMod.Web.Services
 
 <PageTitle>@T["txt_editor_title"]</PageTitle>
 <h3>@T["txt_editor_h3"]</h3>
@@ -10,8 +11,8 @@
 <br />
 <br />
 <Accordion Id="selectionAccordion">
-	<AccordionItem Header="@T["load_from_otr"]" Id="loadOtr" IsInitiallyOpen=true>
-		<InputFile class="form-control" type="file" id="otrFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, true))" accept=".otr" single />
+	<AccordionItem Header="@T["load_from_mod"]" Id="loadMod" IsInitiallyOpen=true>
+		<InputFile class="form-control" type="file" id="modFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, true))" accept=".otr,.o2r" single />
 	</AccordionItem>
 	<AccordionItem Header="@T["load_from_h"]" Id="loadH">
 		<InputFile class="form-control" type="file" id="zretTextFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, false))" accept=".h" single />
@@ -32,11 +33,11 @@
 	</div>
 </div>
 <br />
-<label for="msgPath" class="form-label">@T["out_msg_path_in_otr"]</label>
-<input class="form-control" list="msgPaths" id="msgPath" @bind="@_msgPathInOTR" aria-describedby="validationMsgPath" required />
+<label for="msgPath" class="form-label">@T["out_msg_path_in_mod"]</label>
+<input class="form-control" list="msgPaths" id="msgPath" @bind="@_msgPathInMod" aria-describedby="validationMsgPath" required />
 <div id="validationMsgPath" class="invalid-feedback">@T["out_msg_path_invalid"]</div>
 <datalist id="msgPaths">
-	<option value="@DEFAULT_MESSAGE_OTR_PATH">
+	<option value="@DEFAULT_MESSAGE_PATH">
 	</option>
 	<option value="text/ger_message_data_static/ger_message_data_static">
 	</option>
@@ -46,8 +47,15 @@
 	</option>
 </datalist>
 <br />
-<button class="btn btn-primary" type="submit" @onclick="ExportToOTR" disabled="@(currentTab == null || !currentTab.IsLoaded)">
-	@T["btn_save_otr"]
+<div class="mb-3">
+	<label for="outputFormat" class="form-label">@T["sel_format"]</label>
+	<select class="form-select" id="outputFormat" @onchange="OnFormatChanged">
+		<option value="O2R" selected="@(_outputFormat == OutputFormat.O2R)">O2R (.o2r)</option>
+		<option value="OTR" selected="@(_outputFormat == OutputFormat.OTR)">OTR (.otr)</option>
+	</select>
+</div>
+<button class="btn btn-primary" type="submit" @onclick="ExportToMod" disabled="@(currentTab == null || !currentTab.IsLoaded)">
+	@T["btn_save_mod"]
 </button>
 <button class="btn btn-primary" type="submit" @onclick="GetH" disabled="@(currentTab == null || !currentTab.IsLoaded)">
 	@T["btn_save_h"]
@@ -60,20 +68,33 @@
 	}
 
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
-	private MemoryStream _otrMs = new();
+	[Inject] private SettingsService SettingsService { get; set; } = null!;
+	private MemoryStream _modMs = new();
 	private List<TextDataItem> tabList = new List<TextDataItem> { };
 	private Dictionary<string, OTRMod.Z.Text> _textFiles = new();
 	private Dictionary<string, string> _replacements = new();
 	private bool _working = false;
-	private const string DEFAULT_MESSAGE_OTR_PATH = "text/nes_message_data_static/nes_message_data_static";
-	private string _msgPathInOTR = DEFAULT_MESSAGE_OTR_PATH;
+	private const string DEFAULT_MESSAGE_PATH = "text/nes_message_data_static/nes_message_data_static";
+	private string _msgPathInMod = DEFAULT_MESSAGE_PATH;
 	private string currentHContent = "";
 	private bool _needReplacements = false;
 	private TextDataItem? currentTab;
+	private OutputFormat _outputFormat = OutputFormat.O2R;
 	private string charReplacements = DecodeBase64("XG49MDEK4oC+PTdGCsOAPTgwCsOuPTgxCsOCPTgyCsOEPTgzCsOHPTg0CsOIPTg1CsOJPTg2CsOKPTg3CsOLPTg4CsOPPTg5CsOUPThBCsOWPThCCsOZPThDCsObPThECsOcPThFCsOfPThGCsOgPTkwCsOhPTkxCsOiPTkyCsOkPTkzCsOnPTk0CsOoPTk1CsOpPTk2CsOqPTk3CsOrPTk4CsOvPTk5CsO0PTlBCsO2PTlCCsO5PTlDCsO7PTlECsO8PTlFCltBXT05RgpbQl09QTAKW0NdPUExCltMXT1BMgpbUl09QTMKW1pdPUE0CltDLVVwXT1BNQpbQy1Eb3duXT1BNgpbQy1MZWZ0XT1BNwpbQy1SaWdodF09QTgK4pa8PUE5CltDb250cm9sLVBhZF09QUEKW0QtUGFkXT1BQg==");
 
 	RenderFragment LoadMsg() {
 		return @<InputTextArea class="form-control" rows="12" cols="96" @bind-Value="@currentHContent" disabled="@_working" style="border-radius: 0 var(--bs-border-radius) var(--bs-border-radius);"></InputTextArea>;
+	}
+
+	protected override async Task OnInitializedAsync() {
+		_outputFormat = await SettingsService.GetOutputFormatAsync();
+	}
+
+	private async void OnFormatChanged(ChangeEventArgs e) {
+		if (Enum.TryParse<OutputFormat>(e.Value?.ToString(), out var format)) {
+			_outputFormat = format;
+			await SettingsService.SetOutputFormatAsync(format);
+		}
 	}
 
 	private void OnTabSelected(Tabs.TabItem e) {
@@ -89,7 +110,7 @@
 		}
 
 		currentHContent = tab.PreContent;
-		_msgPathInOTR = $"text/{tab.Title}/{tab.Title}";
+		_msgPathInMod = $"text/{tab.Title}/{tab.Title}";
 		tab.Content = LoadMsg();
 		currentTab = tab;
 	}
@@ -121,33 +142,41 @@
 		SetReplacements();
 	}
 
-	private async void ProcessInput(InputFileChangeEventArgs e, bool isOTR) {
+	private async void ProcessInput(InputFileChangeEventArgs e, bool isModFile) {
 		IBrowserFile inputFile = e.File;
 		tabList.Clear();
 		_textFiles.Clear();
 
 		MemoryStream dataMs = new();
-		if (isOTR) {
-			await inputFile.OpenReadStream(0x4000000).CopyToAsync(dataMs); // is 64 MiB too much for your OTR?
+		if (isModFile) {
+			await inputFile.OpenReadStream(0x4000000).CopyToAsync(dataMs); // is 64 MiB too much for your mod file?
+			dataMs.Position = 0; // Reset position before reading
 			Dictionary<string, Stream> msgResFiles = new();
 			await Task.Delay(10);
-			Load.OnlyFrom("message_data_static", dataMs, ref msgResFiles);
+
+			// Determine if it's O2R or OTR based on file extension
+			bool isO2R = inputFile.Name.EndsWith(".o2r", StringComparison.OrdinalIgnoreCase);
+			if (isO2R)
+				Load.OnlyFromO2R("message_data_static", dataMs, ref msgResFiles);
+			else
+				Load.OnlyFrom("message_data_static", dataMs, ref msgResFiles);
+
 			foreach (var msgRes in msgResFiles) {
 				await Task.Delay(10);
-				var otrRes = OTRMod.Z.Resource.Read(((MemoryStream)msgRes.Value).ToArray());
-				var otrResText = OTRMod.Z.Text.LoadFrom(otrRes);
-				var otrResFileName = Path.GetFileName(msgRes.Key);
+				var modRes = OTRMod.Z.Resource.Read(((MemoryStream)msgRes.Value).ToArray());
+				var modResText = OTRMod.Z.Text.LoadFrom(modRes);
+				var modResFileName = Path.GetFileName(msgRes.Key);
 
-				_textFiles.Add(otrResFileName, otrResText);
+				_textFiles.Add(modResFileName, modResText);
 				msgRes.Value.Flush();
 			}
 		}
 		else {
 			await inputFile.OpenReadStream(0x100000).CopyToAsync(dataMs); // 1 MiB is more than enough for .h files
-			var otrResText = new OTRMod.Z.Text(dataMs.ToArray(), _replacements);
-			var otrResFileName = Path.GetFileNameWithoutExtension(inputFile.Name);
+			var modResText = new OTRMod.Z.Text(dataMs.ToArray(), _replacements);
+			var modResFileName = Path.GetFileNameWithoutExtension(inputFile.Name);
 
-			_textFiles.Add(otrResFileName, otrResText);
+			_textFiles.Add(modResFileName, modResText);
 		}
 
 		StateHasChanged();
@@ -163,14 +192,23 @@
 		_working = false;
 	}
 
-	private async Task ExportToOTR() {
+	private async Task ExportToMod() {
 		_working = true;
-		_otrMs.SetLength(0);
-		var otrResText = new OTRMod.Z.Text(currentHContent, _replacements);
+		_modMs.SetLength(0);
+		var modResText = new OTRMod.Z.Text(currentHContent, _replacements);
 		await Task.Delay(10);
-		Generate.AddFile(_msgPathInOTR, otrResText.Formatted());
-		Generate.FromImage(ref _otrMs);
-		await DlFileService.DownloadFile("GeneratedMessages.otr", _otrMs, "application/octet-stream");
+		Generate.AddFile(_msgPathInMod, modResText.Formatted());
+
+		string fileName;
+		if (_outputFormat == OutputFormat.O2R) {
+			Generate.FromImageO2R(ref _modMs);
+			fileName = "GeneratedMessages.o2r";
+		} else {
+			Generate.FromImage(ref _modMs);
+			fileName = "GeneratedMessages.otr";
+		}
+
+		await DlFileService.DownloadFile(fileName, _modMs, "application/octet-stream");
 		_working = false;
 	}
 }

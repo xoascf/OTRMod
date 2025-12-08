@@ -58,29 +58,29 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="get_otr_title" xml:space="preserve">
-    <value>OTRMod Web - Get OTR</value>
+  <data name="get_mod_title" xml:space="preserve">
+    <value>OTRMod Web - Get O2R/OTR</value>
   </data>
-  <data name="get_otr_h1" xml:space="preserve">
-    <value>Get OTR mod from ROM image</value>
+  <data name="get_mod_h1" xml:space="preserve">
+    <value>Get O2R/OTR mod from ROM image</value>
   </data>
-  <data name="btn_gen_otr" xml:space="preserve">
-    <value>Generate OTR</value>
+  <data name="btn_gen_mod" xml:space="preserve">
+    <value>Generate Mod</value>
   </data>
   <data name="info_sel" xml:space="preserve">
-    <value>Click the "Generate OTR" button when you're ready.</value>
+    <value>Click the "Generate Mod" button when you're ready.</value>
   </data>
   <data name="error" xml:space="preserve">
     <value>Error: {0}</value>
   </data>
   <data name="info_fin" xml:space="preserve">
-    <value>OTR generated successfully!</value>
+    <value>Mod generated successfully!</value>
   </data>
   <data name="info_wait" xml:space="preserve">
-    <value>Please wait while your OTR is being generated...</value>
+    <value>Please wait while your mod is being generated...</value>
   </data>
   <data name="info_not_sel" xml:space="preserve">
-    <value>Select a script file and ROM to generate the OTR.</value>
+    <value>Select a script file and ROM to generate the mod.</value>
   </data>
   <data name="sel_rom" xml:space="preserve">
     <value>Choose a ROM: </value>
@@ -88,8 +88,11 @@
   <data name="sel_script" xml:space="preserve">
     <value>Choose a script: </value>
   </data>
-  <data name="get_otr_tab" xml:space="preserve">
-    <value>Get OTR</value>
+  <data name="sel_format" xml:space="preserve">
+    <value>Output format: </value>
+  </data>
+  <data name="get_mod_tab" xml:space="preserve">
+    <value>Get O2R/OTR</value>
   </data>
   <data name="btn_wait" xml:space="preserve">
     <value>Generating...</value>
@@ -133,8 +136,8 @@
   <data name="txt_editor_desc" xml:space="preserve">
     <value>Import and export compatible game text formats.</value>
   </data>
-  <data name="load_from_otr" xml:space="preserve">
-    <value>Load from OTR</value>
+  <data name="load_from_mod" xml:space="preserve">
+    <value>Load from O2R/OTR</value>
   </data>
   <data name="load_from_h" xml:space="preserve">
     <value>Load from .h message file</value>
@@ -148,17 +151,17 @@
   <data name="txt_editor" xml:space="preserve">
     <value>Text Editor:</value>
   </data>
-  <data name="out_msg_path_in_otr" xml:space="preserve">
-    <value>Output OTR message path:</value>
+  <data name="out_msg_path_in_mod" xml:space="preserve">
+    <value>Output mod message path:</value>
   </data>
   <data name="out_msg_path_invalid" xml:space="preserve">
-    <value>Message OTR path cannot be blank!</value>
+    <value>Message path cannot be blank!</value>
   </data>
   <data name="txt_editor_tab" xml:space="preserve">
     <value>Text Editor</value>
   </data>
-  <data name="btn_save_otr" xml:space="preserve">
-    <value>Save OTR file</value>
+  <data name="btn_save_mod" xml:space="preserve">
+    <value>Save mod file</value>
   </data>
   <data name="btn_save_h" xml:space="preserve">
     <value>Save .h message file</value>

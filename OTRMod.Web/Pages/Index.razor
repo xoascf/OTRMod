@@ -2,10 +2,11 @@
 @using BlazorDownloadFile
 @using OTRMod.ROM
 @using OTRMod.OTR
-@using OTRMod.Utility;
+@using OTRMod.Utility
+@using OTRMod.Web.Services
 
-<PageTitle>@T["get_otr_title"]</PageTitle>
-<h1>@T["get_otr_h1"]</h1>
+<PageTitle>@T["get_mod_title"]</PageTitle>
+<h1>@T["get_mod_h1"]</h1>
 <br />
 <p>
 	<div class="mb-3">
@@ -17,6 +18,15 @@
 	<div class="mb-3">
 		<label for="romFile" class="form-label">@T["sel_rom"]</label>
 		<InputFile class="form-control" type="file" id="romFile" OnChange="@ProcessROM" accept=".z64,.n64,.v64,.u64,.rom" single />
+	</div>
+</p>
+<p>
+	<div class="mb-3">
+		<label for="outputFormat" class="form-label">@T["sel_format"]</label>
+		<select class="form-select" id="outputFormat" @onchange="OnFormatChanged">
+			<option value="O2R" selected="@(_outputFormat == OutputFormat.O2R)">O2R (.o2r)</option>
+			<option value="OTR" selected="@(_outputFormat == OutputFormat.OTR)">OTR (.otr)</option>
+		</select>
 	</div>
 </p>
 @{
@@ -41,21 +51,34 @@ switch (_genStatus) {
 }
 }
 <div class="alert @type" role="alert">@msg</div>
-<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateOTR">
+<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateMod">
 	@if (_genStatus == GenerationStatus.Generating) {
 	<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
 	@($"\n{T["btn_wait"]}\n")
 } else {
-	@T["btn_gen_otr"]
+	@T["btn_gen_mod"]
 }
 </button>
 @code {
 [Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
+[Inject] private SettingsService SettingsService { get; set; } = null!;
 private string[]? _script;
 private readonly MemoryStream _scriptMs = new();
-private readonly MemoryStream _romMs = new(); private MemoryStream _otrMs = new();
+private readonly MemoryStream _romMs = new(); private MemoryStream _modMs = new();
 private GenerationStatus _genStatus = GenerationStatus.NoSelected;
 private string _lastError = string.Empty;
+private OutputFormat _outputFormat = OutputFormat.O2R;
+
+protected override async Task OnInitializedAsync() {
+	_outputFormat = await SettingsService.GetOutputFormatAsync();
+}
+
+private async void OnFormatChanged(ChangeEventArgs e) {
+	if (Enum.TryParse<OutputFormat>(e.Value?.ToString(), out var format)) {
+		_outputFormat = format;
+		await SettingsService.SetOutputFormatAsync(format);
+	}
+}
 
 private async void ProcessScript(InputFileChangeEventArgs e) {
 	_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
@@ -70,7 +93,7 @@ private async void ProcessROM(InputFileChangeEventArgs e) {
 	_genStatus = GenerationStatus.Selected;
 }
 
-private async Task GenerateOTR() {
+private async Task GenerateMod() {
 	if (_genStatus == GenerationStatus.NoSelected) return;
 	_genStatus = GenerationStatus.Generating;
 	await Task.Delay(10);
@@ -91,8 +114,17 @@ private async Task RunProcess() {
 		ImageData = decompressed,
 	};
 	sParser.ParseScript();
-	_otrMs.SetLength(0);
-	Generate.FromImage(ref _otrMs);
-	await DlFileService.DownloadFile(sParser.OTRFileName, _otrMs, "application/octet-stream");
+	_modMs.SetLength(0);
+
+	string fileName;
+	if (_outputFormat == OutputFormat.O2R) {
+		Generate.FromImageO2R(ref _modMs);
+		fileName = Path.ChangeExtension(sParser.OTRFileName, ".o2r");
+	} else {
+		Generate.FromImage(ref _modMs);
+		fileName = sParser.OTRFileName;
+	}
+
+	await DlFileService.DownloadFile(fileName, _modMs, "application/octet-stream");
 }
 }
