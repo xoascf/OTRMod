@@ -35,6 +35,9 @@ switch (_genStatus) {
 	case GenerationStatus.NoSelected:
 		type = "alert-primary"; msg = T["info_not_sel"];
 		break;
+	case GenerationStatus.Loading:
+		type = "alert-secondary"; msg = T["loading"];
+		break;
 	case GenerationStatus.Generating:
 		type = "alert-secondary"; msg = T["info_wait"];
 		break;
@@ -51,7 +54,7 @@ switch (_genStatus) {
 }
 }
 <div class="alert @type" role="alert">@msg</div>
-<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Generating)" @onclick="GenerateMod">
+<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Loading or GenerationStatus.Generating)" @onclick="GenerateMod">
 	@if (_genStatus == GenerationStatus.Generating) {
 	<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
 	@($"\n{T["btn_wait"]}\n")
@@ -68,6 +71,8 @@ private readonly MemoryStream _romMs = new(); private MemoryStream _modMs = new(
 private GenerationStatus _genStatus = GenerationStatus.NoSelected;
 private string _lastError = string.Empty;
 private OutputFormat _outputFormat = OutputFormat.O2R;
+private bool _scriptLoaded = false;
+private bool _romLoaded = false;
 
 protected override async Task OnInitializedAsync() {
 	_outputFormat = await SettingsService.GetOutputFormatAsync();
@@ -80,21 +85,44 @@ private async void OnFormatChanged(ChangeEventArgs e) {
 	}
 }
 
-private async void ProcessScript(InputFileChangeEventArgs e) {
-	_scriptMs.SetLength(0); IBrowserFile scriptFile = e.File;
-	if (_script != null) Array.Clear(_script, 0, _script.Length);
-	await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
-	_genStatus = GenerationStatus.Selected;
+private void UpdateGenStatus() {
+	if (_scriptLoaded && _romLoaded)
+		_genStatus = GenerationStatus.Selected;
+	else
+		_genStatus = GenerationStatus.NoSelected;
 }
 
-private async void ProcessROM(InputFileChangeEventArgs e) {
-	_romMs.SetLength(0); IBrowserFile romFile = e.File;
+private async Task ProcessScript(InputFileChangeEventArgs e) {
+	_scriptLoaded = false;
+	_genStatus = GenerationStatus.Loading;
+	StateHasChanged();
+
+	_scriptMs.SetLength(0);
+	IBrowserFile scriptFile = e.File;
+	if (_script != null) Array.Clear(_script, 0, _script.Length);
+	await scriptFile.OpenReadStream().CopyToAsync(_scriptMs);
+
+	_scriptLoaded = true;
+	UpdateGenStatus();
+	StateHasChanged();
+}
+
+private async Task ProcessROM(InputFileChangeEventArgs e) {
+	_romLoaded = false;
+	_genStatus = GenerationStatus.Loading;
+	StateHasChanged();
+
+	_romMs.SetLength(0);
+	IBrowserFile romFile = e.File;
 	await romFile.OpenReadStream(ID.Size.ADec).CopyToAsync(_romMs);
-	_genStatus = GenerationStatus.Selected;
+
+	_romLoaded = true;
+	UpdateGenStatus();
+	StateHasChanged();
 }
 
 private async Task GenerateMod() {
-	if (_genStatus == GenerationStatus.NoSelected) return;
+	if (!_scriptLoaded || !_romLoaded) return;
 	_genStatus = GenerationStatus.Generating;
 	await Task.Delay(10);
 	try {
