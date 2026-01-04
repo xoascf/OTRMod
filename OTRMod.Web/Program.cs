@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using OTRMod.Web;
 using OTRMod.Web.Services;
+using OTRMod.Web.Services.Generation;
 using System.Globalization;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -20,6 +21,9 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<CultureService>();
 builder.Services.AddScoped<SettingsService>();
 
+// Generation state management (SOLID)
+builder.Services.AddScoped<IGenerationStateManager, GenerationStateManager>();
+builder.Services.AddScoped<IGenerationStatusDisplay, GenerationStatusDisplay>();
 WebAssemblyHost host = builder.Build();
 
 // Set culture from LocalStorage

@@ -30,32 +30,14 @@
 	</div>
 </p>
 @{
-string type; string msg;
-switch (_genStatus) {
-	case GenerationStatus.NoSelected:
-		type = "alert-primary"; msg = T["info_not_sel"];
-		break;
-	case GenerationStatus.Loading:
-		type = "alert-secondary"; msg = T["loading"];
-		break;
-	case GenerationStatus.Generating:
-		type = "alert-secondary"; msg = T["info_wait"];
-		break;
-	case GenerationStatus.Finished:
-		type = "alert-success"; msg = T["info_fin"];
-		break;
-	case GenerationStatus.Error:
-		type = "alert-danger"; msg = T["error", _lastError];
-		break;
-	case GenerationStatus.Selected:
-	default:
-		type = "alert-info"; msg = T["info_sel"];
-		break;
+	var alertClass = StatusDisplay.GetAlertClass(GenState.State.Status);
+	var msgKey = StatusDisplay.GetMessageKey(GenState.State.Status);
+	var msgParams = StatusDisplay.GetMessageParams(GenState.State);
+	var statusMsg = msgParams != null ? T[msgKey, msgParams] : T[msgKey];
 }
-}
-<div class="alert @type" role="alert">@msg</div>
-<button class="btn btn-primary" type="submit" disabled="@(_genStatus is GenerationStatus.NoSelected or GenerationStatus.Loading or GenerationStatus.Generating)" @onclick="GenerateMod">
-	@if (_genStatus == GenerationStatus.Generating) {
+<div class="alert @alertClass" role="alert">@statusMsg</div>
+<button class="btn btn-primary" type="submit" disabled="@(!GenState.State.CanGenerate || GenState.State.IsWorking)" @onclick="GenerateMod">
+	@if (GenState.State.Status == GenerationStatus.Generating) {
 	<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
 	@($"\n{T["btn_wait"]}\n")
 } else {
@@ -65,17 +47,19 @@ switch (_genStatus) {
 @code {
 [Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
 [Inject] private SettingsService SettingsService { get; set; } = null!;
+[Inject] private IGenerationStateManager GenState { get; set; } = null!;
+[Inject] private IGenerationStatusDisplay StatusDisplay { get; set; } = null!;
+
 private string[]? _script;
 private readonly MemoryStream _scriptMs = new();
 private readonly MemoryStream _romMs = new(); private MemoryStream _modMs = new();
-private GenerationStatus _genStatus = GenerationStatus.NoSelected;
-private string _lastError = string.Empty;
 private OutputFormat _outputFormat = OutputFormat.O2R;
 private bool _scriptLoaded = false;
 private bool _romLoaded = false;
 
 protected override async Task OnInitializedAsync() {
 	_outputFormat = await SettingsService.GetOutputFormatAsync();
+	GenState.OnStateChanged += StateHasChanged;
 }
 
 private async void OnFormatChanged(ChangeEventArgs e) {
@@ -87,15 +71,14 @@ private async void OnFormatChanged(ChangeEventArgs e) {
 
 private void UpdateGenStatus() {
 	if (_scriptLoaded && _romLoaded)
-		_genStatus = GenerationStatus.Selected;
+		GenState.SetReady();
 	else
-		_genStatus = GenerationStatus.NoSelected;
+		GenState.SetIdle();
 }
 
 private async Task ProcessScript(InputFileChangeEventArgs e) {
 	_scriptLoaded = false;
-	_genStatus = GenerationStatus.Loading;
-	StateHasChanged();
+	GenState.SetLoading("script");
 
 	_scriptMs.SetLength(0);
 	IBrowserFile scriptFile = e.File;
@@ -104,13 +87,11 @@ private async Task ProcessScript(InputFileChangeEventArgs e) {
 
 	_scriptLoaded = true;
 	UpdateGenStatus();
-	StateHasChanged();
 }
 
 private async Task ProcessROM(InputFileChangeEventArgs e) {
 	_romLoaded = false;
-	_genStatus = GenerationStatus.Loading;
-	StateHasChanged();
+	GenState.SetLoading("rom");
 
 	_romMs.SetLength(0);
 	IBrowserFile romFile = e.File;
@@ -118,19 +99,17 @@ private async Task ProcessROM(InputFileChangeEventArgs e) {
 
 	_romLoaded = true;
 	UpdateGenStatus();
-	StateHasChanged();
 }
 
 private async Task GenerateMod() {
 	if (!_scriptLoaded || !_romLoaded) return;
-	_genStatus = GenerationStatus.Generating;
+	GenState.SetGenerating();
 	await Task.Delay(10);
 	try {
 		await RunProcess();
-		_genStatus = GenerationStatus.Finished;
+		GenState.SetCompleted();
 	} catch (Exception ex) {
-		_genStatus = GenerationStatus.Error;
-		_lastError = ex.ToString();
+		GenState.SetError(ex);
 	}
 }
 
