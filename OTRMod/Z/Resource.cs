@@ -36,10 +36,20 @@ public class Resource {
 		return format;
 	}
 
+	public static Resource? Analyze(byte[] data)
+		=> data == null || data.Length < HeaderSize ? null : new() {
+		Type = (ResourceType)data.ToI32(0x04, false),
+		Version = data.ToI32(0x08, false),
+		IsModded = data[0x18] == 1
+	};
+
+	public static void SetData(ref Resource resource, byte[] data)
+		=> resource.Data = data.Get(HeaderSize, data.Length - HeaderSize);
+
 	public static Resource Read(byte[] data) => new() {
 		Type = (ResourceType)data.ToI32(0x04, false),
 		Version = data.ToI32(0x08, false),
-		IsModded = data.Get(0x18, 1)[0] == 1,
-		Data = data.Get(HeaderSize, data.Length - HeaderSize) // fixme: use getall?
+		IsModded = data[0x18] == 1,
+		Data = data.Get(HeaderSize, data.Length - HeaderSize)
 	};
 }

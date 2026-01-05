@@ -52,7 +52,7 @@ public class ScriptParser {
 		string texS = _def.GetKey("TexS", "texture size", null!, true);
 		string[] size = texS.Split('x');
 		int w = int.Parse(size[0]); int h = int.Parse(size[1]);
-		byte[] data = input.GetData(start, ID.Texture.GetSize(codec, w * h));
+		byte[] data = input.GetData(start, ID.Texture.GetOffset(codec, w * h));
 		return addH.AsBool(true) ? new Z.Texture(codec, w, h, data).Formatted() : data;
 	}
 

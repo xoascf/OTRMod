@@ -11,9 +11,9 @@ public class Texture : Resource {
 	public int Width { get; set; }
 	public int Height { get; set; }
 	public byte[] TextureData { get; set; }
-	private int Flags = 0;
-	private float HByteScale = 1;
-	private float VPixelScale = 1;
+	private int Flags;
+	private float HByteScale;
+	private float VPixelScale;
 
 	public Texture(Codec codec, int width, int height, byte[] texData)
 		: base(ResourceType.Texture) {
@@ -21,6 +21,19 @@ public class Texture : Resource {
 		Width = width;
 		Height = height;
 		TextureData = texData;
+	}
+
+	public Texture(Codec codec, int width, int height, byte[] texData, int flags = 0, float hbs = 1.0f, float vps = 1.0f)
+		: base(ResourceType.Texture, 1) {
+		Codec = codec;
+		Width = width;
+		Height = height;
+
+		TextureData = texData;
+
+		Flags = flags;
+		HByteScale = hbs;
+		VPixelScale = vps;
 	}
 
 	public override byte[] Formatted() {
@@ -42,6 +55,28 @@ public class Texture : Resource {
 
 		return base.Formatted();
 	}
+
+	private Bitmap GetBitmap(Codec codec) {
+		Bitmap bmp = new(Width, Height);
+
+		Iterate2D(Width, Height, (w, h) => {
+			int pixelOffset = h * Width + w;
+			int select = codec switch {
+				Codec.IA4 or Codec.I4 or Codec.CI4 => pixelOffset & 0x1,
+				_ => 0,
+			};
+			pixelOffset = GetOffset(codec, pixelOffset);
+
+			bmp.SetPixel(w, h, Colorize(TextureData, pixelOffset, select, codec));
+		});
+
+		return bmp;
+	}
+
+	public Bitmap GetBitmap() =>
+		TextureData.Length ==
+			GetOffset(Codec.RGBA32, Width * Height) ?
+				GetBitmap(Codec.RGBA32) : GetBitmap(Codec);
 
 	public static Texture LoadFrom(Resource res) {
 		if (res.Data == null)

@@ -12,4 +12,10 @@
     <ProjectReference Include="..\SturmScharf\SturmScharf.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net5.0'))">
+    <PackageReference Include="IronSoftware.System.Drawing">
+      <Version>2025.9.3</Version>
+    </PackageReference>
+  </ItemGroup>
+
 </Project>
