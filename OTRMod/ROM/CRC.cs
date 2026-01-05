@@ -4,8 +4,7 @@ using OTRMod.Utility;
 
 namespace OTRMod.ROM;
 
-public class CRC
-{
+public class CRC {
 	/* CIC seeds. */
 	private const uint CIC6102 = 0xF8CA4DDC;
 	private const uint CIC6103 = 0xA3886759;

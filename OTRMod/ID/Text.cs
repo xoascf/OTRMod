@@ -111,7 +111,7 @@ public static class Text {
 
 		return sb.ToString().Replace("\u201C", "\"");
 	}
-	
+
 	public static string Endec(string t, bool bin, StringsDict replacements) {
 		foreach (KeyValuePair<string, string> rep in replacements)
 			t = bin ? t.Replace(rep.Key, rep.Value) : t.Replace(rep.Value, rep.Key);

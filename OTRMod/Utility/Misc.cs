@@ -2,8 +2,7 @@
 
 namespace OTRMod.Utility;
 
-public static class Misc
-{
+public static class Misc {
 	private static InvalidCastException InvalidCast(string valueName)
 		=> throw new InvalidCastException($"Invalid cast for '{valueName}'.");
 

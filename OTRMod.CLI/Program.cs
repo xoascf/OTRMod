@@ -173,7 +173,7 @@ static void ConvertFromPng() {
 		foreach (string file in files) {
 			if (!file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
 				continue;
-				
+
 			using Bitmap sourceImage = (Bitmap)Bitmap.FromFile(file);
 			byte[] imageData = OTRMod.ID.Texture.Convert(sourceImage, OTRMod.ID.Texture.Codec.RGBA32);
 
