@@ -22,11 +22,11 @@ public class CultureService {
 		var currentCulture = CultureInfo.CurrentCulture.Name;
 		if (currentCulture != culture) {
 			await _localStorage.SetItemAsStringAsync(CULTURE_KEY, culture);
-			
+
 			var newCulture = new CultureInfo(culture);
 			CultureInfo.DefaultThreadCurrentCulture = newCulture;
 			CultureInfo.DefaultThreadCurrentUICulture = newCulture;
-			
+
 			OnCultureChanged?.Invoke();
 		}
 	}

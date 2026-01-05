@@ -1,6 +1,7 @@
 ﻿@page "/text-editor"
 @using BlazorDownloadFile
 @using OTRMod.Web.Shared.Components
+@using OTRMod.Web.Services.Archive
 @using OTRMod.OTR
 @using OTRMod.Utility
 @using OTRMod.Web.Services
@@ -10,6 +11,23 @@
 @T["txt_editor_desc"]
 <br />
 <br />
+
+@if (_loadingFromArchive)
+{
+	<div class="alert alert-info">
+		<div class="spinner-border spinner-border-sm me-2" role="status"></div>
+		@T["loading_from_archive"]
+	</div>
+}
+else if (!string.IsNullOrEmpty(_archiveLoadError))
+{
+	<div class="alert alert-warning">
+		<i class="fa-solid fa-exclamation-triangle me-2"></i>
+		@_archiveLoadError
+		<a href="archive-browser" class="alert-link ms-2">@T["archive_browser_h3"]</a>
+	</div>
+}
+
 <Accordion Id="selectionAccordion">
 	<AccordionItem Header="@T["load_from_mod"]" Id="loadMod" IsInitiallyOpen=true>
 		<InputFile class="form-control" type="file" id="modFile" OnChange="@((InputFileChangeEventArgs e) => ProcessInput(e, true))" accept=".otr,.o2r" single />
@@ -69,11 +87,19 @@
 
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
 	[Inject] private SettingsService SettingsService { get; set; } = null!;
+	[Inject] private IArchiveExplorer ArchiveExplorer { get; set; } = null!;
+	[Inject] private NavigationManager NavigationManager { get; set; } = null!;
+	
+	[SupplyParameterFromQuery(Name = "archive-path")]
+	public string? ArchivePath { get; set; }
+
 	private MemoryStream _modMs = new();
 	private List<TextDataItem> tabList = new List<TextDataItem> { };
 	private Dictionary<string, OTRMod.Z.Text> _textFiles = new();
 	private Dictionary<string, string> _replacements = new();
 	private bool _working = false;
+	private bool _loadingFromArchive = false;
+	private string? _archiveLoadError;
 	private const string DEFAULT_MESSAGE_PATH = "text/nes_message_data_static/nes_message_data_static";
 	private string _msgPathInMod = DEFAULT_MESSAGE_PATH;
 	private string currentHContent = "";
@@ -88,6 +114,29 @@
 
 	protected override async Task OnInitializedAsync() {
 		_outputFormat = await SettingsService.GetOutputFormatAsync();
+		SetReplacements();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		_archiveLoadError = null;
+		
+		// Load from archive if path is provided and archive is loaded
+		if (!string.IsNullOrEmpty(ArchivePath) && _textFiles.Count == 0)
+		{
+			Console.WriteLine($"[TextEditor] OnParametersSetAsync - ArchivePath: {ArchivePath}");
+			Console.WriteLine($"[TextEditor] ArchiveExplorer.IsLoaded: {ArchiveExplorer.IsLoaded}");
+			
+			if (ArchiveExplorer.IsLoaded)
+			{
+				await LoadFromArchiveAsync(ArchivePath);
+			}
+			else
+			{
+				Console.WriteLine("[TextEditor] Archive not loaded - archive state was lost during navigation");
+				_archiveLoadError = T["archive_not_loaded"];
+			}
+		}
 	}
 
 	private async void OnFormatChanged(ChangeEventArgs e) {
@@ -141,8 +190,45 @@
 		}
 	}
 
-	protected override void OnInitialized() {
-		SetReplacements();
+	private async Task LoadFromArchiveAsync(string path)
+	{
+		_loadingFromArchive = true;
+		StateHasChanged();
+
+		try
+		{
+			Console.WriteLine($"[TextEditor] LoadFromArchiveAsync - path: {path}");
+			tabList.Clear();
+			_textFiles.Clear();
+
+			var content = await ArchiveExplorer.GetContentAsync(path);
+			Console.WriteLine($"[TextEditor] Content retrieved: {content != null} (length: {content?.Length ?? 0})");
+			
+			if (content != null)
+			{
+				var modRes = OTRMod.Z.Resource.Read(content);
+				var modResText = OTRMod.Z.Text.LoadFrom(modRes);
+				var modResFileName = Path.GetFileName(path);
+
+				_textFiles.Add(modResFileName, modResText);
+				_msgPathInMod = path.Replace('\\', '/');
+				Console.WriteLine($"[TextEditor] Text file loaded: {modResFileName}");
+			}
+			else
+			{
+				Console.WriteLine("[TextEditor] Content was null");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[TextEditor] Error loading from archive: {ex.Message}");
+			Console.WriteLine($"[TextEditor] Stack trace: {ex.StackTrace}");
+		}
+		finally
+		{
+			_loadingFromArchive = false;
+			StateHasChanged();
+		}
 	}
 
 	private async void ProcessInput(InputFileChangeEventArgs e, bool isModFile) {

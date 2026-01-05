@@ -166,4 +166,97 @@
   <data name="btn_save_h" xml:space="preserve">
     <value>Guardar archivo de mensajes .h</value>
   </data>
+  <data name="archive_browser_title" xml:space="preserve">
+    <value>OTRMod Web - Explorador de archivos</value>
+  </data>
+  <data name="archive_browser_h3" xml:space="preserve">
+    <value>Explorador de archivos</value>
+  </data>
+  <data name="archive_browser_tab" xml:space="preserve">
+    <value>Explorador</value>
+  </data>
+  <data name="sel_archive" xml:space="preserve">
+    <value>Elija un archivo O2R/OTR:</value>
+  </data>
+  <data name="archive_drop_hint" xml:space="preserve">
+    <value>Seleccione un archivo O2R u OTR para explorar su contenido.</value>
+  </data>
+  <data name="archive_info" xml:space="preserve">
+    <value>{0} archivos en el archivo</value>
+  </data>
+  <data name="close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="open_in_editor" xml:space="preserve">
+    <value>Abrir en Editor de textos</value>
+  </data>
+  <data name="loading_from_archive" xml:space="preserve">
+    <value>Cargando recurso de texto desde el archivo...</value>
+  </data>
+  <data name="archive_not_loaded" xml:space="preserve">
+    <value>El archivo ya no está cargado. Abra el archivo de nuevo desde el Explorador de archivos.</value>
+  </data>
+  <data name="show_info" xml:space="preserve">
+    <value>Ver información</value>
+  </data>
+  <data name="resource_info" xml:space="preserve">
+    <value>Información del recurso</value>
+  </data>
+  <data name="file_name" xml:space="preserve">
+    <value>Nombre del archivo</value>
+  </data>
+  <data name="resource_type" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="version" xml:space="preserve">
+    <value>Versión</value>
+  </data>
+  <data name="modded" xml:space="preserve">
+    <value>Modificado</value>
+  </data>
+  <data name="dimensions" xml:space="preserve">
+    <value>Dimensiones</value>
+  </data>
+  <data name="codec" xml:space="preserve">
+    <value>Códec</value>
+  </data>
+  <data name="preview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="message_count" xml:space="preserve">
+    <value>Mensajes</value>
+  </data>
+  <data name="unknown_resource" xml:space="preserve">
+    <value>No se pudo analizar el recurso</value>
+  </data>
+  <data name="view_list" xml:space="preserve">
+    <value>Vista de lista</value>
+  </data>
+  <data name="view_details" xml:space="preserve">
+    <value>Vista de detalles</value>
+  </data>
+  <data name="view_grid" xml:space="preserve">
+    <value>Vista de cuadrícula</value>
+  </data>
+  <data name="name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="type" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="size" xml:space="preserve">
+    <value>Tamaño</value>
+  </data>
+  <data name="folder" xml:space="preserve">
+    <value>Carpeta</value>
+  </data>
+  <data name="file" xml:space="preserve">
+    <value>Archivo</value>
+  </data>
+  <data name="loading_preview" xml:space="preserve">
+    <value>Cargando vista previa...</value>
+  </data>
+  <data name="download_png" xml:space="preserve">
+    <value>Descargar PNG</value>
+  </data>
 </root>

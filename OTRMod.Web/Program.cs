@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using OTRMod.Web;
 using OTRMod.Web.Services;
+using OTRMod.Web.Services.Archive;
 using OTRMod.Web.Services.Generation;
 using System.Globalization;
 
@@ -24,6 +25,13 @@ builder.Services.AddScoped<SettingsService>();
 // Generation state management (SOLID)
 builder.Services.AddScoped<IGenerationStateManager, GenerationStateManager>();
 builder.Services.AddScoped<IGenerationStatusDisplay, GenerationStatusDisplay>();
+
+// Archive exploration
+builder.Services.AddScoped<IArchiveExplorer, ArchiveExplorer>();
+builder.Services.AddSingleton<IResourceAnalyzer, ResourceAnalyzer>();
+builder.Services.AddScoped<ITexturePreviewService, TexturePreviewService>();
+builder.Services.AddSingleton<IFileSizeFormatter, FileSizeFormatter>();
+
 WebAssemblyHost host = builder.Build();
 
 // Set culture from LocalStorage

@@ -166,4 +166,97 @@
   <data name="btn_save_h" xml:space="preserve">
     <value>Save .h message file</value>
   </data>
+  <data name="archive_browser_title" xml:space="preserve">
+    <value>OTRMod Web - Archive Browser</value>
+  </data>
+  <data name="archive_browser_h3" xml:space="preserve">
+    <value>Archive Browser</value>
+  </data>
+  <data name="archive_browser_tab" xml:space="preserve">
+    <value>Archive Browser</value>
+  </data>
+  <data name="sel_archive" xml:space="preserve">
+    <value>Choose an O2R/OTR archive:</value>
+  </data>
+  <data name="archive_drop_hint" xml:space="preserve">
+    <value>Select an O2R or OTR file to browse its contents.</value>
+  </data>
+  <data name="archive_info" xml:space="preserve">
+    <value>{0} files in archive</value>
+  </data>
+  <data name="close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="open_in_editor" xml:space="preserve">
+    <value>Open in Text Editor</value>
+  </data>
+  <data name="loading_from_archive" xml:space="preserve">
+    <value>Loading text resource from archive...</value>
+  </data>
+  <data name="archive_not_loaded" xml:space="preserve">
+    <value>Archive is no longer loaded. Please open the archive again from the Archive Browser.</value>
+  </data>
+  <data name="show_info" xml:space="preserve">
+    <value>Show Info</value>
+  </data>
+  <data name="resource_info" xml:space="preserve">
+    <value>Resource Info</value>
+  </data>
+  <data name="file_name" xml:space="preserve">
+    <value>File Name</value>
+  </data>
+  <data name="resource_type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="modded" xml:space="preserve">
+    <value>Modded</value>
+  </data>
+  <data name="dimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="codec" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="message_count" xml:space="preserve">
+    <value>Messages</value>
+  </data>
+  <data name="unknown_resource" xml:space="preserve">
+    <value>Unable to analyze resource</value>
+  </data>
+  <data name="view_list" xml:space="preserve">
+    <value>List View</value>
+  </data>
+  <data name="view_details" xml:space="preserve">
+    <value>Details View</value>
+  </data>
+  <data name="view_grid" xml:space="preserve">
+    <value>Grid View</value>
+  </data>
+  <data name="name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="file" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="loading_preview" xml:space="preserve">
+    <value>Loading preview...</value>
+  </data>
+  <data name="download_png" xml:space="preserve">
+    <value>Download PNG</value>
+  </data>
 </root>

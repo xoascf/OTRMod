@@ -1,0 +1,432 @@
+@page "/archive-browser"
+@using OTRMod.Web.Services.Archive
+@using OTRMod.ID
+@implements IAsyncDisposable
+
+<PageTitle>@T["archive_browser_title"]</PageTitle>
+<h3>@T["archive_browser_h3"]</h3>
+
+<div class="mb-3">
+    <label for="archiveFile" class="form-label">@T["sel_archive"]</label>
+    <InputFile class="form-control" id="archiveFile" OnChange="LoadArchive" accept=".otr,.o2r" single />
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex align-items-center">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        <span>@T["loading"]</span>
+    </div>
+}
+else if (ArchiveExplorer.IsLoaded)
+{
+    <div class="row">
+        <div class="@(_selectedEntry != null ? "col-md-8" : "col-12")">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fa-solid fa-archive me-2"></i>
+                        <strong>@ArchiveExplorer.ArchiveName</strong>
+                        <span class="badge bg-secondary ms-2">@ArchiveExplorer.Format</span>
+                    </span>
+                    <div class="d-flex gap-2">
+                        @* View mode selector *@
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn @(_viewMode == ArchiveViewMode.List ? "btn-primary" : "btn-outline-secondary")" 
+                                    @onclick="() => _viewMode = ArchiveViewMode.List" title="@T["view_list"]">
+                                <i class="fa-solid fa-list"></i>
+                            </button>
+                            <button type="button" class="btn @(_viewMode == ArchiveViewMode.Details ? "btn-primary" : "btn-outline-secondary")" 
+                                    @onclick="() => _viewMode = ArchiveViewMode.Details" title="@T["view_details"]">
+                                <i class="fa-solid fa-table-list"></i>
+                            </button>
+                            <button type="button" class="btn @(_viewMode == ArchiveViewMode.Grid ? "btn-primary" : "btn-outline-secondary")" 
+                                    @onclick="() => _viewMode = ArchiveViewMode.Grid" title="@T["view_grid"]">
+                                <i class="fa-solid fa-grip"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="CloseArchive">
+                            <i class="fa-solid fa-times"></i> @T["close"]
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="archive-browser">
+                        @* Breadcrumb *@
+                        <nav aria-label="breadcrumb" class="p-2 border-bottom">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <button type="button" class="btn btn-link p-0" @onclick="() => NavigateTo(string.Empty)">
+                                        <i class="fa-solid fa-home"></i>
+                                    </button>
+                                </li>
+                                @foreach (var crumb in GetBreadcrumbs())
+                                {
+                                    <li class="breadcrumb-item @(crumb == _currentPath ? "active" : "")">
+                                        @if (crumb == _currentPath)
+                                        {
+                                            @GetDirName(crumb)
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-link p-0" @onclick="() => NavigateTo(crumb)">@GetDirName(crumb)</button>
+                                        }
+                                    </li>
+                                }
+                            </ol>
+                        </nav>
+
+                        @* File list - using view components *@
+                        <div style="max-height: 60vh; overflow-y: auto;">
+                            @switch (_viewMode)
+                            {
+                                case ArchiveViewMode.List:
+                                    <ArchiveListView Entries="GetCurrentEntries()"
+                                                     SelectedEntry="_selectedEntry"
+                                                     ShowParentLink="!string.IsNullOrEmpty(_currentPath)"
+                                                     OnGoUp="GoUp"
+                                                     OnEntryClick="HandleEntryClick"
+                                                     OnShowInfo="ShowInfo"
+                                                     GetEntryIcon="GetEntryIcon" />
+                                    break;
+                                case ArchiveViewMode.Details:
+                                    <ArchiveDetailsView Entries="GetCurrentEntries()"
+                                                        SizeFormatter="SizeFormatter"
+                                                        SelectedEntry="_selectedEntry"
+                                                        ShowParentLink="!string.IsNullOrEmpty(_currentPath)"
+                                                        OnGoUp="GoUp"
+                                                        OnEntryClick="HandleEntryClick"
+                                                        OnShowInfo="ShowInfo"
+                                                        GetEntryIcon="GetEntryIcon" />
+                                    break;
+                                case ArchiveViewMode.Grid:
+                                    <ArchiveGridView Entries="GetCurrentEntries()"
+                                                     SizeFormatter="SizeFormatter"
+                                                     SelectedEntry="_selectedEntry"
+                                                     ShowParentLink="!string.IsNullOrEmpty(_currentPath)"
+                                                     OnGoUp="GoUp"
+                                                     OnEntryClick="HandleEntryClick"
+                                                     GetEntryIcon="GetEntryIcon" />
+                                    break;
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-muted small">
+                @T["archive_info", ArchiveExplorer.GetEntries().Count(e => !e.IsDirectory)]
+            </div>
+        </div>
+
+        @* Info Panel *@
+        @if (_selectedEntry != null)
+        {
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>@T["resource_info"]</span>
+                        <button type="button" class="btn-close btn-sm" @onclick="() => _selectedEntry = null"></button>
+                    </div>
+                    <div class="card-body">
+                        @if (_loadingInfo)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                            </div>
+                        }
+                        else if (_selectedInfo != null)
+                        {
+                            <dl class="mb-0">
+                                <dt>@T["file_name"]</dt>
+                                <dd class="text-break">@_selectedEntry.Name</dd>
+                                
+                                <dt>@T["resource_type"]</dt>
+                                <dd>
+                                    <i class="fa-solid @_selectedInfo.IconClass me-1"></i>
+                                    @_selectedInfo.TypeName
+                                </dd>
+                                
+                                <dt>@T["version"]</dt>
+                                <dd>@_selectedInfo.Version</dd>
+                                
+                                @if (_selectedInfo.IsModded)
+                                {
+                                    <dd><span class="badge bg-warning">@T["modded"]</span></dd>
+                                }
+
+                                @if (_selectedInfo.Texture != null)
+                                {
+                                    <dt>@T["dimensions"]</dt>
+                                    <dd>@_selectedInfo.Texture.Dimensions</dd>
+                                    
+                                    <dt>@T["codec"]</dt>
+                                    <dd>@_selectedInfo.Texture.CodecName</dd>
+                                    
+                                    <dt>@T["preview"]</dt>
+                                    <dd>
+                                        @if (_loadingPreview)
+                                        {
+                                            <div class="d-flex align-items-center text-muted">
+                                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                                @T["loading_preview"]
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(_texturePreview))
+                                        {
+                                            <img src="@_texturePreview" alt="Texture preview" 
+                                                 class="img-fluid border" style="image-rendering: pixelated; max-width: 100%;" />
+                                        }
+                                    </dd>
+                                    
+                                    <dd class="mt-2">
+                                        <button type="button" class="btn btn-outline-success btn-sm w-100" 
+                                                @onclick="DownloadTexturePng" disabled="@_loadingPreview">
+                                            <i class="fa-solid fa-download me-1"></i> @T["download_png"]
+                                        </button>
+                                    </dd>
+                                }
+
+                                @if (_selectedInfo.Text != null)
+                                {
+                                    <dt>@T["message_count"]</dt>
+                                    <dd>@_selectedInfo.Text.MessageCount</dd>
+                                }
+                            </dl>
+                            
+                            @if (_selectedEntry.IsTextResource)
+                            {
+                                <button type="button" class="btn btn-primary btn-sm mt-2 w-100" @onclick="() => OpenInTextEditor(_selectedEntry)">
+                                    <i class="fa-solid fa-edit me-1"></i> @T["open_in_editor"]
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">@T["unknown_resource"]</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="fa-solid fa-info-circle me-2"></i>
+        @T["archive_drop_hint"]
+    </div>
+}
+
+@code {
+    [Inject] private IArchiveExplorer ArchiveExplorer { get; set; } = null!;
+    [Inject] private IFileSizeFormatter SizeFormatter { get; set; } = null!;
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
+    [Inject] private ITexturePreviewService TexturePreview { get; set; } = null!;
+    [Inject] private BlazorDownloadFile.IBlazorDownloadFileService DownloadService { get; set; } = null!;
+
+    private bool _loading;
+    private string _currentPath = string.Empty;
+    private ArchiveEntry? _selectedEntry;
+    private ResourceInfo? _selectedInfo;
+    private string? _texturePreview;
+    private bool _loadingInfo;
+    private bool _loadingPreview;
+    private ArchiveViewMode _viewMode = ArchiveViewMode.Details;
+    private CancellationTokenSource? _previewCts;
+
+    private async Task LoadArchive(InputFileChangeEventArgs e)
+    {
+        _loading = true;
+        _selectedEntry = null;
+        StateHasChanged();
+
+        try
+        {
+            await using var stream = e.File.OpenReadStream(maxAllowedSize: 256 * 1024 * 1024); // 256 MB max
+            await ArchiveExplorer.LoadAsync(stream, e.File.Name);
+            _currentPath = string.Empty;
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void CloseArchive()
+    {
+        _previewCts?.Cancel();
+        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
+        ArchiveExplorer.Close();
+        _currentPath = string.Empty;
+        _selectedEntry = null;
+        _selectedInfo = null;
+        _texturePreview = null;
+    }
+
+    private IEnumerable<ArchiveEntry> GetCurrentEntries() => ArchiveExplorer.GetEntries(_currentPath);
+
+    private void NavigateTo(string path)
+    {
+        _currentPath = path;
+    }
+
+    private void GoUp()
+    {
+        if (string.IsNullOrEmpty(_currentPath)) return;
+        var lastSlash = _currentPath.LastIndexOf('/');
+        _currentPath = lastSlash > 0 ? _currentPath[..lastSlash] : string.Empty;
+    }
+
+    private void HandleEntryClick(ArchiveEntry entry)
+    {
+        if (entry.IsDirectory)
+            NavigateTo(entry.Path);
+    }
+
+    private async Task ShowInfo(ArchiveEntry entry)
+    {
+        // Cancel any pending preview
+        _previewCts?.Cancel();
+        _previewCts = new CancellationTokenSource();
+        var token = _previewCts.Token;
+
+        _selectedEntry = entry;
+        _selectedInfo = null;
+        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
+        _texturePreview = null;
+        _loadingInfo = true;
+        _loadingPreview = false;
+        StateHasChanged();
+
+        try
+        {
+            // Fast metadata-only analysis (no texture decoding)
+            _selectedInfo = ArchiveExplorer.AnalyzeMetadata(entry.Path);
+            _loadingInfo = false;
+            
+            // Start preview loading in background if it's a texture
+            if (_selectedInfo?.Type == ResourceType.Texture)
+            {
+                _loadingPreview = true;
+            }
+            
+            StateHasChanged();
+
+            // Load texture preview asynchronously (doesn't block UI)
+            if (_selectedInfo?.Type == ResourceType.Texture)
+            {
+                await LoadTexturePreviewAsync(entry.Path, token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled, ignore
+        }
+        catch
+        {
+            _loadingInfo = false;
+            _loadingPreview = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadTexturePreviewAsync(string path, CancellationToken token)
+    {
+        try
+        {
+            // Yield to let UI update
+            await Task.Yield();
+            
+            if (token.IsCancellationRequested) return;
+
+            var texture = await ArchiveExplorer.GetTextureAsync(path);
+            if (token.IsCancellationRequested || texture == null) return;
+
+            var blobUrl = await TexturePreview.CreatePreviewAsync(texture);
+            if (token.IsCancellationRequested)
+            {
+                // Clean up if cancelled
+                await TexturePreview.RevokeBlobUrlAsync(blobUrl);
+                return;
+            }
+
+            _texturePreview = blobUrl;
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested)
+            {
+                _loadingPreview = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task DownloadTexturePng()
+    {
+        if (_selectedEntry == null || _selectedInfo?.Type != ResourceType.Texture)
+            return;
+
+        var texture = await ArchiveExplorer.GetTextureAsync(_selectedEntry.Path);
+        if (texture == null) return;
+
+        var pngBytes = await TexturePreview.CreatePngBytesAsync(texture);
+        if (pngBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(_selectedEntry.Name) + ".png";
+        await DownloadService.DownloadFile(fileName, pngBytes, "image/png");
+    }
+
+    private string GetEntryIcon(ArchiveEntry entry)
+    {
+        // Use cached resource info if available, otherwise use path-based detection
+        if (entry.ResourceInfo != null)
+            return entry.ResourceInfo.IconClass;
+        
+        if (entry.IsTextResource)
+            return "fa-file-lines text-info";
+        
+        // Heuristic based on path
+        var path = entry.Path.ToLowerInvariant();
+        if (path.Contains("tex") || path.EndsWith(".png") || path.EndsWith(".jpg"))
+            return "fa-image text-success";
+        if (path.Contains("anim"))
+            return "fa-person-running text-primary";
+        if (path.Contains("audio") || path.Contains("sound") || path.Contains("music"))
+            return "fa-music text-warning";
+        if (path.Contains("skel"))
+            return "fa-bone text-secondary";
+        
+        return "fa-file";
+    }
+
+    private void OpenInTextEditor(ArchiveEntry entry)
+    {
+        Navigation.NavigateTo($"text-editor?archive-path={Uri.EscapeDataString(entry.Path)}", forceLoad: false);
+    }
+
+    private IEnumerable<string> GetBreadcrumbs()
+    {
+        if (string.IsNullOrEmpty(_currentPath)) yield break;
+
+        var parts = _currentPath.Split('/');
+        var path = "";
+        foreach (var part in parts)
+        {
+            path = string.IsNullOrEmpty(path) ? part : $"{path}/{part}";
+            yield return path;
+        }
+    }
+
+    private static string GetDirName(string path) => path.Contains('/') ? path[(path.LastIndexOf('/') + 1)..] : path;
+
+    public async ValueTask DisposeAsync()
+    {
+        _previewCts?.Cancel();
+        _previewCts?.Dispose();
+        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
+    }
+}

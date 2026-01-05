@@ -1,0 +1,47 @@
+@using OTRMod.Web.Services.Archive
+
+<div class="archive-grid-view d-flex flex-wrap gap-2 p-2">
+    @if (ShowParentLink)
+    {
+        <div class="archive-grid-item text-center p-2 border rounded" 
+             style="width: 100px; cursor: pointer;" @onclick="OnGoUp">
+            <i class="fa-solid fa-level-up-alt fa-2x text-muted"></i>
+            <div class="small text-truncate mt-1">..</div>
+        </div>
+    }
+    @foreach (var entry in Entries)
+    {
+        <div class="archive-grid-item text-center p-2 border rounded @(IsSelected(entry) ? "border-primary bg-primary bg-opacity-10" : "")" 
+             style="width: 100px; cursor: pointer;" @onclick="() => OnClick(entry)">
+            <i class="fa-solid @GetIcon(entry) fa-2x"></i>
+            <div class="small text-truncate mt-1" title="@entry.Name">@entry.Name</div>
+            @if (!entry.IsDirectory)
+            {
+                <div class="small text-muted">@SizeFormatter.Format(entry.Size)</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<ArchiveEntry> Entries { get; set; } = [];
+    [Parameter, EditorRequired] public IFileSizeFormatter SizeFormatter { get; set; } = null!;
+    [Parameter] public ArchiveEntry? SelectedEntry { get; set; }
+    [Parameter] public bool ShowParentLink { get; set; }
+    [Parameter] public EventCallback OnGoUp { get; set; }
+    [Parameter] public EventCallback<ArchiveEntry> OnEntryClick { get; set; }
+    [Parameter] public Func<ArchiveEntry, string>? GetEntryIcon { get; set; }
+
+    private bool IsSelected(ArchiveEntry entry) => SelectedEntry?.Path == entry.Path;
+    
+    private string GetIcon(ArchiveEntry entry)
+    {
+        if (entry.IsDirectory) return "fa-folder text-warning";
+        return GetEntryIcon?.Invoke(entry) ?? "fa-file";
+    }
+
+    private async Task OnClick(ArchiveEntry entry)
+    {
+        await OnEntryClick.InvokeAsync(entry);
+    }
+}

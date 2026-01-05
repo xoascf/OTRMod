@@ -1,0 +1,54 @@
+@using OTRMod.Web.Services.Archive
+
+<ul class="list-group list-group-flush archive-list-view">
+    @if (ShowParentLink)
+    {
+        <li class="list-group-item list-group-item-action" @onclick="OnGoUp" style="cursor: pointer;">
+            <i class="fa-solid fa-level-up-alt me-2"></i> ..
+        </li>
+    }
+    @foreach (var entry in Entries)
+    {
+        <li class="list-group-item list-group-item-action d-flex align-items-center @(IsSelected(entry) ? "active" : "")"
+            @onclick="() => OnClick(entry)" style="cursor: pointer;">
+            <i class="fa-solid @GetIcon(entry) me-2"></i>
+            <span class="flex-grow-1 text-truncate">@entry.Name</span>
+            @if (!entry.IsDirectory)
+            {
+                <button type="button" class="btn btn-sm btn-outline-info ms-2" 
+                        @onclick="() => OnInfoClick(entry)" 
+                        @onclick:stopPropagation>
+                    <i class="fa-solid fa-info-circle"></i>
+                </button>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<ArchiveEntry> Entries { get; set; } = [];
+    [Parameter] public ArchiveEntry? SelectedEntry { get; set; }
+    [Parameter] public bool ShowParentLink { get; set; }
+    [Parameter] public EventCallback OnGoUp { get; set; }
+    [Parameter] public EventCallback<ArchiveEntry> OnEntryClick { get; set; }
+    [Parameter] public EventCallback<ArchiveEntry> OnShowInfo { get; set; }
+    [Parameter] public Func<ArchiveEntry, string>? GetEntryIcon { get; set; }
+
+    private bool IsSelected(ArchiveEntry entry) => SelectedEntry?.Path == entry.Path;
+    
+    private string GetIcon(ArchiveEntry entry)
+    {
+        if (entry.IsDirectory) return "fa-folder text-warning";
+        return GetEntryIcon?.Invoke(entry) ?? "fa-file";
+    }
+
+    private async Task OnClick(ArchiveEntry entry)
+    {
+        await OnEntryClick.InvokeAsync(entry);
+    }
+
+    private async Task OnInfoClick(ArchiveEntry entry)
+    {
+        await OnShowInfo.InvokeAsync(entry);
+    }
+}

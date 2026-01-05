@@ -1,0 +1,86 @@
+@using OTRMod.Web.Services.Archive
+@using OTRMod.Web.Shared.Resources
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<Resource> T
+
+<table class="table table-hover table-sm archive-details-view mb-0">
+    <thead class="table-light">
+        <tr>
+            <th style="width: 50%">@T["name"]</th>
+            <th style="width: 25%">@T["type"]</th>
+            <th style="width: 15%" class="text-end">@T["size"]</th>
+            <th style="width: 10%"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ShowParentLink)
+        {
+            <tr class="cursor-pointer" @onclick="OnGoUp">
+                <td colspan="4">
+                    <i class="fa-solid fa-level-up-alt me-2"></i> ..
+                </td>
+            </tr>
+        }
+        @foreach (var entry in Entries)
+        {
+            <tr class="@(IsSelected(entry) ? "table-primary" : "") cursor-pointer" @onclick="() => OnClick(entry)">
+                <td class="text-truncate" style="max-width: 0;">
+                    <i class="fa-solid @GetIcon(entry) me-2"></i>
+                    @entry.Name
+                </td>
+                <td class="text-muted">@GetTypeName(entry)</td>
+                <td class="text-end text-muted">@(entry.IsDirectory ? "—" : SizeFormatter.Format(entry.Size))</td>
+                <td class="text-end">
+                    @if (!entry.IsDirectory)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                @onclick="() => OnInfoClick(entry)" 
+                                @onclick:stopPropagation>
+                            <i class="fa-solid fa-info-circle"></i>
+                        </button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<ArchiveEntry> Entries { get; set; } = [];
+    [Parameter, EditorRequired] public IFileSizeFormatter SizeFormatter { get; set; } = null!;
+    [Parameter] public ArchiveEntry? SelectedEntry { get; set; }
+    [Parameter] public bool ShowParentLink { get; set; }
+    [Parameter] public EventCallback OnGoUp { get; set; }
+    [Parameter] public EventCallback<ArchiveEntry> OnEntryClick { get; set; }
+    [Parameter] public EventCallback<ArchiveEntry> OnShowInfo { get; set; }
+    [Parameter] public Func<ArchiveEntry, string>? GetEntryIcon { get; set; }
+
+    private bool IsSelected(ArchiveEntry entry) => SelectedEntry?.Path == entry.Path;
+    
+    private string GetIcon(ArchiveEntry entry)
+    {
+        if (entry.IsDirectory) return "fa-folder text-warning";
+        return GetEntryIcon?.Invoke(entry) ?? "fa-file";
+    }
+
+    private string GetTypeName(ArchiveEntry entry)
+    {
+        if (entry.IsDirectory) return T["folder"];
+        var ext = Path.GetExtension(entry.Name);
+        return string.IsNullOrEmpty(ext) ? T["file"] : ext.TrimStart('.').ToUpperInvariant();
+    }
+
+    private async Task OnClick(ArchiveEntry entry)
+    {
+        await OnEntryClick.InvokeAsync(entry);
+    }
+
+    private async Task OnInfoClick(ArchiveEntry entry)
+    {
+        await OnShowInfo.InvokeAsync(entry);
+    }
+}
