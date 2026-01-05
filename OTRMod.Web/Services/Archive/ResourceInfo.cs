@@ -68,11 +68,10 @@ public sealed record TextureInfo(
 		Codec.IA4 => "IA4 (4-bit Gray+Alpha)",
 		Codec.IA8 => "IA8 (8-bit Gray+Alpha)",
 		Codec.IA16 => "IA16 (16-bit Gray+Alpha)",
-		Codec.JPEG32 => "JPEG",
 		_ => Codec.ToString()
 	};
 
-	public string Dimensions => $"{Width}×{Height}";
+	public string Dimensions => $"{Width}x{Height}"; // TODO: Localize!!
 }
 
 /// <summary>Text-specific metadata.</summary>

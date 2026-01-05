@@ -26,9 +26,6 @@ public static class Texture {
 		IA4,
 		IA8,
 		IA16,
-
-		/* Background */
-		JPEG32,
 	}
 
 	public static int GetOffset(Codec codec, int i) => codec switch {
@@ -36,7 +33,7 @@ public static class Texture {
 		Codec.RGBA16 or Codec.IA16 => i * 2,
 		Codec.CI4 or Codec.I4 or Codec.IA4 => i / 2,
 		Codec.CI8 or Codec.I8 or Codec.IA8 => i,
-		Codec.JPEG32 or Codec.Error => throw new NotImplementedException(),
+		Codec.Error => throw new NotImplementedException(),
 		_ => throw new ArgumentOutOfRangeException
 			(nameof(codec), $"Unknown texture type: {codec}"),
 	};
