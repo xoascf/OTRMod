@@ -29,7 +29,7 @@ builder.Services.AddScoped<IGenerationStatusDisplay, GenerationStatusDisplay>();
 // Archive exploration
 builder.Services.AddScoped<IArchiveExplorer, ArchiveExplorer>();
 builder.Services.AddSingleton<IResourceAnalyzer, ResourceAnalyzer>();
-builder.Services.AddScoped<ITexturePreviewService, TexturePreviewService>();
+builder.Services.AddScoped<IImagePreviewService, ImagePreviewService>();
 builder.Services.AddSingleton<IFileSizeFormatter, FileSizeFormatter>();
 
 WebAssemblyHost host = builder.Build();

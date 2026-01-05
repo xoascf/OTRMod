@@ -259,4 +259,7 @@
   <data name="download_png" xml:space="preserve">
     <value>Descargar PNG</value>
   </data>
+  <data name="download_image" xml:space="preserve">
+    <value>Descargar imagen</value>
+  </data>
 </root>

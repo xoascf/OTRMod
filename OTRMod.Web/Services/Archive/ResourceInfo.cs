@@ -16,6 +16,12 @@ public sealed record ResourceInfo(
 	/// <summary>Text-specific info (null if not text).</summary>
 	public TextInfo? Text { get; init; }
 
+	/// <summary>Whether this is a background resource (JPEG image).</summary>
+	public bool IsBackground { get; init; }
+
+	/// <summary>Whether this resource can be previewed as an image.</summary>
+	public bool HasImagePreview => Texture != null || IsBackground;
+
 	/// <summary>Gets a human-readable type name.</summary>
 	public string TypeName => Type switch {
 		ResourceType.Texture => "Texture",

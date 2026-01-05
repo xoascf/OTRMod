@@ -16,6 +16,11 @@ public interface IResourceAnalyzer {
 	/// Gets texture object for preview/download.
 	/// </summary>
 	OTRMod.Z.Texture? GetTexture(byte[] data);
+
+	/// <summary>
+	/// Gets background object for preview/download.
+	/// </summary>
+	OTRMod.Z.Background? GetBackground(byte[] data);
 }
 
 /// <summary>
@@ -36,6 +41,7 @@ public sealed class ResourceAnalyzer : IResourceAnalyzer {
 
 		return type switch {
 			ResourceType.Texture => info with { Texture = AnalyzeTextureMetadata(data) },
+			ResourceType.Background => info with { IsBackground = true },
 			ResourceType.Text => info with { Text = AnalyzeTextMetadata(data) },
 			_ => info
 		};
@@ -48,6 +54,19 @@ public sealed class ResourceAnalyzer : IResourceAnalyzer {
 				return null;
 
 			return OTRMod.Z.Texture.LoadFrom(res);
+		}
+		catch {
+			return null;
+		}
+	}
+
+	public OTRMod.Z.Background? GetBackground(byte[] data) {
+		try {
+			var res = OTRMod.Z.Resource.Read(data);
+			if (res.Type != ResourceType.Background)
+				return null;
+
+			return OTRMod.Z.Background.LoadFrom(res);
 		}
 		catch {
 			return null;

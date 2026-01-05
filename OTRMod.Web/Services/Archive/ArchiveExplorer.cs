@@ -92,6 +92,11 @@ public sealed class ArchiveExplorer : IArchiveExplorer {
 		return content == null ? null : _analyzer.GetTexture(content);
 	}
 
+	public async Task<OTRMod.Z.Background?> GetBackgroundAsync(string path) {
+		var content = await GetContentAsync(path);
+		return content == null ? null : _analyzer.GetBackground(content);
+	}
+
 	public void Close() {
 		_archiveData = null;
 		_entries.Clear();

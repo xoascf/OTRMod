@@ -3,21 +3,29 @@ using Microsoft.JSInterop;
 namespace OTRMod.Web.Services.Archive;
 
 /// <summary>
-/// Service for generating texture previews using native C# decoding.
+/// Service for generating image previews using native C# decoding.
 /// Uses Blob URLs for memory efficiency.
 /// </summary>
-public interface ITexturePreviewService : IAsyncDisposable {
+public interface IImagePreviewService : IAsyncDisposable {
 	/// <summary>
 	/// Creates a PNG Blob URL from a texture resource.
 	/// </summary>
-	/// <param name="texture">The texture to preview.</param>
-	/// <returns>Blob URL for the PNG image, or null on failure.</returns>
 	ValueTask<string?> CreatePreviewAsync(OTRMod.Z.Texture texture);
+
+	/// <summary>
+	/// Creates a JPEG Blob URL from a background resource.
+	/// </summary>
+	ValueTask<string?> CreatePreviewAsync(OTRMod.Z.Background background);
 
 	/// <summary>
 	/// Creates a PNG byte array from a texture resource (for download).
 	/// </summary>
 	ValueTask<byte[]?> CreatePngBytesAsync(OTRMod.Z.Texture texture);
+
+	/// <summary>
+	/// Gets the JPEG bytes from a background resource (for download).
+	/// </summary>
+	ValueTask<byte[]?> GetJpegBytesAsync(OTRMod.Z.Background background);
 
 	/// <summary>
 	/// Revokes a Blob URL to free memory.
@@ -26,14 +34,14 @@ public interface ITexturePreviewService : IAsyncDisposable {
 }
 
 /// <summary>
-/// Implementation using native C# texture decoding + JS Blob URLs.
+/// Implementation using native C# decoding + JS Blob URLs.
 /// </summary>
-public sealed class TexturePreviewService : ITexturePreviewService {
+public sealed class ImagePreviewService : IImagePreviewService {
 	private readonly IJSRuntime _js;
 	private IJSObjectReference? _module;
 	private bool _disposed;
 
-	public TexturePreviewService(IJSRuntime js) => _js = js;
+	public ImagePreviewService(IJSRuntime js) => _js = js;
 
 	private async ValueTask<IJSObjectReference> GetModuleAsync() {
 		return _module ??= await _js.InvokeAsync<IJSObjectReference>(
@@ -53,12 +61,36 @@ public sealed class TexturePreviewService : ITexturePreviewService {
 		}
 	}
 
+	public async ValueTask<string?> CreatePreviewAsync(OTRMod.Z.Background background) {
+		try {
+			var jpegBytes = await GetJpegBytesAsync(background);
+			if (jpegBytes == null) return null;
+
+			var module = await GetModuleAsync();
+			return await module.InvokeAsync<string?>("createBlobUrl", jpegBytes, "image/jpeg");
+		}
+		catch {
+			return null;
+		}
+	}
+
 	public ValueTask<byte[]?> CreatePngBytesAsync(OTRMod.Z.Texture texture) {
 		try {
 			// Use native OTRMod bitmap decoding
 			var bitmap = texture.GetBitmap();
 			var pngBytes = bitmap.ExportBytes(IronSoftware.Drawing.AnyBitmap.ImageFormat.Png);
 			return ValueTask.FromResult<byte[]?>(pngBytes);
+		}
+		catch {
+			return ValueTask.FromResult<byte[]?>(null);
+		}
+	}
+
+	public ValueTask<byte[]?> GetJpegBytesAsync(OTRMod.Z.Background background) {
+		try {
+			// Background resources contain raw JPEG data, just trim at EOI marker
+			var jpegBytes = background.GetJpegTrimmed();
+			return ValueTask.FromResult<byte[]?>(jpegBytes.Length > 0 ? jpegBytes : null);
 		}
 		catch {
 			return ValueTask.FromResult<byte[]?>(null);

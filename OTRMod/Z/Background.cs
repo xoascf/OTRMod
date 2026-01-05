@@ -20,11 +20,18 @@ public class Background : Resource {
 	}
 
 	public static Background LoadFrom(Resource res) {
-		if (res.Data == null)
-			throw new ArgumentException("Resource data cannot be null.", nameof(res));
+		if (res.Data == null || res.Data.Length < 4)
+			throw new ArgumentException("Resource data cannot be null or too short.", nameof(res));
 
-		// For now the payload is treated as the JPEG bytes (may include padding).
-		return new Background(res.Data) {
+		// Background format: first 4 bytes = texDataSize (little-endian), then JPEG data.
+		int texDataSize = res.Data.ToI32(0, false);
+		int jpegOffset = 4;
+		int jpegLength = Math.Min(texDataSize, res.Data.Length - jpegOffset);
+
+		byte[] jpegData = new byte[jpegLength];
+		Array.Copy(res.Data, jpegOffset, jpegData, 0, jpegLength);
+
+		return new Background(jpegData) {
 			Version = res.Version,
 			IsModded = res.IsModded,
 		};
@@ -35,7 +42,14 @@ public class Background : Resource {
 		// containers (u16 matrix: width * height * 2).
 		AddPaddingIfNeeded();
 
-		Data = JpegData ?? Array.Empty<byte>();
+		byte[] jpegBytes = JpegData ?? new byte[0];
+
+		// Background format: [4-byte texDataSize (little-endian)][jpeg data]
+		byte[] resourceData = new byte[4 + jpegBytes.Length];
+		ByteArray.FromI32(jpegBytes.Length, Big).CopyTo(resourceData, 0);
+		jpegBytes.CopyTo(resourceData, 4);
+
+		Data = resourceData;
 		return base.Formatted();
 	}
 
@@ -45,7 +59,7 @@ public class Background : Resource {
 	/// </summary>
 	public byte[] GetJpegTrimmed() {
 		if (JpegData == null || JpegData.Length < 2)
-			return Array.Empty<byte>();
+			return new byte[0];
 
 		for (int i = 0; i < JpegData.Length - 1; i++) {
 			if (JpegData[i] == 0xFF && JpegData[i + 1] == 0xD9) {
@@ -66,7 +80,7 @@ public class Background : Resource {
 
 	private void AddPaddingIfNeeded() {
 		if (JpegData == null) {
-			JpegData = Array.Empty<byte>();
+			JpegData = new byte[0];
 			return;
 		}
 

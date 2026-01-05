@@ -34,6 +34,9 @@ public interface IArchiveExplorer {
 	/// <summary>Get texture object for preview generation.</summary>
 	Task<OTRMod.Z.Texture?> GetTextureAsync(string path);
 
+	/// <summary>Get background object for preview generation.</summary>
+	Task<OTRMod.Z.Background?> GetBackgroundAsync(string path);
+
 	/// <summary>Close the current archive.</summary>
 	void Close();
 }

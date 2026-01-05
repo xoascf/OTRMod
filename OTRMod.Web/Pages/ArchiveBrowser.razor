@@ -162,7 +162,10 @@ else if (ArchiveExplorer.IsLoaded)
                                     
                                     <dt>@T["codec"]</dt>
                                     <dd>@_selectedInfo.Texture.CodecName</dd>
-                                    
+                                }
+
+                                @if (_selectedInfo.HasImagePreview)
+                                {
                                     <dt>@T["preview"]</dt>
                                     <dd>
                                         @if (_loadingPreview)
@@ -172,17 +175,17 @@ else if (ArchiveExplorer.IsLoaded)
                                                 @T["loading_preview"]
                                             </div>
                                         }
-                                        else if (!string.IsNullOrEmpty(_texturePreview))
+                                        else if (!string.IsNullOrEmpty(_imagePreview))
                                         {
-                                            <img src="@_texturePreview" alt="Texture preview" 
-                                                 class="img-fluid border" style="image-rendering: pixelated; max-width: 100%;" />
+                                            <img src="@_imagePreview" alt="Preview" 
+                                                 class="img-fluid border" style="@(_selectedInfo.Texture != null ? "image-rendering: pixelated; " : "")max-width: 100%;" />
                                         }
                                     </dd>
                                     
                                     <dd class="mt-2">
                                         <button type="button" class="btn btn-outline-success btn-sm w-100" 
-                                                @onclick="DownloadTexturePng" disabled="@_loadingPreview">
-                                            <i class="fa-solid fa-download me-1"></i> @T["download_png"]
+                                                @onclick="DownloadImage" disabled="@_loadingPreview">
+                                            <i class="fa-solid fa-download me-1"></i> @T["download_image"]
                                         </button>
                                     </dd>
                                 }
@@ -223,14 +226,14 @@ else
     [Inject] private IArchiveExplorer ArchiveExplorer { get; set; } = null!;
     [Inject] private IFileSizeFormatter SizeFormatter { get; set; } = null!;
     [Inject] private NavigationManager Navigation { get; set; } = null!;
-    [Inject] private ITexturePreviewService TexturePreview { get; set; } = null!;
+    [Inject] private IImagePreviewService ImagePreview { get; set; } = null!;
     [Inject] private BlazorDownloadFile.IBlazorDownloadFileService DownloadService { get; set; } = null!;
 
     private bool _loading;
     private string _currentPath = string.Empty;
     private ArchiveEntry? _selectedEntry;
     private ResourceInfo? _selectedInfo;
-    private string? _texturePreview;
+    private string? _imagePreview;
     private bool _loadingInfo;
     private bool _loadingPreview;
     private ArchiveViewMode _viewMode = ArchiveViewMode.Details;
@@ -258,12 +261,12 @@ else
     private async void CloseArchive()
     {
         _previewCts?.Cancel();
-        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
+        await ImagePreview.RevokeBlobUrlAsync(_imagePreview);
         ArchiveExplorer.Close();
         _currentPath = string.Empty;
         _selectedEntry = null;
         _selectedInfo = null;
-        _texturePreview = null;
+        _imagePreview = null;
     }
 
     private IEnumerable<ArchiveEntry> GetCurrentEntries() => ArchiveExplorer.GetEntries(_currentPath);
@@ -295,8 +298,8 @@ else
 
         _selectedEntry = entry;
         _selectedInfo = null;
-        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
-        _texturePreview = null;
+        await ImagePreview.RevokeBlobUrlAsync(_imagePreview);
+        _imagePreview = null;
         _loadingInfo = true;
         _loadingPreview = false;
         StateHasChanged();
@@ -307,18 +310,18 @@ else
             _selectedInfo = ArchiveExplorer.AnalyzeMetadata(entry.Path);
             _loadingInfo = false;
             
-            // Start preview loading in background if it's a texture
-            if (_selectedInfo?.Type == ResourceType.Texture)
+            // Start preview loading in background if it's an image resource
+            if (_selectedInfo?.HasImagePreview == true)
             {
                 _loadingPreview = true;
             }
             
             StateHasChanged();
 
-            // Load texture preview asynchronously (doesn't block UI)
-            if (_selectedInfo?.Type == ResourceType.Texture)
+            // Load image preview asynchronously (doesn't block UI)
+            if (_selectedInfo?.HasImagePreview == true)
             {
-                await LoadTexturePreviewAsync(entry.Path, token);
+                await LoadImagePreviewAsync(entry.Path, _selectedInfo, token);
             }
         }
         catch (OperationCanceledException)
@@ -333,7 +336,7 @@ else
         }
     }
 
-    private async Task LoadTexturePreviewAsync(string path, CancellationToken token)
+    private async Task LoadImagePreviewAsync(string path, ResourceInfo info, CancellationToken token)
     {
         try
         {
@@ -342,18 +345,29 @@ else
             
             if (token.IsCancellationRequested) return;
 
-            var texture = await ArchiveExplorer.GetTextureAsync(path);
-            if (token.IsCancellationRequested || texture == null) return;
+            string? blobUrl = null;
 
-            var blobUrl = await TexturePreview.CreatePreviewAsync(texture);
+            if (info.Texture != null)
+            {
+                var texture = await ArchiveExplorer.GetTextureAsync(path);
+                if (token.IsCancellationRequested || texture == null) return;
+                blobUrl = await ImagePreview.CreatePreviewAsync(texture);
+            }
+            else if (info.IsBackground)
+            {
+                var background = await ArchiveExplorer.GetBackgroundAsync(path);
+                if (token.IsCancellationRequested || background == null) return;
+                blobUrl = await ImagePreview.CreatePreviewAsync(background);
+            }
+
             if (token.IsCancellationRequested)
             {
                 // Clean up if cancelled
-                await TexturePreview.RevokeBlobUrlAsync(blobUrl);
+                await ImagePreview.RevokeBlobUrlAsync(blobUrl);
                 return;
             }
 
-            _texturePreview = blobUrl;
+            _imagePreview = blobUrl;
         }
         finally
         {
@@ -365,19 +379,36 @@ else
         }
     }
 
-    private async Task DownloadTexturePng()
+    private async Task DownloadImage()
     {
-        if (_selectedEntry == null || _selectedInfo?.Type != ResourceType.Texture)
+        if (_selectedEntry == null || _selectedInfo?.HasImagePreview != true)
             return;
 
-        var texture = await ArchiveExplorer.GetTextureAsync(_selectedEntry.Path);
-        if (texture == null) return;
+        byte[]? imageBytes = null;
+        string extension = ".png";
+        string mimeType = "image/png";
 
-        var pngBytes = await TexturePreview.CreatePngBytesAsync(texture);
-        if (pngBytes == null) return;
+        if (_selectedInfo.Texture != null)
+        {
+            var texture = await ArchiveExplorer.GetTextureAsync(_selectedEntry.Path);
+            if (texture != null)
+                imageBytes = await ImagePreview.CreatePngBytesAsync(texture);
+        }
+        else if (_selectedInfo.IsBackground)
+        {
+            var background = await ArchiveExplorer.GetBackgroundAsync(_selectedEntry.Path);
+            if (background != null)
+            {
+                imageBytes = await ImagePreview.GetJpegBytesAsync(background);
+                extension = ".jpg";
+                mimeType = "image/jpeg";
+            }
+        }
 
-        var fileName = Path.GetFileNameWithoutExtension(_selectedEntry.Name) + ".png";
-        await DownloadService.DownloadFile(fileName, pngBytes, "image/png");
+        if (imageBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(_selectedEntry.Name) + extension;
+        await DownloadService.DownloadFile(fileName, imageBytes, mimeType);
     }
 
     private string GetEntryIcon(ArchiveEntry entry)
@@ -427,6 +458,6 @@ else
     {
         _previewCts?.Cancel();
         _previewCts?.Dispose();
-        await TexturePreview.RevokeBlobUrlAsync(_texturePreview);
+        await ImagePreview.RevokeBlobUrlAsync(_imagePreview);
     }
 }
