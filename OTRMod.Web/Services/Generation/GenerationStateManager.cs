@@ -47,7 +47,7 @@ public sealed class GenerationStateManager : IGenerationStateManager {
 	}
 
 	public void SetError(Exception exception) {
-		_state.SetError(exception.Message);
+		_state.SetError(exception.ToString());
 		NotifyStateChanged();
 	}
 
