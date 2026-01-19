@@ -114,6 +114,7 @@ private async Task GenerateMod() {
 }
 
 private async Task RunProcess() {
+	Generate.ClearFiles();
 	_script = _scriptMs.ToArray().ToStringArray();
 	byte[] decompressed = Decompressor.Data(_romMs.ToArray().ToBigEndian(), calc: false);
 	ScriptParser sParser = new() {

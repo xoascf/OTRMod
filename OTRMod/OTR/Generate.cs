@@ -15,6 +15,9 @@ public class Generate {
 	public static void AddFile(string path, MemStream data)
 		=> _files.Add(path.Replace(@"\", "/"), data);
 
+	public static void ClearFiles()
+		=> _files.Clear();
+
 	/* OTR (MPQ-based) */
 	public static void FromImage(ref MemStream otrStream) {
 		MpqArchiveBuilder builder = new();
