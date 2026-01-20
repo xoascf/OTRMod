@@ -22,6 +22,10 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<CultureService>();
 builder.Services.AddScoped<SettingsService>();
 
+// Message path and file naming services (SOLID)
+builder.Services.AddScoped<IMessagePathService, MessagePathService>();
+builder.Services.AddScoped<IModFileNameService, ModFileNameService>();
+
 // Generation state management (SOLID)
 builder.Services.AddScoped<IGenerationStateManager, GenerationStateManager>();
 builder.Services.AddScoped<IGenerationStatusDisplay, GenerationStatusDisplay>();
