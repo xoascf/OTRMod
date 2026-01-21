@@ -107,7 +107,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 	[Inject] private IMessagePathService PathService { get; set; } = null!;
 	[Inject] private IModFileNameService FileNameService { get; set; } = null!;
 	[Inject] private IJSRuntime JSRuntime { get; set; } = null!;
-	
+
 	[SupplyParameterFromQuery(Name = "archive-path")]
 	public string? ArchivePath { get; set; }
 
@@ -128,60 +128,74 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 	private TextDataItem? currentTab;
 	private OutputFormat _outputFormat = OutputFormat.O2R;
 	private bool _hasUnsavedChanges = false;
-	private DotNetObjectReference<TextEditor>? _objRef;
+	private IDisposable? _locationChangingRegistration;
 	private string charReplacements = DecodeBase64("XG49MDEK4oC+PTdGCsOAPTgwCsOuPTgxCsOCPTgyCsOEPTgzCsOHPTg0CsOIPTg1CsOJPTg2CsOKPTg3CsOLPTg4CsOPPTg5CsOUPThBCsOWPThCCsOZPThDCsObPThECsOcPThFCsOfPThGCsOgPTkwCsOhPTkxCsOiPTkyCsOkPTkzCsOnPTk0CsOoPTk1CsOpPTk2CsOqPTk3CsOrPTk4CsOvPTk5CsO0PTlBCsO2PTlCCsO5PTlDCsO7PTlECsO8PTlFCltBXT05RgpbQl09QTAKW0NdPUExCltMXT1BMgpbUl09QTMKW1pdPUE0CltDLVVwXT1BNQpbQy1Eb3duXT1BNgpbQy1MZWZ0XT1BNwpbQy1SaWdodF09QTgK4pa8PUE5CltDb250cm9sLVBhZF09QUEKW0QtUGFkXT1BQg==");
 
 	RenderFragment LoadMsg() {
 		return @<InputTextArea class="form-control" rows="12" cols="96" @bind-Value="@currentHContent" @bind-Value:after="OnContentChanged" disabled="@_working" style="border-radius: 0 var(--bs-border-radius) var(--bs-border-radius);"></InputTextArea>;
 	}
-	
+
 	private void OnContentChanged() {
 		_hasUnsavedChanges = true;
 		UpdateUnsavedChangesFlag();
 	}
-	
-	private async void UpdateUnsavedChangesFlag() {
-		await JSRuntime.InvokeVoidAsync("eval", $"window.__hasUnsavedChanges = {(_hasUnsavedChanges ? "true" : "false")};");
+
+	private void UpdateUnsavedChangesFlag() {
+		_ = JSRuntime.InvokeVoidAsync("eval", $"window.__hasUnsavedChanges = {(_hasUnsavedChanges ? "true" : "false")};");
 	}
 
 	protected override async Task OnInitializedAsync() {
 		_outputFormat = await SettingsService.GetOutputFormatAsync();
 		SetReplacements();
-		
-		// Set up beforeunload handler for unsaved changes warning
-		_objRef = DotNetObjectReference.Create(this);
-		await JSRuntime.InvokeVoidAsync("eval", @"
-			window.addEventListener('beforeunload', function(e) {
-				if (window.__hasUnsavedChanges) {
-					e.preventDefault();
-					e.returnValue = '';
-					return '';
+
+		// Register Blazor navigation handler: when there are unsaved changes,
+		// prevent SPA navigation and trigger a full-page navigation so the
+		// browser "beforeunload" handler shows the native localized message.
+		_locationChangingRegistration = NavigationManager.RegisterLocationChangingHandler(async context => {
+			if (_hasUnsavedChanges) {
+				// Stop the router from performing the navigation
+				context.PreventNavigation();
+
+				// Ensure the global beforeunload handler and helper exist, then force a real navigation
+				await JSRuntime.InvokeVoidAsync("eval", @"
+				if (!window.__textEditorBeforeUnloadAdded) {
+					window.__textEditorBeforeUnloadAdded = true;
+					window.addEventListener('beforeunload', function(e) {
+						if (window.__hasUnsavedChanges) {
+							e.preventDefault();
+							e.returnValue = '';
+							return '';
+						}
+					});
 				}
-			});
-		");
+				if (!window.blazorHelpers) { window.blazorHelpers = {}; }
+				if (!window.blazorHelpers.navigateToWithUnload) {
+					window.blazorHelpers.navigateToWithUnload = function(url) { window.location.href = url; };
+				}
+				");
+
+				// Trigger full navigation (will invoke beforeunload and show native prompt)
+				await JSRuntime.InvokeVoidAsync("blazorHelpers.navigateToWithUnload", context.TargetLocation);
+			}
+		});
 	}
-	
+
 	public async ValueTask DisposeAsync() {
-		_objRef?.Dispose();
+		_locationChangingRegistration?.Dispose();
 		await JSRuntime.InvokeVoidAsync("eval", "window.__hasUnsavedChanges = false;");
 	}
 
-	protected override async Task OnParametersSetAsync()
-	{
+	protected override async Task OnParametersSetAsync() {
 		_archiveLoadError = null;
-		
+
 		// Load from archive if path is provided and archive is loaded
-		if (!string.IsNullOrEmpty(ArchivePath) && _textFiles.Count == 0)
-		{
+		if (!string.IsNullOrEmpty(ArchivePath) && _textFiles.Count == 0) {
 			Console.WriteLine($"[TextEditor] OnParametersSetAsync - ArchivePath: {ArchivePath}");
 			Console.WriteLine($"[TextEditor] ArchiveExplorer.IsLoaded: {ArchiveExplorer.IsLoaded}");
-			
+
 			if (ArchiveExplorer.IsLoaded)
-			{
 				await LoadFromArchiveAsync(ArchivePath);
-			}
-			else
-			{
+			else {
 				Console.WriteLine("[TextEditor] Archive not loaded - archive state was lost during navigation");
 				_archiveLoadError = T["archive_not_loaded"];
 			}
@@ -211,42 +225,42 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		}
 
 		currentHContent = tab.PreContent;
-		
+
 		// Use the original mod path if available, extract directory path (remove filename)
 		string fullPath;
 		if (_textFilePaths.TryGetValue(tab.Id, out var storedPath))
 			fullPath = PathService.NormalizePath(storedPath);
 		else
 			fullPath = $"text/{tab.Title}/{tab.Title}";
-		
+
 		// Extract directory path (remove filename)
 		var directoryPath = PathService.GetDirectoryPath(fullPath);
 		if (string.IsNullOrEmpty(directoryPath))
 			directoryPath = $"text/{tab.Title}"; // Fallback
-		
+
 		// Determine if it's an override path and set the switch accordingly
 		_isOverride = PathService.IsOverridePath(directoryPath);
-		
+
 		// Store the standard directory path (without override prefix and without filename)
 		_standardPath = PathService.IsOverridePath(directoryPath) 
 			? PathService.GetDirectoryPath(PathService.ToStandardPath(directoryPath + "/dummy"))
 			: directoryPath;
-		
+
 		// Update the displayed path based on override state
 		UpdatePathFromOverrideState();
-		
+
 		tab.Content = LoadMsg();
 		currentTab = tab;
 	}
-	
+
 	private void OnAddTabSelected(Tabs.TabItem e) {
 		// Create a new empty message file
 		var newFileName = $"new_message_{DateTime.Now:yyyyMMddHHmmss}";
 		var newText = new OTRMod.Z.Text(Array.Empty<byte>(), _replacements);
-		
+
 		_textFiles.Add(newFileName, newText);
 		_textFilePaths.Add(newFileName, $"{_msgPathInMod}/{newFileName}");
-		
+
 		// Create a new tab
 		var newTab = new TextDataItem { 
 			Id = newFileName, 
@@ -256,23 +270,23 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			IsLoaded = false,
 			PreContent = ""
 		};
-		
+
 		tabList.Insert(tabList.Count - 1, newTab); // Insert before the "+" tab
 		StateHasChanged();
-		
+
 		// Select the new tab
 		OnTabSelected(newTab);
 		_hasUnsavedChanges = true;
 		UpdateUnsavedChangesFlag();
 	}
-	
+
 	private void OnOverrideChanged(ChangeEventArgs e) {
 		if (bool.TryParse(e.Value?.ToString(), out var isOverride)) {
 			_isOverride = isOverride;
 			UpdatePathFromOverrideState();
 		}
 	}
-	
+
 	private void OnPathChanged(ChangeEventArgs e) {
 		if (e.Value is string newPath && !string.IsNullOrWhiteSpace(newPath)) {
 			var normalized = PathService.NormalizePath(newPath);
@@ -280,10 +294,10 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			var directoryPath = PathService.GetDirectoryPath(normalized);
 			if (string.IsNullOrEmpty(directoryPath))
 				directoryPath = normalized; // User typed just a directory path
-			
+
 			// Update override state based on what user typed
 			var isPathOverride = PathService.IsOverridePath(directoryPath);
-			
+
 			// If user typed an override path, update the override state
 			if (isPathOverride) {
 				_isOverride = true;
@@ -302,7 +316,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			}
 		}
 	}
-	
+
 	private void UpdatePathFromOverrideState() {
 		if (_isOverride) {
 			// Only generate a new override path if current path is not already an override path
@@ -354,7 +368,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 			var content = await ArchiveExplorer.GetContentAsync(path);
 			Console.WriteLine($"[TextEditor] Content retrieved: {content != null} (length: {content?.Length ?? 0})");
-			
+
 			if (content != null)
 			{
 				var modRes = OTRMod.Z.Resource.Read(content);
@@ -365,13 +379,13 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 				_textFiles.Add(modResFileName, modResText);
 				_textFilePaths.Add(modResFileName, normalizedPath);
-				
+
 				// Determine if it's an override path (check directory)
 				_isOverride = PathService.IsOverridePath(directoryPath);
 				_standardPath = PathService.IsOverridePath(directoryPath)
 					? PathService.GetDirectoryPath(PathService.ToStandardPath(directoryPath + "/dummy"))
 					: directoryPath;
-				
+
 				_msgPathInMod = directoryPath;
 				Console.WriteLine($"[TextEditor] Text file loaded: {modResFileName}, Override: {_isOverride}");
 			}
@@ -423,7 +437,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 				_textFilePaths.Add(modResFileName, modResFullPath);
 				msgRes.Value.Flush();
 			}
-			
+
 			// If files were loaded, set override state and path from the first file
 			if (_textFilePaths.Count > 0) {
 				var firstPath = _textFilePaths.Values.First();
@@ -464,22 +478,22 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 	private async Task ExportToMod() {
 		if (currentTab == null)
 			return;
-			
+
 		_working = true;
 		_modMs.SetLength(0);
 		var modResText = new OTRMod.Z.Text(currentHContent, _replacements);
 		await Task.Delay(10);
-		
+
 		// Combine directory path with tab name (filename)
 		var directoryPath = PathService.NormalizePath(_msgPathInMod);
 		var fileName = currentTab.Title;
 		var finalPath = $"{directoryPath}/{fileName}";
-		
+
 		Generate.AddFile(finalPath, modResText.Formatted());
 
 		// Generate appropriate mod file name using the service
 		var modFileName = FileNameService.GenerateFileName(finalPath, _outputFormat, _isOverride);
-		
+
 		if (_outputFormat == OutputFormat.O2R) {
 			Generate.FromImageO2R(ref _modMs);
 		} else {

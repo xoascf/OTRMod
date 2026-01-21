@@ -89,10 +89,10 @@ public class MessagePathService : IMessagePathService {
 
 		var normalized = NormalizePath(fullPath);
 		var lastSlash = normalized.LastIndexOf('/');
-		
+
 		if (lastSlash < 0)
 			return string.Empty; // No directory, just filename
-		
+
 		return normalized.Substring(0, lastSlash);
 	}
 }
