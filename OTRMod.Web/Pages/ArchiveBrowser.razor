@@ -413,25 +413,12 @@ else
 
     private string GetEntryIcon(ArchiveEntry entry)
     {
-        // Use cached resource info if available, otherwise use path-based detection
-        if (entry.ResourceInfo != null)
-            return entry.ResourceInfo.IconClass;
-        
-        if (entry.IsTextResource)
-            return "fa-file-lines text-info";
-        
-        // Heuristic based on path
-        var path = entry.Path.ToLowerInvariant();
-        if (path.Contains("tex") || path.EndsWith(".png") || path.EndsWith(".jpg"))
-            return "fa-image text-success";
-        if (path.Contains("anim"))
-            return "fa-person-running text-primary";
-        if (path.Contains("audio") || path.Contains("sound") || path.Contains("music"))
-            return "fa-music text-warning";
-        if (path.Contains("skel"))
-            return "fa-bone text-secondary";
-        
-        return "fa-file";
+        // Use cached resource info if available, otherwise analyze metadata
+        if (entry.ResourceInfo == null)
+        {
+            entry.ResourceInfo = ArchiveExplorer.AnalyzeMetadata(entry.Path);
+        }
+        return entry.ResourceInfo?.IconClass ?? "fa-file";
     }
 
     private void OpenInTextEditor(ArchiveEntry entry)

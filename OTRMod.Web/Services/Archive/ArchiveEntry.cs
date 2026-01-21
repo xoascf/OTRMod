@@ -22,7 +22,7 @@ public sealed record ArchiveEntry(
 	long Size,
 	bool IsDirectory) {
 	/// <summary>Resource info (populated after analysis).</summary>
-	public ResourceInfo? ResourceInfo { get; init; }
+	public ResourceInfo? ResourceInfo { get; set; }
 
 	/// <summary>Checks if this is a text resource.</summary>
 	public bool IsTextResource => ResourceInfo?.Type == ResourceType.Text;

@@ -46,7 +46,7 @@ public sealed record ResourceInfo(
 	/// <summary>Gets a Font Awesome icon class for the resource type.</summary>
 	public string IconClass => Type switch {
 		ResourceType.Texture or ResourceType.Background => "fa-image",
-		ResourceType.Text => "fa-file-lines",
+		ResourceType.Text => "fa-file-text",
 		ResourceType.Animation or ResourceType.PlayerAnimation => "fa-person-running",
 		ResourceType.Audio or ResourceType.AudioSample or ResourceType.AudioSoundFont or ResourceType.AudioSequence => "fa-music",
 		ResourceType.Skeleton or ResourceType.SkeletonLimb => "fa-bone",
