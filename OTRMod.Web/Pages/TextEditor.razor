@@ -639,6 +639,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 				tabList = new List<TextDataItem>(tabList);
 				StateHasChanged();
 			});
+			UpdateGlobalUnsavedFlag();
 		}
 	}
 
