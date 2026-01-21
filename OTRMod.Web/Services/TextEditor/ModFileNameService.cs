@@ -1,4 +1,4 @@
-namespace OTRMod.Web.Services;
+namespace OTRMod.Web.Services.TextEditor;
 
 /// <summary>
 /// Implementation of IModFileNameService for generating mod file names.

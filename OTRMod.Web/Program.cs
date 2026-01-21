@@ -7,6 +7,7 @@ using OTRMod.Web;
 using OTRMod.Web.Services;
 using OTRMod.Web.Services.Archive;
 using OTRMod.Web.Services.Generation;
+using OTRMod.Web.Services.TextEditor;
 using System.Globalization;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -22,7 +23,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<CultureService>();
 builder.Services.AddScoped<SettingsService>();
 
-// Message path and file naming services (SOLID)
+// Text editor related services
 builder.Services.AddScoped<IMessagePathService, MessagePathService>();
 builder.Services.AddScoped<IModFileNameService, ModFileNameService>();
 

@@ -1,4 +1,4 @@
-namespace OTRMod.Web.Services;
+namespace OTRMod.Web.Services.TextEditor;
 
 /// <summary>
 /// Service for generating appropriate mod file names based on content and settings.

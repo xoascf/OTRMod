@@ -8,6 +8,7 @@
 		} else {
 			<button class="nav-link @GetTabClass(tab)" id="@($"{Id}-tab")" @onclick="() => SelectTab(tab)" @ondblclick="() => StartEditingTitle(tab)">
 				@tab.Title
+				@if (tab is TabItem ti && ti.IsDirty) {<span class="text-danger ms-1">*</span>}
 			</button>
 		}
 	}
@@ -27,6 +28,7 @@
 		public string Title { get; set; } = "";
 		public RenderFragment? Content { get; set; }
 		public EventCallback<TabItem> OnSelected { get; set; }
+		public bool IsDirty { get; set; }
 	}
 	[Parameter] public string CssClass { get; set; } = "";
 	[Parameter, EditorRequired] public IEnumerable<TabItem> TabList { get; set; } = null!;

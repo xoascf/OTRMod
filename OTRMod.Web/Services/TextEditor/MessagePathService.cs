@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace OTRMod.Web.Services;
+namespace OTRMod.Web.Services.TextEditor;
 
 /// <summary>
 /// Implementation of IMessagePathService for managing message file paths.

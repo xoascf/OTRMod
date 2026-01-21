@@ -5,6 +5,7 @@
 @using OTRMod.OTR
 @using OTRMod.Utility
 @using OTRMod.Web.Services
+@using OTRMod.Web.Services.TextEditor
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
 
@@ -50,8 +51,10 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		@if (tabList.Count != _textFiles.Count + 1)
 		{
 			tabList.Clear();
-			foreach (KeyValuePair<string, OTRMod.Z.Text> msg in _textFiles)
-				tabList.Add(new TextDataItem { Id = msg.Key, Title = msg.Key, Content =@<p>@T["loading"]</p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnTabSelected(e)) });
+			foreach (KeyValuePair<string, OTRMod.Z.Text> msg in _textFiles) {
+				var t = new TextDataItem { Id = msg.Key, Title = msg.Key, Content =@<p>@T["loading"]</p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnTabSelected(e)) };
+				tabList.Add(t);
+			}
 			// Add "+" tab for creating new messages
 			tabList.Add(new TextDataItem { Id = "__add__", Title = "+", Content =@<p></p>, OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem e) => OnAddTabSelected(e)) });
 		}
@@ -97,7 +100,11 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 @code {
 	public class TextDataItem : Tabs.TabItem {
 		public bool IsLoaded { get; set; }
+		// Cached content for the tab (current text shown when switching to it)
 		public string PreContent { get; set; } = "";
+		// The content considered "saved" or original for change comparison
+		public string OriginalContent { get; set; } = "";
+		public string EditorId { get; set; } = "";
 	}
 
 	[Inject] private IBlazorDownloadFileService DlFileService { get; set; } = null!;
@@ -129,19 +136,43 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 	private OutputFormat _outputFormat = OutputFormat.O2R;
 	private bool _hasUnsavedChanges = false;
 	private IDisposable? _locationChangingRegistration;
+
+	private DotNetObjectReference<TextEditor>? _objRef;
 	private string charReplacements = DecodeBase64("XG49MDEK4oC+PTdGCsOAPTgwCsOuPTgxCsOCPTgyCsOEPTgzCsOHPTg0CsOIPTg1CsOJPTg2CsOKPTg3CsOLPTg4CsOPPTg5CsOUPThBCsOWPThCCsOZPThDCsObPThECsOcPThFCsOfPThGCsOgPTkwCsOhPTkxCsOiPTkyCsOkPTkzCsOnPTk0CsOoPTk1CsOpPTk2CsOqPTk3CsOrPTk4CsOvPTk5CsO0PTlBCsO2PTlCCsO5PTlDCsO7PTlECsO8PTlFCltBXT05RgpbQl09QTAKW0NdPUExCltMXT1BMgpbUl09QTMKW1pdPUE0CltDLVVwXT1BNQpbQy1Eb3duXT1BNgpbQy1MZWZ0XT1BNwpbQy1SaWdodF09QTgK4pa8PUE5CltDb250cm9sLVBhZF09QUEKW0QtUGFkXT1BQg==");
 
-	RenderFragment LoadMsg() {
-		return @<InputTextArea class="form-control" rows="12" cols="96" @bind-Value="@currentHContent" @bind-Value:after="OnContentChanged" disabled="@_working" style="border-radius: 0 var(--bs-border-radius) var(--bs-border-radius);"></InputTextArea>;
+	private void SetTabDirty(TextDataItem tab, bool isDirty) {
+		if (tab == null) return;
+		tab.IsDirty = isDirty;
+		// base.Title was updated in the property setter; refresh UI
 	}
 
-	private void OnContentChanged() {
-		_hasUnsavedChanges = true;
-		UpdateUnsavedChangesFlag();
+	private CancellationTokenSource? _unsavedDebounceCts;
+	private const int UnsavedDebounceMs = 600;
+
+	private void UpdateGlobalUnsavedFlag() {
+		_hasUnsavedChanges = tabList.Any(t => t.IsDirty);
+		// Debounce JS interop to avoid frequent calls while typing
+		_unsavedDebounceCts?.Cancel();
+		_unsavedDebounceCts = new CancellationTokenSource();
+		_ = DebouncedUpdateAsync(_unsavedDebounceCts.Token);
 	}
 
-	private void UpdateUnsavedChangesFlag() {
-		_ = JSRuntime.InvokeVoidAsync("eval", $"window.__hasUnsavedChanges = {(_hasUnsavedChanges ? "true" : "false")};");
+	private async Task DebouncedUpdateAsync(CancellationToken token) {
+		try {
+			await Task.Delay(UnsavedDebounceMs, token);
+			await UpdateUnsavedChangesFlag();
+		}
+		catch (TaskCanceledException) { }
+	}
+
+	private async Task UpdateUnsavedChangesFlag() {
+		// Update a global JS flag used by beforeunload handler
+		try {
+			await JSRuntime.InvokeVoidAsync("eval", $"window.__hasUnsavedChanges = {(_hasUnsavedChanges ? "true" : "false")};");
+		}
+		catch {
+			// Ignore JS interop errors during rapid UI interactions
+		}
 	}
 
 	protected override async Task OnInitializedAsync() {
@@ -182,6 +213,10 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 	public async ValueTask DisposeAsync() {
 		_locationChangingRegistration?.Dispose();
+		if (currentTab != null && !string.IsNullOrEmpty(currentTab.EditorId)) {
+			try { await JSRuntime.InvokeVoidAsync("fastTextEditor.dispose", currentTab.EditorId); } catch { }
+		}
+		_objRef?.Dispose();
 		await JSRuntime.InvokeVoidAsync("eval", "window.__hasUnsavedChanges = false;");
 	}
 
@@ -209,22 +244,50 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		}
 	}
 
-	private void OnTabSelected(Tabs.TabItem e) {
-		if (currentTab != null)
-			currentTab.PreContent = currentHContent;
+	private async void OnTabSelected(Tabs.TabItem e) {
+		if (currentTab != null) {
+			// Get the latest text from JS before saving
+			try {
+				currentTab.PreContent = await JSRuntime.InvokeAsync<string>("fastTextEditor.getText", currentTab.EditorId);
+			} catch {
+				currentTab.PreContent = currentHContent;
+			}
+		}
 
 		var tab = e as TextDataItem;
 		if (tab == null)
 			return;
 
+		// Dispose previous editor if switching tabs
+		if (currentTab != null && !string.IsNullOrEmpty(currentTab.EditorId)) {
+			try { await JSRuntime.InvokeVoidAsync("fastTextEditor.dispose", currentTab.EditorId); } catch { }
+		}
+
 		Console.WriteLine($"Tab selected: {tab.Id}");
 		if (!tab.IsLoaded || _needReplacements) {
-			tab.PreContent = _textFiles[tab.Id].ToHumanReadable(_replacements);
+			var content = _textFiles[tab.Id].ToHumanReadable(_replacements);
+			// cache and original hash
+			tab.PreContent = content;
+			// Store original (saved) state when first loaded
+			tab.OriginalContent = content;
 			_needReplacements = false;
 			tab.IsLoaded = true;
 		}
-
 		currentHContent = tab.PreContent;
+
+		// Update dirty flag for the tab based on original content
+		SetTabDirty(tab, !string.Equals(currentHContent ?? "", tab.OriginalContent ?? "", StringComparison.Ordinal));
+		// Generate unique editor ID if not set
+		if (string.IsNullOrEmpty(tab.EditorId)) tab.EditorId = $"editor_{Guid.NewGuid():N}";
+		// Render editor
+		tab.Content = @<textarea id="@tab.EditorId" class="form-control" rows="12" cols="96" disabled="@_working" style="border-radius: 0 var(--bs-border-radius) var(--bs-border-radius);">@currentHContent</textarea>;
+		currentTab = tab;
+		_ = InvokeAsync(async () => { 
+			StateHasChanged(); 
+			await Task.Delay(5); 
+			await InitializeJsEditor(tab.EditorId, tab.OriginalContent); 
+		});
+		UpdateGlobalUnsavedFlag();
 
 		// Use the original mod path if available, extract directory path (remove filename)
 		string fullPath;
@@ -248,27 +311,33 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 		// Update the displayed path based on override state
 		UpdatePathFromOverrideState();
-
-		tab.Content = LoadMsg();
-		currentTab = tab;
 	}
 
 	private void OnAddTabSelected(Tabs.TabItem e) {
 		// Create a new empty message file
-		var newFileName = $"new_message_{DateTime.Now:yyyyMMddHHmmss}";
+		// Ensure unique filename (avoid duplicate keys)
+		var newFileNameBase = $"new_message_{DateTime.Now:yyyyMMddHHmmss}";
+		var newFileName = newFileNameBase;
+		int suffix = 1;
+		while (_textFiles.ContainsKey(newFileName) || _textFilePaths.ContainsKey(newFileName)) {
+			newFileName = newFileNameBase + "_" + suffix.ToString();
+			suffix++;
+		}
 		var newText = new OTRMod.Z.Text(Array.Empty<byte>(), _replacements);
 
 		_textFiles.Add(newFileName, newText);
 		_textFilePaths.Add(newFileName, $"{_msgPathInMod}/{newFileName}");
 
 		// Create a new tab
-		var newTab = new TextDataItem { 
-			Id = newFileName, 
-			Title = newFileName, 
-			Content = @<p>@T["loading"]</p>, 
+		var newTab = new TextDataItem {
+			Id = newFileName,
+			Title = newFileName,
+			Content = @<p>@T["loading"]</p>,
 			OnSelected = EventCallback.Factory.Create(this, (Tabs.TabItem t) => OnTabSelected(t)),
 			IsLoaded = false,
-			PreContent = ""
+			PreContent = "",
+			OriginalContent = "",
+			IsDirty = true // new file is considered unsaved
 		};
 
 		tabList.Insert(tabList.Count - 1, newTab); // Insert before the "+" tab
@@ -276,8 +345,8 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 		// Select the new tab
 		OnTabSelected(newTab);
-		_hasUnsavedChanges = true;
-		UpdateUnsavedChangesFlag();
+		// Mark global unsaved changes
+		UpdateGlobalUnsavedFlag();
 	}
 
 	private void OnOverrideChanged(ChangeEventArgs e) {
@@ -469,9 +538,16 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		_working = true;
 		await Task.Delay(10);
 		string hFileName = $"{currentTab.Title}.h";
+		// Get latest text from JS before saving
+		try {
+			currentHContent = await JSRuntime.InvokeAsync<string>("fastTextEditor.getText", currentTab.EditorId);
+		}
+		catch { }
 		await DlFileService.DownloadFileFromText(hFileName, currentHContent, System.Text.Encoding.UTF8, "text/plain");
-		_hasUnsavedChanges = false;
-		UpdateUnsavedChangesFlag();
+		// After saving a single file, mark that tab as not dirty
+		currentTab.OriginalContent = currentHContent;
+		SetTabDirty(currentTab, false);
+		UpdateGlobalUnsavedFlag();
 		_working = false;
 	}
 
@@ -480,6 +556,13 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			return;
 
 		_working = true;
+		// Get current text from JS
+		try {
+			currentHContent = await JSRuntime.InvokeAsync<string>("fastTextEditor.getText", currentTab.EditorId);
+		}
+		catch {
+			// fallback to in-memory content
+		}
 		_modMs.SetLength(0);
 		var modResText = new OTRMod.Z.Text(currentHContent, _replacements);
 		await Task.Delay(10);
@@ -501,8 +584,51 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		}
 
 		await DlFileService.DownloadFile(modFileName, _modMs, "application/octet-stream");
-		_hasUnsavedChanges = false;
-		UpdateUnsavedChangesFlag();
+		// After exporting, consider the current tab saved
+		currentTab.OriginalContent = currentHContent;
+		SetTabDirty(currentTab, false);
+		UpdateGlobalUnsavedFlag();
 		_working = false;
 	}
-}
+
+	private Task OnTabTitleEdited(Tabs.TabItem tabItem, string newTitle) {
+		if (tabItem is TextDataItem t) {
+			// Update the Title; keep IsDirty flag unchanged
+			t.Title = newTitle;
+			StateHasChanged();
+		}
+		return Task.CompletedTask;
+	}
+
+	private async Task InitializeJsEditor(string editorId, string initialText) {
+		if (_objRef == null) _objRef = DotNetObjectReference.Create(this);
+		// Ensure the textarea exists in the DOM and retry a few times if needed
+		const int attempts = 5;
+		const int delayMs = 50;
+		for (int i = 0; i < attempts; i++) {
+			await Task.Delay(i == 0 ? 5 : delayMs);
+			try {
+				var ok = await JSRuntime.InvokeAsync<bool>("fastTextEditor.init", editorId, initialText, _objRef);
+				if (ok) {
+					Console.WriteLine($"[TextEditor] fastTextEditor.init succeeded for {editorId}");
+					return;
+				}
+			}
+			catch (JSException ex) {
+				Console.WriteLine($"[TextEditor] fastTextEditor.init attempt {i} error: {ex.Message}");
+			}
+		}
+		Console.WriteLine($"[TextEditor] fastTextEditor.init failed for {editorId} after retries");
+	}
+	[JSInvokable("OnJsDirtyStateChanged")]
+	public async Task OnJsDirtyStateChanged(bool isDirty) {
+		if (currentTab != null && currentTab.IsDirty != isDirty) {
+			SetTabDirty(currentTab, isDirty);
+			// Force UI refresh for the tabs
+			await InvokeAsync(() => {
+				tabList = new List<TextDataItem>(tabList);
+				StateHasChanged();
+			});
+		}
+	}
+}}

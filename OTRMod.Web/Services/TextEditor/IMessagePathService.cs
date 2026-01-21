@@ -1,4 +1,4 @@
-namespace OTRMod.Web.Services;
+namespace OTRMod.Web.Services.TextEditor;
 
 /// <summary>
 /// Service for managing message file paths, including override path transformation.
