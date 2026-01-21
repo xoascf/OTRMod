@@ -81,6 +81,14 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 	</option>
 	<option value="text/staff_message_data_static">
 	</option>
+	<option value="override/@DEFAULT_MESSAGE_PATH">
+	</option>
+	<option value="override/text/ger_message_data_static">
+	</option>
+	<option value="override/text/fra_message_data_static">
+	</option>
+	<option value="override/text/staff_message_data_static">
+	</option>
 </datalist>
 <br />
 <div class="mb-3">
@@ -311,6 +319,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 		// Update the displayed path based on override state
 		UpdatePathFromOverrideState();
+		StateHasChanged();
 	}
 
 	private void OnAddTabSelected(Tabs.TabItem e) {
@@ -358,11 +367,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 	private void OnPathChanged(ChangeEventArgs e) {
 		if (e.Value is string newPath && !string.IsNullOrWhiteSpace(newPath)) {
-			var normalized = PathService.NormalizePath(newPath);
-			// Extract directory path (remove filename if present)
-			var directoryPath = PathService.GetDirectoryPath(normalized);
-			if (string.IsNullOrEmpty(directoryPath))
-				directoryPath = normalized; // User typed just a directory path
+			var directoryPath = PathService.NormalizePath(newPath);
 
 			// Update override state based on what user typed
 			var isPathOverride = PathService.IsOverridePath(directoryPath);
@@ -631,4 +636,4 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			});
 		}
 	}
-}}
+}
