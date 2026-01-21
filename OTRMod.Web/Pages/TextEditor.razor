@@ -324,14 +324,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 
 	private void OnAddTabSelected(Tabs.TabItem e) {
 		// Create a new empty message file
-		// Ensure unique filename (avoid duplicate keys)
-		var newFileNameBase = $"new_message_{DateTime.Now:yyyyMMddHHmmss}";
-		var newFileName = newFileNameBase;
-		int suffix = 1;
-		while (_textFiles.ContainsKey(newFileName) || _textFilePaths.ContainsKey(newFileName)) {
-			newFileName = newFileNameBase + "_" + suffix.ToString();
-			suffix++;
-		}
+		var newFileName = GenerateNewFileName();
 		var newText = new OTRMod.Z.Text(Array.Empty<byte>(), _replacements);
 
 		_textFiles.Add(newFileName, newText);
@@ -362,6 +355,18 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 		if (bool.TryParse(e.Value?.ToString(), out var isOverride)) {
 			_isOverride = isOverride;
 			UpdatePathFromOverrideState();
+			// If toggling to override mode and current tab has a base message filename, rename it to a dated filename
+			if (_isOverride && currentTab != null && IsBaseMessageFileName(currentTab.Title)) {
+				var newFileName = GenerateNewFileName();
+				RenameTab(currentTab, newFileName);
+			}
+			// If toggling off override mode and current tab has a dated filename, try to restore it to the base filename
+			else if (!_isOverride && currentTab != null && IsDatedMessageFileName(currentTab.Title)) {
+				var baseName = Path.GetFileName(_standardPath);
+				if (!_textFiles.ContainsKey(baseName)) {
+					RenameTab(currentTab, baseName);
+				}
+			}
 		}
 	}
 
@@ -635,5 +640,42 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 				StateHasChanged();
 			});
 		}
+	}
+
+	private bool IsBaseMessageFileName(string fileName) {
+		var baseName = Path.GetFileName(_standardPath);
+		return string.Equals(fileName, baseName, StringComparison.Ordinal);
+	}
+
+	private bool IsDatedMessageFileName(string fileName) {
+		return fileName.StartsWith("new_message_", StringComparison.Ordinal);
+	}
+
+	private string GenerateNewFileName() {
+		var newFileNameBase = $"new_message_{DateTime.Now:yyyyMMddHHmmss}";
+		var newFileName = newFileNameBase;
+		int suffix = 1;
+		while (_textFiles.ContainsKey(newFileName) || _textFilePaths.ContainsKey(newFileName)) {
+			newFileName = newFileNameBase + "_" + suffix.ToString();
+			suffix++;
+		}
+		return newFileName;
+	}
+
+	private void RenameTab(TextDataItem tab, string newName) {
+		var oldName = tab.Id;
+		// Update _textFiles dictionary
+		_textFiles[newName] = _textFiles[oldName];
+		_textFiles.Remove(oldName);
+		// Update _textFilePaths dictionary
+		if (_textFilePaths.ContainsKey(oldName)) {
+			_textFilePaths[newName] = $"{_msgPathInMod}/{newName}";
+			_textFilePaths.Remove(oldName);
+		}
+		// Update tab properties
+		tab.Id = newName;
+		tab.Title = newName;
+		// Trigger UI update
+		StateHasChanged();
 	}
 }
