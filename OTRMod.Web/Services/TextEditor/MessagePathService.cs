@@ -30,11 +30,8 @@ public class MessagePathService : IMessagePathService {
 				messageType = "message_data_static"; // Default fallback
 		}
 
-		// Generate a new GUID for the override file
-		var guid = Guid.NewGuid().ToString("D");
-
-		// Construct override path: override/text/{messageType}/{guid}
-		return $"{OverridePrefix}text/{messageType}/{guid}";
+		// Construct override path: override/text/{messageType}
+		return $"{OverridePrefix}text/{messageType}";
 	}
 
 	public string ToStandardPath(string overridePath) {

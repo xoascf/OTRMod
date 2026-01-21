@@ -386,7 +386,7 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			// If user typed a standard path but override is checked, transform it
 			else if (_isOverride) {
 				_standardPath = directoryPath;
-				_msgPathInMod = PathService.GetDirectoryPath(PathService.ToOverridePath(directoryPath + "/dummy"));
+				_msgPathInMod = PathService.ToOverridePath(directoryPath + "/dummy");
 			}
 			// User typed standard path and override is off
 			else {
@@ -402,9 +402,9 @@ else if (!string.IsNullOrEmpty(_archiveLoadError))
 			// This preserves user's manually typed override paths
 			if (!PathService.IsOverridePath(_msgPathInMod)) {
 				var overridePath = PathService.ToOverridePath(_standardPath + "/dummy");
-				_msgPathInMod = PathService.GetDirectoryPath(overridePath);
+				_msgPathInMod = overridePath;
 			}
-			// If it's already an override path, keep it as-is (user may have typed a specific GUID)
+			// If it's already an override path, keep it as-is
 		}
 		else {
 			// Convert override path back to standard if switching off override mode

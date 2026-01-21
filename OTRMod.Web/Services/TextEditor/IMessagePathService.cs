@@ -7,8 +7,8 @@ public interface IMessagePathService {
 	/// <summary>
 	/// Transforms a standard message path to an override path.
 	/// </summary>
-	/// <param name="standardPath">The standard path (e.g., "text/nes_message_data_static/nes_message_data_static")</param>
-	/// <returns>The override path with a generated GUID (e.g., "override/text/nes_message_data_static/{guid}")</returns>
+	/// <param name="standardPath">The standard path (e.g., "text/nes_message_data_static")</param>
+	/// <returns>The override path (e.g., "override/text/nes_message_data_static")</returns>
 	string ToOverridePath(string standardPath);
 
 	/// <summary>
