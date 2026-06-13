@@ -4,42 +4,73 @@ namespace OTRMod.ROM;
 
 public static class Decompressor {
 	public static byte[] Data(byte[] inROM, int outSize = Size.PDec, bool calc = true) {
-		/* Assumes that the ROM is decompressed if its size is larger than 32MB. */
-		if (inROM.Length > Size.DCom)
-			return inROM;
-
-		byte[] outROM = new byte[outSize];
-		inROM.CopyTo(outROM, 0);
-
 		int tblStart = TableEntry.FindTable(inROM);
-		TableEntry tbl = TableEntry.Get(GetAllFrom(inROM, tblStart), 2);
-
-		int tblCount = tbl.Size / 16;
+		
+		byte[] dmadataSpan = GetAllFrom(inROM, tblStart);
+		TableEntry dmadataEntry = TableEntry.Get(dmadataSpan, 2);
+		int tblCount = dmadataEntry.Size / 16;
 		Debug.WriteLine($"Number of files: {tblCount}.");
 
-		byte[] inTable = inROM.Get(tblStart, tbl.VEnd - tblStart);
-		byte[] outTable = outROM.Get(tblStart, tbl.VEnd - tblStart);
+		byte[] inTable = inROM.Get(tblStart, dmadataEntry.Size);
 
-		Array.Clear(outROM, tbl.VEnd, outROM.Length - tbl.VEnd);
+		/* Check if already decompressed... */
+		bool isCompressed = false;
+		for (int i = 0; i < tblCount; i++) {
+			TableEntry entry = TableEntry.Get(inTable, i);
+			if (entry.PStart == -1 || entry.VStart == -1 || entry.PEnd == -1 || entry.VEnd == -1)
+				continue;
+			if (entry.PEnd != 0 && entry.PEnd != entry.PStart) {
+				isCompressed = true;
+				break;
+			}
+		}
 
-		for (int i = 3; i < tblCount; i++) {
-			tbl = TableEntry.Get(inTable, i);
+		if (!isCompressed) {
+			Debug.WriteLine("ROM is already decompressed.");
+			return inROM;
+		}
 
-			switch (tbl.PEnd) {
-				case -1: /* MM ROM, that's for sure */
-					continue;
+		byte[] outTable = new byte[dmadataEntry.Size];
 
-				case 0: /* Already decompressed */
+		long requiredDstSize = inROM.Length;
+		for (int i = 0; i < tblCount; i++) {
+			TableEntry entry = TableEntry.Get(inTable, i);
+			if (entry.VEnd > requiredDstSize) {
+				requiredDstSize = entry.VEnd;
+			}
+		}
+
+		int finalSize = (int)requiredDstSize;
+		if (outSize > finalSize) {
+			finalSize = outSize;
+		} else {
+			int dstSz = inROM.Length;
+			while (dstSz < finalSize) {
+				dstSz *= 2;
+			}
+			finalSize = dstSz;
+		}
+
+		byte[] outROM = new byte[finalSize];
+
+		for (int i = 0; i < tblCount; i++) {
+			TableEntry tbl = TableEntry.Get(inTable, i);
+
+			if (tbl.PStart == -1 || tbl.VStart == -1 || tbl.PEnd == -1 || tbl.VEnd == -1 || tbl.VEnd <= tbl.VStart || (tbl.PEnd != 0 && tbl.PEnd == tbl.PStart)) {
+				outTable.Set(i * 16, tbl.GetNew());
+				continue;
+			}
+
+			if (tbl.PEnd != 0) {
+				int uncompSize = tbl.VEnd - tbl.VStart;
+				Decode(inROM.Slice(tbl.PStart), outROM.Slice(tbl.VStart), uncompSize);
+			} else {
+				int size = tbl.VEnd - tbl.VStart;
 #if NETCOREAPP2_1_OR_GREATER
-					inROM.Slice(tbl.PStart, tbl.Size).CopyTo(outROM.Slice(tbl.VStart));
+				inROM.Slice(tbl.PStart, size).CopyTo(outROM.Slice(tbl.VStart));
 #else
-					outROM.Set(tbl.VStart, inROM.Get(tbl.PStart, tbl.Size));
+				outROM.Set(tbl.VStart, inROM.Get(tbl.PStart, size));
 #endif
-					break;
-
-				default:
-					Decode(inROM.Slice(tbl.PStart), outROM.Slice(tbl.VStart), tbl.Size);
-					break;
 			}
 
 			tbl.PStart = tbl.VStart;
@@ -59,10 +90,57 @@ public static class Decompressor {
 	/* Yaz0: http://amnoid.de/gc/yaz0.txt */
 #if NETCOREAPP2_1_OR_GREATER
 	private static void Decode(Span<byte> srcArray, Span<byte> dstArray, int size) {
+		string header = System.Text.Encoding.ASCII.GetString(srcArray.Slice(0, 4));
+		switch (header) {
+			case "Yaz0":
+				DecodeYaz0(srcArray, dstArray, size);
+				break;
+			case "ZLIB":
+				DecodeZlib(srcArray, dstArray, size);
+				break;
+			case "LZO0":
+				DecodeLzo(srcArray, dstArray, size);
+				break;
+			case "UCL0":
+				DecodeUcl(srcArray, dstArray, size);
+				break;
+			case "APL0":
+				DecodeApl(srcArray, dstArray, size);
+				break;
+			default:
+				throw new Exception($"Unknown compression codec: {header}");
+		}
+	}
+
+	private static void DecodeYaz0(Span<byte> srcArray, Span<byte> dstArray, int size) {
 		int srcPlace = 16;
 		int dstOffset = 0;
 #else
 	private static void Decode(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		byte[] srcArray = src.Array;
+		string header = System.Text.Encoding.ASCII.GetString(srcArray, src.Offset, 4);
+		switch (header) {
+			case "Yaz0":
+				DecodeYaz0(src, dst, size);
+				break;
+			case "ZLIB":
+				DecodeZlib(src, dst, size);
+				break;
+			case "LZO0":
+				DecodeLzo(src, dst, size);
+				break;
+			case "UCL0":
+				DecodeUcl(src, dst, size);
+				break;
+			case "APL0":
+				DecodeApl(src, dst, size);
+				break;
+			default:
+				throw new Exception($"Unknown compression codec: {header}");
+		}
+	}
+
+	private static void DecodeYaz0(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
 		byte[] srcArray = src.Array;
 		byte[] dstArray = dst.Array;
 		int srcPlace = src.Offset + 16;
@@ -103,4 +181,54 @@ public static class Decompressor {
 			bitCount--;
 		}
 	}
+
+#if NETCOREAPP2_1_OR_GREATER
+	private static void DecodeZlib(Span<byte> srcArray, Span<byte> dstArray, int size) {
+		using var ms = new System.IO.MemoryStream(srcArray.Slice(8).ToArray());
+		using var zs = new Ionic.Zlib.ZlibStream(ms, Ionic.Zlib.CompressionMode.Decompress);
+		byte[] buffer = new byte[size];
+		int bytesRead = 0;
+		while (bytesRead < size) {
+			int read = zs.Read(buffer, bytesRead, size - bytesRead);
+			if (read == 0) break;
+			bytesRead += read;
+		}
+		buffer.AsSpan(0, bytesRead).CopyTo(dstArray);
+	}
+
+	private static void DecodeLzo(Span<byte> srcArray, Span<byte> dstArray, int size) {
+		throw new NotImplementedException("LZO decompression is not yet implemented.");
+	}
+
+	private static void DecodeUcl(Span<byte> srcArray, Span<byte> dstArray, int size) {
+		throw new NotImplementedException("UCL decompression is not yet implemented.");
+	}
+
+	private static void DecodeApl(Span<byte> srcArray, Span<byte> dstArray, int size) {
+		throw new NotImplementedException("APLib decompression is not yet implemented.");
+	}
+#else
+	private static void DecodeZlib(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		using var ms = new System.IO.MemoryStream(src.Array, src.Offset + 8, src.Count - 8);
+		using var zs = new Ionic.Zlib.ZlibStream(ms, Ionic.Zlib.CompressionMode.Decompress);
+		int bytesRead = 0;
+		while (bytesRead < size) {
+			int read = zs.Read(dst.Array, dst.Offset + bytesRead, size - bytesRead);
+			if (read == 0) break;
+			bytesRead += read;
+		}
+	}
+
+	private static void DecodeLzo(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		throw new NotImplementedException("LZO decompression is not yet implemented.");
+	}
+
+	private static void DecodeUcl(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		throw new NotImplementedException("UCL decompression is not yet implemented.");
+	}
+
+	private static void DecodeApl(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		throw new NotImplementedException("APLib decompression is not yet implemented.");
+	}
+#endif
 }
