@@ -1,8 +1,31 @@
 /* Licensed under the Open Software License version 3.0 */
 
+using OTRMod.Utility;
+
 namespace OTRMod.ROM;
 
+public enum Codec {
+	None,
+	Yaz0,
+	Zlib,
+	Lzo,
+	Ucl,
+	Apl
+}
+
 public static class Decompressor {
+	private static Codec GetCodec(byte[] rom, int offset) {
+		int header = rom.ToI32(offset);
+		return header switch {
+			0x59617A30 => Codec.Yaz0, // "Yaz0"
+			0x5A4C4942 => Codec.Zlib, // "ZLIB"
+			0x4C5A4F30 => Codec.Lzo,  // "LZO0"
+			0x55434C30 => Codec.Ucl,  // "UCL0"
+			0x41504C30 => Codec.Apl,  // "APL0"
+			_ => Codec.None
+		};
+	}
+
 	public static byte[] Data(byte[] inROM, int outSize = Size.PDec, bool calc = true) {
 		int tblStart = TableEntry.FindTable(inROM);
 		
@@ -61,11 +84,15 @@ public static class Decompressor {
 				continue;
 			}
 
+			Codec codec = Codec.None;
 			if (tbl.PEnd != 0) {
-				int uncompSize = tbl.VEnd - tbl.VStart;
-				Decode(inROM.Slice(tbl.PStart), outROM.Slice(tbl.VStart), uncompSize);
+				codec = GetCodec(inROM, tbl.PStart);
+			}
+
+			int size = tbl.VEnd - tbl.VStart;
+			if (codec != Codec.None) {
+				Decode(codec, inROM.Slice(tbl.PStart), outROM.Slice(tbl.VStart), size);
 			} else {
-				int size = tbl.VEnd - tbl.VStart;
 #if NETCOREAPP2_1_OR_GREATER
 				inROM.Slice(tbl.PStart, size).CopyTo(outROM.Slice(tbl.VStart));
 #else
@@ -89,26 +116,25 @@ public static class Decompressor {
 
 	/* Yaz0: http://amnoid.de/gc/yaz0.txt */
 #if NETCOREAPP2_1_OR_GREATER
-	private static void Decode(Span<byte> srcArray, Span<byte> dstArray, int size) {
-		string header = System.Text.Encoding.ASCII.GetString(srcArray.Slice(0, 4));
-		switch (header) {
-			case "Yaz0":
+	private static void Decode(Codec codec, Span<byte> srcArray, Span<byte> dstArray, int size) {
+		switch (codec) {
+			case Codec.Yaz0:
 				DecodeYaz0(srcArray, dstArray, size);
 				break;
-			case "ZLIB":
+			case Codec.Zlib:
 				DecodeZlib(srcArray, dstArray, size);
 				break;
-			case "LZO0":
+			case Codec.Lzo:
 				DecodeLzo(srcArray, dstArray, size);
 				break;
-			case "UCL0":
+			case Codec.Ucl:
 				DecodeUcl(srcArray, dstArray, size);
 				break;
-			case "APL0":
+			case Codec.Apl:
 				DecodeApl(srcArray, dstArray, size);
 				break;
 			default:
-				throw new Exception($"Unknown compression codec: {header}");
+				throw new ArgumentOutOfRangeException(nameof(codec), $"Unknown compression codec: {codec}");
 		}
 	}
 
@@ -116,27 +142,25 @@ public static class Decompressor {
 		int srcPlace = 16;
 		int dstOffset = 0;
 #else
-	private static void Decode(ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
-		byte[] srcArray = src.Array;
-		string header = System.Text.Encoding.ASCII.GetString(srcArray, src.Offset, 4);
-		switch (header) {
-			case "Yaz0":
+	private static void Decode(Codec codec, ArraySegment<byte> src, ArraySegment<byte> dst, int size) {
+		switch (codec) {
+			case Codec.Yaz0:
 				DecodeYaz0(src, dst, size);
 				break;
-			case "ZLIB":
+			case Codec.Zlib:
 				DecodeZlib(src, dst, size);
 				break;
-			case "LZO0":
+			case Codec.Lzo:
 				DecodeLzo(src, dst, size);
 				break;
-			case "UCL0":
+			case Codec.Ucl:
 				DecodeUcl(src, dst, size);
 				break;
-			case "APL0":
+			case Codec.Apl:
 				DecodeApl(src, dst, size);
 				break;
 			default:
-				throw new Exception($"Unknown compression codec: {header}");
+				throw new ArgumentOutOfRangeException(nameof(codec), $"Unknown compression codec: {codec}");
 		}
 	}
 
@@ -160,16 +184,13 @@ public static class Decompressor {
 				dstArray[dstPlace++] = srcArray[srcPlace++];
 			}
 			else {
-#if NETCOREAPP2_1_OR_GREATER
-				Span<byte> bytes = srcArray.Slice(srcPlace, 2);
-#else
-				byte[] bytes = srcArray.Get(srcPlace, 2);
-#endif
+				int b0 = srcArray[srcPlace];
+				int b1 = srcArray[srcPlace + 1];
 				srcPlace += 2;
 
-				int distance = ((bytes[0] & 0xF) << 8) | bytes[1];
+				int distance = ((b0 & 0xF) << 8) | b1;
 				int copyPlace = dstPlace - (distance + 1);
-				int numBytes = bytes[0] >> 4;
+				int numBytes = b0 >> 4;
 
 				numBytes = numBytes != 0 ? numBytes + 2 : srcArray[srcPlace++] + 18;
 
